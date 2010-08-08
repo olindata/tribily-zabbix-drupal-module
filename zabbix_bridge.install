@@ -1,0 +1,22 @@
+<?php
+// $Id: zabbix_bridge.install,v 1.2 2008/12/06 01:17:17 rmiddle Exp $
+// Built for Drupal 6
+/**
+ * @file
+ * Notifies administrator of new user registrations.
+ */
+
+
+/**
+ * Implementation of hook_install().
+ */
+function zabbix_bridge_install() {
+  //  Set the weight of the module lower so modules like logintobogie don't cause problmes.
+  db_query("UPDATE {system} SET weight = 1002 WHERE name = 'zabbix_bridge'");
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function zabbix_bridge_uninstall() {
+}

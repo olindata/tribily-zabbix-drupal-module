@@ -1,0 +1,122 @@
+<?php
+// $Id: zabbix_bridge.module,v 1.20 2009/07/02 03:41:42 rmiddle Exp $
+// Built for Drupal 6
+
+/**
+ * @file
+ * Notifies administrator of new user registrations.
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function zabbix_bridge_help($path, $arg) {
+  if ($path == 'admin/help#zabbix_bridge') {
+    return '<p>'.
+      t('This module provides various integration between drupal and Zabbix.') .
+      '</p>';
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function zabbix_bridge_menu() {
+  $items['admin/settings/zabbix_bridge'] = array(
+    'title' => 'Zabbix Bridge',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('zabbix_bridge_settings'),
+    'description' => 'Configure the Zabbix Bridge module.',
+    'file' => 'zabbix_bridge.admin.inc',
+    'access arguments' => array('administer site configuration'),
+  );
+  return $items;
+}
+
+
+/**
+ * Implementation of hook_user().
+ */
+function zabbix_bridge_user($op, &$edit, &$account, $category = NULL) {
+  switch ($op) {
+    case 'insert':
+      zabbix_bridge_create_zabbix_user($edit, $account, $category);
+      break;
+    case 'delete':
+      zabbix_bridge_delete_zabbix_user($edit, $account, $category);
+      break;
+  }
+}
+
+include_once 'ZabbixAPI.class.php';
+
+function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
+  var_dump($edit, $account, $category);   
+
+    // This logs into Zabbix, and returns false if it fails
+    ZabbixAPI::login('http://zabbix-dev.tribily.com/','admin','zabbix')
+        or die('Unable to login: '.print_r(ZabbixAPI::getLastError(),true));
+
+    // This gets the version of the zabbix server
+    $version = ZabbixAPI::fetch_string('apiinfo','version')
+        or die('Unable to get Zabbix Version: '.print_r(ZabbixAPI::getLastError(),true));
+    echo "Server running Zabbix API Version: $version\n";
+  
+    //delete the user from zabbix
+    $userinfo = ZabbixAPI::fetch_array('user', 'get', array( 'pattern' => $edit['name']))
+        or die('Unable to delete user: '.print_r(ZabbixAPI::getLastError(),true));
+    echo "Zabbix get user info:\n";
+    var_dump($userinfo);
+    
+    $zabbixuserid = 324;
+    
+    //delete the user from zabbix
+    $deletedusers = ZabbixAPI::fetch_array('user', 'delete', array( 'userid' => $zabbixuserid))
+        or die('Unable to delete user: '.print_r(ZabbixAPI::getLastError(),true));
+    echo "Zabbix user deleted:\n";
+    var_dump($deletedusers);
+
+    
+}
+
+function zabbix_bridge_create_zabbix_user($edit, $account, $category) {
+
+    // This logs into Zabbix, and returns false if it fails
+    ZabbixAPI::login('http://zabbix-dev.tribily.com/','admin','zabbix')
+        or die('Unable to login: '.print_r(ZabbixAPI::getLastError(),true));
+
+    // This gets the version of the zabbix server
+    $version = ZabbixAPI::fetch_string('apiinfo','version')
+        or die('Unable to get Zabbix Version: '.print_r(ZabbixAPI::getLastError(),true));
+    echo "Server running Zabbix API Version: $version\n";
+
+    //create the usergroup
+    $zabbixusergroupid = ZabbixAPI::fetch_string('usergroup', 'create', array('name' => $edit['name'],
+                                                       'users_status'=>0))
+        or die('Unable to create zabbix user group: '.print_r(ZabbixAPI::getLastError(),true    ));
+    echo "Zabbix usergroup created: ".$zabbixusergroupid."\n";
+
+    //create the user
+    $zabbixuserid = ZabbixAPI::fetch_string('user', 'create', array(   'email' => $edit['mail'],
+                                                       'alias'=>$edit['name'],
+                                                       'passwd'=>$edit['pass'],
+                                                       'number_of_hosts'=>0)) //number_of_hosts is added because of a bug in API 1.2
+        or die('Unable to create zabbix user: '.print_r(ZabbixAPI::getLastError(),true));
+    echo "Zabbix user created: ".$zabbixuserid."\n";
+
+//    var_dump($zabbixusergroupid, $zabbixuserid);
+
+//    //add user to usergroup
+//    ZabbixAPI::fetch_string('usergroup', 'updateUsers', array(  'usrgrps' => array('usrgrpid' => $zabbixusergroupid),
+//                                                                'users' => array('userid' => $zabbixuserid)))
+//        or die('Unable to add user to usergroup: '.print_r(ZabbixAPI::getLastError(),true));
+//    echo "Zabbix user added to usergroup: ".$zabbixuserid."\n";
+
+
+    //add the email address to it's media
+    $medias = ZabbixAPI::fetch_array('user', 'addMedia', array( 'users' => array('userid' => $zabbixuserid), 'medias' => array('mediatypeid' => 1, 'sendto' => $edit['mail'], 'active' => 0, 'severity' => 63, 'period' => '1-7,00:00-23:59;')))
+        or die('Unable to add media to user: '.print_r(ZabbixAPI::getLastError(),true));
+    echo "Media added to zabbix user:\n".var_dump($medias)."\n";
+
+
+}
