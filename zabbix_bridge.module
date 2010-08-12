@@ -91,8 +91,7 @@ function zabbix_bridge_create_zabbix_user($edit, $account, $category) {
     echo "Server running Zabbix API Version: $version\n";
 
     //create the usergroup
-    $zabbixusergroupid = ZabbixAPI::fetch_string('usergroup', 'create', array('name' => $edit['name'],
-                                                       'users_status'=>0))
+    $zabbixusergroupid = ZabbixAPI::fetch_string('usergroup', 'create', array(array(array('name' => $edit['name']))))
         or die('Unable to create zabbix user group: '.print_r(ZabbixAPI::getLastError(),true    ));
     echo "Zabbix usergroup created: ".$zabbixusergroupid."\n";
 
