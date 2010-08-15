@@ -71,5 +71,19 @@ function zabbix_bridge_settings() {
     '#description' => t('When to send an Email'),
     '#required' => FALSE,
   );
+
+  // Add zabbix trace deletion options
+  $trace_options = array(
+    'yes' => 'Yes',
+    'no' => 'No'
+  );
+
+  $form['zabbix_bridge_trace'] = array(
+    '#type' => 'radios',
+    '#title' => t('Delete Zabbix Traces Upon Account Deletion'),
+    '#default_value' => variable_get('zabbix_bridge_trace', 'no'),
+    '#description' => t('If checked, deleting a user account will remove all Zabbix traces (user, usergroup, host, hostgroup, media, actions)'),
+    '#options' => $trace_options
+  );
   return system_settings_form($form);
 }

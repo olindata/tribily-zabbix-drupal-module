@@ -45,13 +45,116 @@ function zabbix_bridge_user($op, &$edit, &$account, $category = NULL) {
     case 'delete':
       zabbix_bridge_delete_zabbix_user($edit, $account, $category);
       break;
+    case 'update':
+      zabbix_bridge_update_zabbix_user($edit, $account, $category);
+      break;
   }
 }
 
 include_once 'ZabbixAPI.class.php';
 
+function zabbix_bridge_update_zabbix_user($edit, $account, $category) {
+
+    // This logs into Zabbix, and returns false if it fails
+    ZabbixAPI::login('http://zabbix-dev.tribily.com/','admin','zabbix')
+        or die('Unable to login: '.print_r(ZabbixAPI::getLastError(),true));
+
+    // This gets the version of the zabbix server
+    $version = ZabbixAPI::fetch_string('apiinfo','version')
+        or die('Unable to get Zabbix Version: '.print_r(ZabbixAPI::getLastError(),true));
+    echo "Server running Zabbix API Version: $version\n";
+    
+    var_dump($edit, $account, $category);
+
+    // retrieve drupal-zabbix associations - CONSIDER REVISING AND USING ZABBIX API INSTEAD!
+    $result = db_query('SELECT * FROM drupal_zabbix WHERE drupal_uid=%s', $account->uid)
+            or die('Unable to retrieve drupal-zabbix associations');
+
+    $data = db_fetch_array($result);
+
+    // update user details
+    $user = array(  'userid' => $data['zabbix_uid'],
+                    'alias' => $edit['name'],
+                    'passwd' => $edit['pass']   );
+
+    var_dump($user);
+
+    $updatedusers = ZabbixAPI::fetch_string('user', 'update', array($user))
+            or die('Unable to update zabbix user profile: '.print_r(ZabbixAPI::getLastError(),true));
+    echo "Updated Zabbix user:\n";
+
+    var_dump($updatedusers);
+
+    // get user media
+    $usermedia = ZabbixAPI::fetch_array('user', 'getMedia', array ( 'userids' => array( $data['zabbix_uid'] ),
+                                                                    'mediatypeid' => 1,
+                                                                    'sendto' => $account->mail
+                                                            ))
+            or die('Unable to fetch zabbix user media: '.print_r(ZabbixAPI::getLastError(),true));
+    echo "Retrieved Zabbix user media:\n";
+
+    var_dump($usermedia);
+
+    // delete existing and relevant media before adding
+    $deletedmedia = ZabbixAPI::fetch_string('user', 'deleteMedia', $usermedia)
+            or die('Unable to delete zabbix user media: '.print_r(ZabbixAPI::getLastError(),true));
+    echo "Deleted Zabbix user media:\n";
+
+    var_dump($deletedmedia);
+
+    // add updated user media
+    /*
+     * media types:
+     *
+     * 1 - Email
+     * 2 - Jabber
+     * 3 - SMS
+     *
+     * Refer to table `media_type` for more details
+     *
+     */
+    $media_data = array();
+
+    $media_data['users'] = array( 'userid' => $data['zabbix_uid']   );
+
+    $media_data['medias'] = array(  'mediatypeid' => 1, 'sendto' => $edit['mail'],
+                                    'active' => 0, 'severity' => 63,
+                                    'period' => '1-7,00:00-23:59;'  );
+
+    $updatedmedia = ZabbixAPI::fetch_string('user', 'addMedia', $media_data)
+            or die('Unable to update zabbix user media: '.print_r(ZabbixAPI::getLastError(),true));
+
+    echo "Updated Zabbix user media:\n";
+
+    var_dump($updatedmedia);
+
+    // update usergroup details
+    $usergroup = array( 'usrgrpid' => $data['zabbix_usrgrp_id'],
+                        'name' => $edit['name']);
+
+    $updatedusergroups = ZabbixAPI::fetch_string('usergroup', 'update', array($usergroup))
+            or die('Unable to update zabbix usergroup: '.print_r(ZabbixAPI::getLastError(),true));
+
+    echo "Updated Zabbix usergroup:\n";
+
+    var_dump($updatedusergroups);
+
+    // update hostgroup details
+    $hostgroup = array( 'groupid' => $data['zabbix_hostgrp_id'],
+                        'name' => $edit['name']);
+
+    $updatedhostgroups = ZabbixAPI::fetch_string('hostgroup', 'update', array($hostgroup))
+            or die('Unable to update zabbix hostgroup: '.print_r(ZabbixAPI::getLastError(),true));
+
+    echo "Updated Zabbix hostgroup:\n";
+
+    var_dump($updatedhostgroups);
+
+}
+
+
 function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
-  var_dump($edit, $account, $category);   
+    var_dump($edit, $account, $category);
 
     // This logs into Zabbix, and returns false if it fails
     ZabbixAPI::login('http://zabbix-dev.tribily.com/','admin','zabbix')
@@ -62,20 +165,47 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
         or die('Unable to get Zabbix Version: '.print_r(ZabbixAPI::getLastError(),true));
     echo "Server running Zabbix API Version: $version\n";
   
-    //delete the user from zabbix
-    $userinfo = ZabbixAPI::fetch_array('user', 'get', array( 'pattern' => $edit['name']))
+    //get the zabbix user - consider revising, shows all ids
+    /*$userinfo = ZabbixAPI::fetch_array('user', 'get', array( 'pattern' => $edit['name']))
         or die('Unable to delete user: '.print_r(ZabbixAPI::getLastError(),true));
     echo "Zabbix get user info:\n";
-    var_dump($userinfo);
-    
-    $zabbixuserid = 324;
-    
-    //delete the user from zabbix
-    $deletedusers = ZabbixAPI::fetch_array('user', 'delete', array( 'userid' => $zabbixuserid))
-        or die('Unable to delete user: '.print_r(ZabbixAPI::getLastError(),true));
-    echo "Zabbix user deleted:\n";
-    var_dump($deletedusers);
+    var_dump($userinfo);*/
 
+    if ("yes" == variable_get('zabbix_bridge_trace', 'no')) {
+
+        echo 'Delete zabbix trace set to yes, deleting zabbix traces as well ...' . "\n";
+
+        // retrieve drupal-zabbix associations - CONSIDER REVISING AND USING ZABBIX API INSTEAD!
+        $result = db_query('SELECT * FROM drupal_zabbix WHERE drupal_uid=%s', $account->uid)
+                or die('Unable to retrieve drupal-zabbix associations');
+
+        $data = db_fetch_array($result);
+
+        $zabbixuserid = $data['zabbix_uid'];
+        $hostgroupid = $data['zabbix_hostgrp_id'];
+        $usergroupid = $data['zabbix_usrgrp_id'];
+
+        $result = db_query('DELETE FROM drupal_zabbix WHERE drupal_uid=%s', $account->uid);
+
+        //delete the user from zabbix (deletes media as well)
+        $deletedusers = ZabbixAPI::fetch_array('user', 'delete', array( 'userid' => $zabbixuserid))
+            or die('Unable to delete user: '.print_r(ZabbixAPI::getLastError(),true));
+        echo "Zabbix user deleted:\n";
+        var_dump($deletedusers);
+
+        // delete the user's hostgroup
+        $deletedhostgroups = ZabbixAPI::fetch_array('hostgroup', 'delete', array(array('groupid' => $hostgroupid)))
+                or die('Unable to delete hostgroup: '.print_r(ZabbixAPI::getLastError(),true));
+        echo "Zabbix hostgroup deleted:\n";
+        var_dump($deletedhostgroups);
+
+        // delete the user's usergroup
+        $deletedusergroups = ZabbixAPI::fetch_array('usergroup', 'delete', array(array('usrgrpid' => $usergroupid)))
+                or die('Unable to delete hostgroup: '.print_r(ZabbixAPI::getLastError(),true));
+        echo "Zabbix usergroup deleted:\n";
+        var_dump($deletedusergroups);
+
+    }
     
 }
 
@@ -91,8 +221,8 @@ function zabbix_bridge_create_zabbix_user($edit, $account, $category) {
     echo "Server running Zabbix API Version: $version\n";
 
     //create the usergroup
-    $zabbixusergroupid = ZabbixAPI::fetch_string('usergroup', 'create', array(array(array('name' => $edit['name']))))
-        or die('Unable to create zabbix user group: '.print_r(ZabbixAPI::getLastError(),true    ));
+    $zabbixusergroupid = ZabbixAPI::fetch_string('usergroup', 'create', array(array('name' => $edit['name'])))
+        or die('Unable to create zabbix user group: '.print_r(ZabbixAPI::getLastError(),true));
     echo "Zabbix usergroup created: ".$zabbixusergroupid."\n";
 
     //create the user
@@ -103,13 +233,13 @@ function zabbix_bridge_create_zabbix_user($edit, $account, $category) {
         or die('Unable to create zabbix user: '.print_r(ZabbixAPI::getLastError(),true));
     echo "Zabbix user created: ".$zabbixuserid."\n";
 
-//    var_dump($zabbixusergroupid, $zabbixuserid);
+    var_dump($zabbixusergroupid, $zabbixuserid);
 
-//    //add user to usergroup
-//    ZabbixAPI::fetch_string('usergroup', 'updateUsers', array(  'usrgrps' => array('usrgrpid' => $zabbixusergroupid),
-//                                                                'users' => array('userid' => $zabbixuserid)))
-//        or die('Unable to add user to usergroup: '.print_r(ZabbixAPI::getLastError(),true));
-//    echo "Zabbix user added to usergroup: ".$zabbixuserid."\n";
+    //add user to usergroup
+    ZabbixAPI::fetch_string('usergroup', 'updateUsers', array(  'usrgrps' => array('usrgrpid' => $zabbixusergroupid),
+                                                               'users' => array('userid' => $zabbixuserid)))
+        or die('Unable to add user to usergroup: '.print_r(ZabbixAPI::getLastError(),true));
+    echo "Zabbix user added to usergroup: ".$zabbixuserid."\n";
 
 
     //add the email address to it's media
@@ -117,5 +247,91 @@ function zabbix_bridge_create_zabbix_user($edit, $account, $category) {
         or die('Unable to add media to user: '.print_r(ZabbixAPI::getLastError(),true));
     echo "Media added to zabbix user:\n".var_dump($medias)."\n";
 
+
+    // create the hostgroup
+    $zabbixhostgroupid = ZabbixAPI::fetch_string('hostgroup', 'create', array(array('name' => $edit['name'])))
+            or die('Unable to create zabbix user group: '.print_r(ZabbixAPI::getLastError(),true));
+    echo "Zabbix hostgroup created: $zabbixhostgroupid\n";
+
+    // set allow rights for usergroup for hostgroup
+    $allowrights = ZabbixAPI::fetch_array('usergroup', 'addRights', array(  'usrgrpid' => $zabbixusergroupid,
+                                                                            'rights' => array( array(   'permission' => 3,
+                                                                                                        'id' => $zabbixhostgroupid
+                                                                                                )
+                                                                                            )
+                                                                        ))
+            or die('Unable to create allow rights for zabbix usergroup: '.print_r(ZabbixAPI::getLastError(),true));
+    echo 'Zabbix allow rights created: ';
+    
+    var_dump($allowrights);
+
+    // associate the drupal uid to its relevant zabbix ids
+    zabbix_bridge_drupal_to_zabbix($account->uid, $zabbixuserid, $zabbixusergroupid, $zabbixhostgroupid)
+            or die('Unable to create drupal-zabbix association');
+
+    // get other zabbix hostgroups
+    $otherhostgroups = ZabbixAPI::fetch_array('hostgroup', 'get')
+            or die('Unable to get other zabbix hostgroups: '.print_r(ZabbixAPI::getLastError(),true));
+
+    var_dump($otherhostgroups);
+
+    foreach ($otherhostgroups as $otherhostgroup) {
+
+        $curr_id = $otherhostgroup['groupid'];
+
+        if ($curr_id == $zabbixhostgroupid)
+            continue;
+
+        // set deny rights for usergroup for other hostgroup
+        $denyrights = ZabbixAPI::fetch_array('usergroup', 'addRights', array(  'usrgrpid' => $zabbixusergroupid,
+                                                                            'rights' => array( array(   'permission' => 0,
+                                                                                                        'id' => $curr_id)
+                                                                                            )
+                                                                        ))
+            or die("Unable to create deny rights for zabbix usergroup $zabbixusergroupid to hostgroup $curr_id: ".print_r(ZabbixAPI::getLastError(),true));
+
+        echo 'Zabbix usergroup-hostgroup deny rights created:';
+        var_dump($denyrights);
+
+    }
+    
+    // get other zabbix usergroups
+    $otherusergroups = ZabbixAPI::fetch_array('usergroup', 'get')
+            or die('Unable to get other zabbix usergroups: '.print_r(ZabbixAPI::getLastError(),true));
+
+    var_dump($otherusergroups);
+    
+    foreach ($otherusergroups as $otherusergroup) {
+
+        $curr_id = $otherusergroup['usrgrpid'];
+
+        if ($curr_id == $zabbixusergroupid)
+            continue;
+
+        // set deny rights for other hostgroup to this usergroup
+        $denyrights = ZabbixAPI::fetch_array('usergroup', 'addRights', array(  'usrgrpid' => $curr_id,
+                                                                            'rights' => array( array(   'permission' => 0,
+                                                                                                        'id' => $zabbixhostgroupid)
+                                                                                            )
+                                                                        ))
+            or die("Unable to create deny rights for zabbix hostgroup $curr_id to usergroup $zabbixusergroupid: ".print_r(ZabbixAPI::getLastError(),true));
+
+        echo 'Zabbix hostgroup-usergroup deny rights created:';
+        var_dump($denyrights);
+
+    }
+
+}
+
+function zabbix_bridge_drupal_to_zabbix($drupal_uid, $zabbix_uid, $zabbixusrgrpid, $zabbixhostgrpid) {
+    
+    var_dump($drupal_uid, $zabbix_uid, $zabbixusrgrpid, $zabbixhostgrpid);
+
+    $sql = 'INSERT INTO drupal_zabbix (drupal_uid, zabbix_uid, zabbix_usrgrp_id, zabbix_hostgrp_id)';
+    $sql .= " VALUES('%s', '%s', '%s', '%s')";
+
+    $result = db_query($sql, $drupal_uid, $zabbix_uid, $zabbixusrgrpid, $zabbixhostgrpid);
+
+    return $result;
 
 }
