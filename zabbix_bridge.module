@@ -206,6 +206,34 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
         var_dump($deletedusergroups);
 
     }
+
+    // remove actions
+    $actionids = ZabbixAPI::fetch_array('action', 'get', array ( 'pattern' => $account->name))
+            or die('Unable to retrieve actions: '.print_r(ZabbixAPI::getLastError(),true));
+
+    echo "Zabbix actions retrieved:\n";
+    var_dump($actionids);
+
+    $deletedactions = ZabbixAPI::fetch_array('action', 'delete', $actionids)
+            or die('Unable to delete actions: '.print_r(ZabbixAPI::getLastError(),true));
+
+    echo "Zabbix actions deleted:\n";
+    var_dump($deletedactions);
+
+    // remove hosts
+    $hostparams = array( 'groupids' => 141 );
+
+    $hostids = ZabbixAPI::fetch_array('host', 'get', $hostparams)
+            or die('Unable to retrieve hosts: '.print_r(ZabbixAPI::getLastError(),true));
+
+    echo "Zabbix hosts retrieved:\n";
+    var_dump($hostids);
+
+    $deletedhosts = ZabbixAPI::fetch_array('host', 'delete', $hostids)
+            or die('Unable to delete hosts: '.print_r(ZabbixAPI::getLastError(),true));
+
+    echo "Zabbix hosts deleted:\n";
+    var_dump($deletedhosts);
     
 }
 
@@ -320,6 +348,47 @@ function zabbix_bridge_create_zabbix_user($edit, $account, $category) {
         var_dump($denyrights);
 
     }
+
+    // create the action
+    $actionparams = array();
+
+    // still needs testing/completing
+    $actionparams[] = array(    'name' => $edit['name'],
+                                'evaltype' => 0, // ACTION_EVAL_TYPE_AND_OR
+                                'operations' => array ( array(  'object' => 1, // OPERATION_OBJECT_GROUP
+                                                                'objectid' => $zabbixusergroupid,
+                                                                'operationtype' => 0, // OPERATION_TYPE_MESSAGE
+                                                                'shortdata' => '{TRIGGER.NAME}: {STATUS}', // ACTION_DEFAULT_MSG
+                                                                'longdata' => '{TRIGGER.NAME}: {STATUS}', // ACTION_DEFAULT_MSG
+                                                                'default_msg' => 1,
+                                                                'mediatypeid' => 1, // email
+                                                                'esc_period' => 0,
+                                                                'esc_step_from' => 1,
+                                                                'esc_step_to' => 1,
+                                                                'evaltype' => 0
+                                                            )
+                                                       ),
+                                'conditions' => array ( array(  'conditiontype' => 4, // CONDITION_TYPE_TRIGGER_SEVERITY
+                                                                'value' => 2, // TRIGGER_SEVERITY_WARNING
+                                                                'operator' => 5 // CONDITION_OPERATOR_MORE_EQUAL
+                                                        )
+                                                    ),
+                                'eventsource' => 0, //EVENT_SOURCE_TRIGGERS
+                                'def_shortdata' => '{TRIGGER.NAME}: {STATUS}', // ACTION_DEFAULT_MSG
+                                'def_longdata' => '{TRIGGER.NAME}: {STATUS}', // ACTION_DEFAULT_MSG
+                                'r_shortdata' => '{TRIGGER.NAME}: {STATUS}', // ACTION_DEFAULT_MSG
+                                'r_longdata' => '{TRIGGER.NAME}: {STATUS}', // ACTION_DEFAULT_MSG
+                                'status' => 0, // ACTION_STATUS_ENABLED,
+                                'recovery_msg' => 1
+                            );
+
+    $actionids = ZabbixAPI::fetch_string('action', 'create', $actionparams)
+            or die('Unable to create zabbix action: '.print_r(ZabbixAPI::getLastError(),true));
+
+    echo 'Zabbix action created:';
+    var_dump($actionids);
+
+    // add condition: trigger on severity >= warning
 
 }
 
