@@ -10,6 +10,7 @@
  * Module settings page.
  */
 function zabbix_bridge_settings() {
+    /*
   $form['user_notify'] = array(
     '#type' => 'fieldset',
     '#title' => t('User Alerts'),
@@ -71,6 +72,7 @@ function zabbix_bridge_settings() {
     '#description' => t('When to send an Email'),
     '#required' => FALSE,
   );
+     */
 
   // Add zabbix trace deletion options
   $trace_options = array(
@@ -85,5 +87,20 @@ function zabbix_bridge_settings() {
     '#description' => t('If checked, deleting a user account will remove all Zabbix traces (user, usergroup, host, hostgroup, media, actions)'),
     '#options' => $trace_options
   );
+  
+  // add debug message options
+  $debug_options = array(
+    'yes' => 'Yes',
+    'no' => 'No'  
+  );
+
+  $form['zabbix_bridge_debug'] = array(
+    '#type' => 'radios',
+    '#title' => T('Enable Debug Messages'),
+    '#default_value' => variable_get('zabbix_bridge_debug', 'no'),
+    '#description' => t('Determines whether debug messages show up or not. This should NOT be enabled in production!'),
+    '#options' => $debug_options
+  );
+
   return system_settings_form($form);
 }
