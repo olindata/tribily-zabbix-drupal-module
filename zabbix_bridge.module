@@ -30,6 +30,19 @@ function zabbix_bridge_menu() {
     'file' => 'zabbix_bridge.admin.inc',
     'access arguments' => array('administer site configuration'),
   );
+
+  // raj: add hosts tab for host related options
+  $items['user/%user/hosts'] = array(
+    'title' => 'Hosts',
+    'page callback' => 'zabbix_hosts',
+    'page arguments' => array('zabbix_hosts_form'),
+    'access callback' => 'user_edit_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    //'load arguments' => array('%map', '%index'),
+    'file' => 'zabbix_bridge.hosts.inc',
+  );
+
   return $items;
 }
 
@@ -80,9 +93,9 @@ function zabbix_bridge_update_zabbix_user($edit, $account, $category) {
         or die('Unable to get Zabbix Version: '.print_r(ZabbixAPI::getLastError(),true));
     echo_debug("Server running Zabbix API Version: $version\n");
     
-    echo_debug(print_r($edit, true));
-    echo_debug(print_r($account, true));
-    echo_debug(print_r($category, true));
+    echo_debug($edit);
+    echo_debug($account);
+    echo_debug($category);
 
     // retrieve drupal-zabbix associations - CONSIDER REVISING AND USING ZABBIX API INSTEAD!
     $result = db_query('SELECT * FROM drupal_zabbix WHERE drupal_uid=%s', $account->uid)
@@ -95,13 +108,13 @@ function zabbix_bridge_update_zabbix_user($edit, $account, $category) {
                     'alias' => $edit['name'],
                     'passwd' => $edit['pass']   );
 
-    echo_debug(print_r($user, true));
+    echo_debug($user);
 
     $updatedusers = ZabbixAPI::fetch_string('user', 'update', array($user))
             or die('Unable to update zabbix user profile: '.print_r(ZabbixAPI::getLastError(),true));
     echo_debug("Updated Zabbix user:\n");
 
-    echo_debug(print_r($updatedusers, true));
+    echo_debug($updatedusers);
 
     // get user media
     $usermedia = ZabbixAPI::fetch_array('user', 'getMedia', array ( 'userids' => array( $data['zabbix_uid'] ),
