@@ -13,10 +13,59 @@
 function zabbix_bridge_install() {
   //  Set the weight of the module lower so modules like logintobogie don't cause problmes.
   db_query("UPDATE {system} SET weight = 1002 WHERE name = 'zabbix_bridge'");
+
+  drupal_install_schema('zabbix_bridge');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function zabbix_bridge_schema() {
+
+    $schema = array();
+
+    $schema['drupal_zabbix'] = array(
+        'description' => 'Drupal-Zabbix Association',
+        'fields' => array(
+            'id' => array( 'type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE ),
+            'drupal_uid' => array( 'type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE ),
+            'zabbix_uid' => array( 'type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE ),
+            'zabbix_usrgrp_id' => array( 'type' => 'int', 'size' => 'big', 'unsigned' => TRUE, 'not null' => TRUE ),
+            'zabbix_hostgrp_id' => array( 'type' => 'int', 'size' => 'big', 'unsigned' => TRUE, 'not null' => TRUE )
+        ),
+        'primary key' => array('id'),
+        'unique key' => array( 'drupal_zabbix_UNIQUE' => array('drupal_uid', 'zabbix_uid') )
+    );
+
+    $schema['zabbix_role'] = array(
+        'description' => 'Zabbix role',
+        'fields' => array(
+            'roleid' => array( 'type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE ),
+            'name' => array( 'type' => 'varchar', 'not null' => TRUE, 'length' => 50 ),
+            'description' => array( 'type' => 'varchar', 'not null' => FALSE, 'length' => 255 )
+        ),
+        'primary key' => array('roleid'),
+        'unique key'
+    );
+
+    $schema['zabbix_roles_templates'] = array(
+        'description' => 'Zabbix role-template association',
+        'fields' => array(
+            'roleid' => array( 'type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE ),
+            'templateid' => array( 'type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE )
+        ),
+        'primary key' => array('roleid', 'templateid')
+    );
+
+    return $schema;
+
 }
 
 /**
  * Implementation of hook_uninstall().
  */
 function zabbix_bridge_uninstall() {
+
+    drupal_uninstall_schema('zabbix_bridge');
+
 }

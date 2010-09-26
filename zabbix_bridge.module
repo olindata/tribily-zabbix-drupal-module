@@ -196,7 +196,7 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
     // This gets the version of the zabbix server
     $version = ZabbixAPI::fetch_string('apiinfo','version')
         or die('Unable to get Zabbix Version: '.print_r(ZabbixAPI::getLastError(),true));
-    echo_debug("Server running Zabbix API Version: $version\n");
+    echo_debug("Server running Zabbix API Version: $version\n");    
   
     //get the zabbix user - consider revising, shows all ids
     /*$userinfo = ZabbixAPI::fetch_array('user', 'get', array( 'pattern' => $edit['name']))
@@ -254,7 +254,7 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
     echo_debug(print_r($deletedactions, true));
 
     // remove hosts
-    $hostparams = array( 'groupids' => 141 );
+    $hostparams = array( 'groupids' => $hostgroupid );
 
     $hostids = ZabbixAPI::fetch_array('host', 'get', $hostparams)
             or die('Unable to retrieve hosts: '.print_r(ZabbixAPI::getLastError(),true));

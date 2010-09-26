@@ -6,7 +6,8 @@
  * Settings form.
  */
 
-define('HOST_NAME_MAXLENGTH', 50);
+define('HOST_NAME_MAXLENGTH', 64);
+define('HOST_SERVER_MAXLENGTH', 64);
 
 /**
  * Form builder; Present the form to edit a given user's hosts.
@@ -15,10 +16,12 @@ define('HOST_NAME_MAXLENGTH', 50);
  * @ingroup forms
  */
 function zabbix_hosts($register = FALSE) {
+
     $account = user_load(array('uid' => arg(1)));
     drupal_set_title(check_plain($account->name) . ' Hosts');
 
     return drupal_get_form('zabbix_hosts_form', $account);
+
 }
 
 /**
@@ -45,18 +48,21 @@ function zabbix_hosts_form($form_state, $account) {
         '#weight' => -10
     );
 
+    // the host's name
     $form['hosts']['name'] = array('#type' => 'textfield',
         '#title' => t('Name'),
         '#maxlength' => HOST_NAME_MAXLENGTH,
         '#required' => TRUE
     );
 
+    // the server address, either IP or DNS based on connection type
     $form['hosts']['server'] = array('#type' => 'textfield',
         '#title' => t('Server Address'),
         '#maxlength' => HOST_SERVER_MAXLENGTH,
         '#required' => TRUE
     );
 
+    // connection type - IP/DNS
     $form['hosts']['connect'] = array('#type' => 'select',
         '#title' => t('Connect To'),
         '#default_value' => variable_get('hosts_connect', 'dns'),
@@ -68,14 +74,7 @@ function zabbix_hosts_form($form_state, $account) {
         '#required' => TRUE
     );
 
-    /* Not needed
-    $form['hosts']['port'] = array('#type' => 'textfield',
-        '#title' => t('Zabbix Agent Port'),
-        '#maxlength' => USERNAME_MAX_LENGTH
-    );
-     *
-     */
-
+    // status - monitored/unmonitored
     $form['hosts']['status'] = array('#type' => 'select',
         '#title' => t('Status'),
         '#default_value' => variable_get('hosts_status', 'monitored'),
@@ -87,13 +86,19 @@ function zabbix_hosts_form($form_state, $account) {
         '#required' => TRUE
     );
 
-    /* set this to FALSE by default */
-    /*
-    $form['hosts']['ipmi'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Use IPMI'),
-    );*/
+    $result = db_query('SELECT roleid, name FROM zabbix_role')
+            or die('Unable to retrieve zabbix roles');
 
+    // make the template SELECT options
+    $template_options = array();
+
+    while($data = db_fetch_array($result)) {
+
+        $template_options[$data['roleid']] = t($data['name']);
+
+    }
+
+    /*
     // retrieve zabbix templates, known as roles in drupal
     $templates = ZabbixAPI::fetch_array('template', 'get', array())
             or die('Unable to get Zabbix templates: '.print_r(ZabbixAPI::getLastError(),true));
@@ -124,6 +129,10 @@ function zabbix_hosts_form($form_state, $account) {
         $template_options[$template_host['hostid']] = t($template_host['host']);
 
     }
+     *
+     */
+
+    echo_debug($template_options);
 
     $form['hosts']['roles'] = array(
         '#type' => 'checkboxes',
@@ -144,20 +153,23 @@ function zabbix_hosts_form($form_state, $account) {
  */
 function zabbix_hosts_form_validate($form, &$form_state) {
 
-    if ('' == $form_state['values']['server']) {
+    // regexes retrieved from http://stackoverflow.com/questions/106179/regular-expression-to-match-hostname-or-ip-address
+    $reg['ip'] = "/^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/";
+    $reg['dns'] = "/^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])$/";
 
-        form_set_error('hosts', t('You must specify a server address!'));
+    $server = $form_state['values']['server'];
+    $connect = $form_state['values']['connect'];
+
+    // messages based on connection type
+    $msg['ip'] = 'You must specify a valid IP address as the Server Address.';
+    $msg['dns'] = 'You must specify a valid DNS as the Server Address.';
+
+    // if the server address doesn't match the connect type, notify the user
+    if (!preg_match($reg[$connect], $server)) {
+        
+        form_set_error('hosts', t($msg[$connect]));
 
     }
-
-    /* TODO: regex checking
-    if ('' == $form_state['values']['server'] && 'ip' == $form_state['values']['connect']) {
-
-        form_set_error('hosts', t('You must specify an IP adress for connection type IP!'));
-
-    }
-     *
-     */
 
 }
 
@@ -166,12 +178,124 @@ function zabbix_hosts_form_validate($form, &$form_state) {
  */
 function zabbix_hosts_form_submit($form, &$form_state) {
 
-    var_dump($form);
-    var_dump($form_state);
+    // This logs into Zabbix, and returns false if it fails
+    ZabbixAPI::login('http://zabbix-dev.tribily.com/','admin','zabbix')
+        or die('Unable to login: '.print_r(ZabbixAPI::getLastError(),true));
+
+    // This gets the version of the zabbix server
+    $version = ZabbixAPI::fetch_string('apiinfo','version')
+        or die('Unable to get Zabbix Version: '.print_r(ZabbixAPI::getLastError(),true));
+    echo_debug("Server running Zabbix API Version: $version\n");
+
+    //echo_debug($form);
+    $account = user_load(array('uid' => arg(1)));
+    
+    echo_debug($form_state);
+
+    $result = db_query('SELECT * FROM drupal_zabbix WHERE drupal_uid=%s', $account->uid)
+            or die('Unable to retrieve drupal-zabbix associations');
+
+    $data = db_fetch_array($result);
+
+    if (!$data)
+        die('No drupal-zabbix association exists for this user!');
+
+    $connect = $form_state['values']['connect'];
+    $server = $form_state['values']['server'];
+    $status = $form_state['values']['status'];
+
+    $host = array();
+    $host['host'] = $form_state['values']['name'];
+    $host['groups'] = array($data['zabbix_hostgrp_id']);
+    $host['useipmi'] = 0;
+
+    // 0 - status monitored, 1 - status not monitored
+    $host['status'] = ('monitored' == $status) ? 0 : 1;
+
+    if ('ip' == $connect) {
+
+        $host['useip'] = 1;
+        $host['ip'] = $server;
+
+    }
+    else {
+
+        $host['dns'] = $server;
+
+    }
+
+    echo_debug($host);
+
+    $roles = $form_state['values']['roles'];
+    $role_ids = array();
+
+    // get the role ids
+    foreach($roles as $key=>$value) {
+
+        if (0 === $value) {
+
+            continue;
+
+        }
+
+        $role_ids[] = $key;
+
+    }
+
+    // retrieve zabbix template ids based on role ids
+    $result = db_query('SELECT * FROM zabbix_roles_templates WHERE roleid IN (%s)', implode(',', $role_ids));
+
+    if (!$result) {
+
+                $message = 'Unable to retrieve role-template associations';
+
+    }
+    else {
+
+        $template_ids = array();
+
+        while ($data = db_fetch_array($result)) {
+
+            $template_ids[] = $data['templateid'];
+
+        }
+
+        $created_host_id = ZabbixAPI::fetch_string('host', 'create', array( $host ));
+
+        if (!$created_host_id) {
+
+            $message = 'Unable to add host: '.print_r(ZabbixAPI::getLastError(),true);
+
+        }
+        else {
+
+            $message = 'Host successfully added.';
+
+            echo_debug($created_host_id);
+
+            $template_add = ZabbixAPI::fetch_string('template', 'massAdd', array( 'templates' => $template_ids,
+                                                                                'hosts' => array( 'hostid' => $created_host_id ) ));
+
+            echo_debug($template_add);
+
+            if (!$template_add) {
+
+                $message = 'Unable to link templates: '.print_r(ZabbixAPI::getLastError(), true);
+
+            }
+            else {
+
+                $message = 'Host successfully added.';
+
+            }
+
+        }
+    }
 
     cache_clear_all();
 
-    drupal_set_message(t('Host successfully added.'));
+    echo_debug($message);
+    drupal_set_message(t($message));
 
     return;
 
