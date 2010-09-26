@@ -8,6 +8,8 @@
 
 define('HOST_NAME_MAXLENGTH', 64);
 define('HOST_SERVER_MAXLENGTH', 64);
+define('DRUPAL_MSG_TYPE_ERR', 'error');
+define('DRUPAL_MSG_TYPE_STATUS', 'status');
 
 /**
  * Form builder; Present the form to edit a given user's hosts.
@@ -36,11 +38,11 @@ function zabbix_hosts_form($form_state, $account) {
 
     // This logs into Zabbix, and returns false if it fails
     ZabbixAPI::login('http://zabbix-dev.tribily.com/','admin','zabbix')
-        or die('Unable to login: '.print_r(ZabbixAPI::getLastError(),true));
+        or drupal_set_message('Unable to login: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
 
     // This gets the version of the zabbix server
     $version = ZabbixAPI::fetch_string('apiinfo','version')
-        or die('Unable to get Zabbix Version: '.print_r(ZabbixAPI::getLastError(),true));
+        or drupal_set_message('Unable to get Zabbix Version: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
     echo_debug("Server running Zabbix API Version: $version\n");
 
     $form['hosts'] = array('#type' => 'fieldset',
@@ -87,7 +89,7 @@ function zabbix_hosts_form($form_state, $account) {
     );
 
     $result = db_query('SELECT roleid, name FROM zabbix_role')
-            or die('Unable to retrieve zabbix roles');
+            or drupal_set_message('Unable to retrieve zabbix roles', DRUPAL_MSG_TYPE_ERR);
 
     // make the template SELECT options
     $template_options = array();
@@ -180,11 +182,11 @@ function zabbix_hosts_form_submit($form, &$form_state) {
 
     // This logs into Zabbix, and returns false if it fails
     ZabbixAPI::login('http://zabbix-dev.tribily.com/','admin','zabbix')
-        or die('Unable to login: '.print_r(ZabbixAPI::getLastError(),true));
+        or drupal_set_message('Unable to login: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
 
     // This gets the version of the zabbix server
     $version = ZabbixAPI::fetch_string('apiinfo','version')
-        or die('Unable to get Zabbix Version: '.print_r(ZabbixAPI::getLastError(),true));
+        or drupal_set_message('Unable to get Zabbix Version: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
     echo_debug("Server running Zabbix API Version: $version\n");
 
     //echo_debug($form);
@@ -193,12 +195,12 @@ function zabbix_hosts_form_submit($form, &$form_state) {
     echo_debug($form_state);
 
     $result = db_query('SELECT * FROM drupal_zabbix WHERE drupal_uid=%s', $account->uid)
-            or die('Unable to retrieve drupal-zabbix associations');
+            or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
 
     $data = db_fetch_array($result);
 
     if (!$data)
-        die('No drupal-zabbix association exists for this user!');
+        drupal_set_message('No drupal-zabbix association exists for this user!', DRUPAL_MSG_TYPE_ERR);
 
     $connect = $form_state['values']['connect'];
     $server = $form_state['values']['server'];
