@@ -10,71 +10,36 @@
  * Module settings page.
  */
 function zabbix_bridge_settings() {
-    /*
-  $form['user_notify'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('User Alerts'),
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE
-  );
-  $user_notify_opts = array(
-    'Custom' => t('Send to a custom email address'),
-    'Role' => t('Send to a specific role(s)'),
-    'Both' => t('Send to Both a custom email address and a specific role(s)'),
+    $form['zabbix_bridge_credentials'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Zabbix credentials'),
+      );
+    $form['zabbix_bridge_credentials']['zabbix_bridge_API_url'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Zabbix API url'),
+        '#default_value' => variable_get('zabbix_bridge_API_url', zabbix_bridge_API_url),
+        '#required' => TRUE,
+        '#description' => t('Url used for API calls. If you don\'t know what to put here, try the full path to your zabbix install, like: http://example.com/zabbix')
     );
-  $form['user_notify']['zabbix_bridge_type'] = array(
-    '#type' => 'radios',
-    '#options' => $user_notify_opts,
-    '#title' => t('Send by Role or Custom Email address?'),
-    '#default_value' => variable_get('zabbix_bridge_type', 'Custom'),
-    '#prefix' => '<div class="user-register-notify-user-notify">',
-    '#suffix' => '</div>',
-    );
-  $form['user_notify']['zabbix_bridge_mailto'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Send notifications to this custom email address'),
-    '#description' => t('If you leave this blank, the site email address, %mailto, will be used.', array('%mailto' => variable_get('site_mail', ini_get('sendmail_from')))),
-    '#default_value' => variable_get('zabbix_bridge_mailto', variable_get('site_mail', ini_get('sendmail_from'))),
-  );
-  $user_roles = user_roles(TRUE);
-  $form['user_notify']['zabbix_bridge_roles'] = array(
-    '#type' => 'checkboxes',
-    '#title' => t('Send to a specific role(s)'),
-    '#options' => $user_roles,
-    '#description' => t('All users with these checked roles will receive a notification email when selected.'),
-    '#default_value' => variable_get('zabbix_bridge_roles', user_roles(TRUE)),
-  );
 
-  $form['zabbix_bridge_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Email Subject'),
-    '#default_value' => variable_get('zabbix_bridge_subject', zabbix_bridge_SUBJECT),
-    '#required' => TRUE,
-    '#description' => t('Subject of user registration messages')
-  );
-  $form['zabbix_bridge_body'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Email Body'),
-    '#default_value' => variable_get('zabbix_bridge_body', zabbix_bridge_BODY),
-    '#rows' => 10,
-    '#required' => TRUE,
-    '#description' => t('Customize the body of the user registration notification email.') .' '. t('Available variables are:') .' !user_name, !user_mail, !user_view, !user_edit, !user_delete, !site, !uri, !uri_brief, !date, !action, !profile, !og.'
-  );
-  $alert_options = array(
-    'create' => 'Receive Email upon user creation.',
-    'update' => 'Receive Email upon user creation and update.',
+    $form['zabbix_bridge_credentials']['zabbix_bridge_API_user'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Zabbix API user'),
+        '#default_value' => variable_get('zabbix_bridge_API_user', zabbix_bridge_API_user),
+        '#required' => TRUE,
+        '#description' => t('User used for API calls. Has to have API calling enabled, and has to be a super-admin.')
     );
-  $form['zabbix_bridge_alert'] = array(
-    '#type' => 'radios',
-    '#options' => $alert_options,
-    '#title' => t('Page Sort order'),
-    '#default_value' => variable_get('zabbix_bridge_alert', 'create'),
-    '#description' => t('When to send an Email'),
-    '#required' => FALSE,
-  );
-     */
 
-  // Add zabbix trace deletion options
+    $form['zabbix_bridge_credentials']['zabbix_bridge_API_pass'] = array(
+        '#type' => 'password_confirm',
+        '#title' => t('Zabbix API password'),
+        '#required' => TRUE,
+        '#size' => 25,
+        '#description' => t('Password used for API calls. This is the zabbix password of the API user.')
+    );
+
+
+   // Add zabbix trace deletion options
   $trace_options = array(
     'yes' => 'Yes',
     'no' => 'No'

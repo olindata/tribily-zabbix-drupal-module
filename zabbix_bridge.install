@@ -24,7 +24,7 @@ function zabbix_bridge_schema() {
 
     $schema = array();
 
-    $schema['drupal_zabbix'] = array(
+    $schema['zabbix_drupal_account'] = array(
         'description' => 'Drupal-Zabbix Association',
         'fields' => array(
             'id' => array( 'type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE ),
@@ -34,7 +34,7 @@ function zabbix_bridge_schema() {
             'zabbix_hostgrp_id' => array( 'type' => 'int', 'size' => 'big', 'unsigned' => TRUE, 'not null' => TRUE )
         ),
         'primary key' => array('id'),
-        'unique key' => array( 'drupal_zabbix_UNIQUE' => array('drupal_uid', 'zabbix_uid') )
+        'unique key' => array( 'zabbix_drupal_acc_UNIQUE' => array('drupal_uid', 'zabbix_uid') )
     );
 
     $schema['zabbix_role'] = array(
@@ -55,6 +55,31 @@ function zabbix_bridge_schema() {
             'templateid' => array( 'type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE )
         ),
         'primary key' => array('roleid', 'templateid')
+    );
+
+    $schema['zabbix_hosts'] = array(
+        'description' => 'Holds the hosts assigned to a user in zabbix',
+        'fields' => array(
+            'userid' => array( 'type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE ),
+            'hostid' => array( 'type' => 'serial', 'not null' => TRUE ),
+            'zabbixhostid' => array( 'type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE ),
+            'ipaddress' => array( 'type' => 'varchar', 'length' => 15, 'not null' => FALSE ),
+            'dns' => array( 'type' => 'varchar', 'length' => 64, 'not null' => FALSE ),
+            'hostname' => array( 'type' => 'varchar', 'length' => 64, 'not null' => TRUE ),
+            'enabled' => array( 'type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE ),
+        ),
+        'primary key' => array('hostid')
+    );
+
+
+    $schema['zabbix_hosts_roles'] = array(
+        'description' => 'Connects hosts and their assigned roles',
+        'fields' => array(
+            'hostsrolesid' => array( 'type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE ),
+            'hostid' => array( 'type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE ),
+            'roleid' => array( 'type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE ),
+        ),
+        'primary key' => array('hostsrolesid')
     );
 
     return $schema;

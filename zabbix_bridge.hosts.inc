@@ -11,6 +11,8 @@ define('HOST_SERVER_MAXLENGTH', 64);
 define('DRUPAL_MSG_TYPE_ERR', 'error');
 define('DRUPAL_MSG_TYPE_STATUS', 'status');
 
+include('zabbix_functions.php');
+
 /**
  * Form builder; Present the form to edit a given user's hosts.
  * Added by Raj
@@ -20,7 +22,7 @@ define('DRUPAL_MSG_TYPE_STATUS', 'status');
 function zabbix_hosts($register = FALSE) {
 
     $account = user_load(array('uid' => arg(1)));
-    drupal_set_title(check_plain($account->name) . ' Hosts');
+    drupal_set_title('Hosts to monitor');
 
     return drupal_get_form('zabbix_hosts_form', $account);
 
@@ -35,16 +37,7 @@ function zabbix_hosts($register = FALSE) {
  * @see zabbix_hosts_form_submit()
  */
 function zabbix_hosts_form($form_state, $account) {
-
-    // This logs into Zabbix, and returns false if it fails
-    ZabbixAPI::login('http://zabbix-dev.tribily.com/','admin','zabbix')
-        or drupal_set_message('Unable to login: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
-
-    // This gets the version of the zabbix server
-    $version = ZabbixAPI::fetch_string('apiinfo','version')
-        or drupal_set_message('Unable to get Zabbix Version: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
-    echo_debug("Server running Zabbix API Version: $version\n");
-
+    
     $form['hosts'] = array('#type' => 'fieldset',
         '#title' => t('Add Host'),
         '#weight' => -10
@@ -88,7 +81,7 @@ function zabbix_hosts_form($form_state, $account) {
         '#required' => TRUE
     );
 
-    $result = db_query('SELECT roleid, name FROM zabbix_role')
+    $result = db_query('SELECT roleid, name FROM {zabbix_role}')
             or drupal_set_message('Unable to retrieve zabbix roles', DRUPAL_MSG_TYPE_ERR);
 
     // make the template SELECT options
@@ -133,8 +126,6 @@ function zabbix_hosts_form($form_state, $account) {
     }
      *
      */
-
-    echo_debug($template_options);
 
     $form['hosts']['roles'] = array(
         '#type' => 'checkboxes',
@@ -181,20 +172,15 @@ function zabbix_hosts_form_validate($form, &$form_state) {
 function zabbix_hosts_form_submit($form, &$form_state) {
 
     // This logs into Zabbix, and returns false if it fails
-    ZabbixAPI::login('http://zabbix-dev.tribily.com/','admin','zabbix')
+    zabbix_api_login()
         or drupal_set_message('Unable to login: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
-
-    // This gets the version of the zabbix server
-    $version = ZabbixAPI::fetch_string('apiinfo','version')
-        or drupal_set_message('Unable to get Zabbix Version: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
-    echo_debug("Server running Zabbix API Version: $version\n");
 
     //echo_debug($form);
     $account = user_load(array('uid' => arg(1)));
     
     echo_debug($form_state);
 
-    $result = db_query('SELECT * FROM drupal_zabbix WHERE drupal_uid=%s', $account->uid)
+    $result = db_query('SELECT * FROM {zabbix_drupal_account} WHERE drupal_uid=%s', $account->uid)
             or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
 
     $data = db_fetch_array($result);
@@ -245,7 +231,7 @@ function zabbix_hosts_form_submit($form, &$form_state) {
     }
 
     // retrieve zabbix template ids based on role ids
-    $result = db_query('SELECT * FROM zabbix_roles_templates WHERE roleid IN (%s)', implode(',', $role_ids));
+    $result = db_query('SELECT * FROM {zabbix_roles_templates} WHERE roleid IN (%s)', implode(',', $role_ids));
 
     if (!$result) {
 

@@ -22,16 +22,36 @@ function zabbix_bridge_help($path, $arg) {
  * Implementation of hook_menu().
  */
 function zabbix_bridge_menu() {
-  $items['admin/settings/zabbix_bridge'] = array(
+    $items['admin/settings/zabbix_bridge'] = array(
+        'title' => 'Zabbix Bridge',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_settings'),
+        'description' => 'Configure the Zabbix Bridge module.',
+        'file' => 'zabbix_bridge.admin.inc',
+        'access arguments' => array('administer site configuration'),
+      );
+
+    $items['admin/settings/zabbix_bridge/settings'] = array(
     'title' => 'Zabbix Bridge',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('zabbix_bridge_settings'),
     'description' => 'Configure the Zabbix Bridge module.',
     'file' => 'zabbix_bridge.admin.inc',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
     'access arguments' => array('administer site configuration'),
   );
 
-  // raj: add hosts tab for host related options
+//  $items['admin/settings/zabbix_bridge/synchronise'] = array(
+//    'title' => 'Synchronise',
+//    'page callback' => 'drupal_get_form',
+//    'page arguments' => array('zabbix_bridge_synch'),
+//    'description' => 'Synchronise zabbix and drupal.',
+//    'file' => 'zabbix_bridge.synch.inc',
+//    'type' => MENU_LOCAL_TASK,
+//    'access arguments' => array('administer site configuration'),
+//  );
+
+// raj: add hosts tab for host related options
   $items['user/%user/hosts'] = array(
     'title' => 'Hosts',
     'page callback' => 'zabbix_hosts',
@@ -74,8 +94,8 @@ function echo_debug($msg) {
             /*if (is_string($msg))
                 echo $msg;
             else*/
-            // var_dump() for now, echo won't prevent page redirects
-            drupal_set_message(var_dump($msg), DRUPAL_MSG_TYPE_STATUS);
+            // print_r() for now, echo won't prevent page redirects
+            drupal_set_message(print_r($msg, true), DRUPAL_MSG_TYPE_STATUS);
             
     }
 }
@@ -85,20 +105,15 @@ include_once 'ZabbixAPI.class.php';
 function zabbix_bridge_update_zabbix_user($edit, $account, $category) {
 
     // This logs into Zabbix, and returns false if it fails
-    ZabbixAPI::login('http://zabbix-dev.tribily.com/','admin','zabbix')
+    zabbix_api_login()
         or drupal_set_message('Unable to login: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
-
-    // This gets the version of the zabbix server
-    $version = ZabbixAPI::fetch_string('apiinfo','version')
-        or drupal_set_message('Unable to get Zabbix Version: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
-    echo_debug("Server running Zabbix API Version: $version\n");
     
     echo_debug($edit);
     echo_debug($account);
     echo_debug($category);
 
     // retrieve drupal-zabbix associations - CONSIDER REVISING AND USING ZABBIX API INSTEAD!
-    $result = db_query('SELECT * FROM drupal_zabbix WHERE drupal_uid=%s', $account->uid)
+    $result = db_query('SELECT * FROM {zabbix_drupal_account} WHERE drupal_uid=%s', $account->uid)
             or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
 
     $data = db_fetch_array($result);
@@ -190,13 +205,8 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
     echo_debug($category);
 
     // This logs into Zabbix, and returns false if it fails
-    ZabbixAPI::login('http://zabbix-dev.tribily.com/','admin','zabbix')
+    zabbix_api_login()
         or drupal_set_message('Unable to login: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
-
-    // This gets the version of the zabbix server
-    $version = ZabbixAPI::fetch_string('apiinfo','version')
-        or drupal_set_message('Unable to get Zabbix Version: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
-    echo_debug("Server running Zabbix API Version: $version\n");    
   
     //get the zabbix user - consider revising, shows all ids
     /*$userinfo = ZabbixAPI::fetch_array('user', 'get', array( 'pattern' => $edit['name']))
@@ -209,7 +219,7 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
         echo_debug('Delete zabbix trace set to yes, deleting zabbix traces as well ...' . "\n");
 
         // retrieve drupal-zabbix associations - CONSIDER REVISING AND USING ZABBIX API INSTEAD!
-        $result = db_query('SELECT * FROM drupal_zabbix WHERE drupal_uid=%s', $account->uid)
+        $result = db_query('SELECT * FROM {zabbix_drupal_account} WHERE drupal_uid=%s', $account->uid)
                 or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
 
         $data = db_fetch_array($result);
@@ -218,7 +228,7 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
         $hostgroupid = $data['zabbix_hostgrp_id'];
         $usergroupid = $data['zabbix_usrgrp_id'];
 
-        $result = db_query('DELETE FROM drupal_zabbix WHERE drupal_uid=%s', $account->uid);
+        $result = db_query('DELETE FROM {zabbix_drupal_account} WHERE drupal_uid=%s', $account->uid);
 
         //delete the user from zabbix (deletes media as well)
         $deletedusers = ZabbixAPI::fetch_array('user', 'delete', array( 'userid' => $zabbixuserid))
@@ -273,13 +283,8 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
 function zabbix_bridge_create_zabbix_user($edit, $account, $category) {
 
     // This logs into Zabbix, and returns false if it fails
-    ZabbixAPI::login('http://zabbix-dev.tribily.com/','admin','zabbix')
+    zabbix_api_login()
         or drupal_set_message('Unable to login: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
-
-    // This gets the version of the zabbix server
-    $version = ZabbixAPI::fetch_string('apiinfo','version')
-        or drupal_set_message('Unable to get Zabbix Version: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
-    echo_debug("Server running Zabbix API Version: $version\n");
 
     //create the usergroup
     $zabbixusergroupid = ZabbixAPI::fetch_string('usergroup', 'create', array(array('name' => $edit['name'])))
@@ -433,7 +438,7 @@ function zabbix_bridge_drupal_to_zabbix($drupal_uid, $zabbix_uid, $zabbixusrgrpi
     echo_debug(print_r($zabbixusrgrpid, true));
     echo_debug(print_r($zabbixhostgrpid, true));
 
-    $sql = 'INSERT INTO drupal_zabbix (drupal_uid, zabbix_uid, zabbix_usrgrp_id, zabbix_hostgrp_id)';
+    $sql = 'INSERT INTO {zabbix_drupal_account} (drupal_uid, zabbix_uid, zabbix_usrgrp_id, zabbix_hostgrp_id)';
     $sql .= " VALUES('%s', '%s', '%s', '%s')";
 
     $result = db_query($sql, $drupal_uid, $zabbix_uid, $zabbixusrgrpid, $zabbixhostgrpid);
