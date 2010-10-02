@@ -75,11 +75,10 @@ function zabbix_bridge_schema() {
     $schema['zabbix_hosts_roles'] = array(
         'description' => 'Connects hosts and their assigned roles',
         'fields' => array(
-            'hostsrolesid' => array( 'type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE ),
             'hostid' => array( 'type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE ),
             'roleid' => array( 'type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE ),
         ),
-        'primary key' => array('hostsrolesid')
+        'primary key' => array('hostid, roleid')
     );
 
     return $schema;

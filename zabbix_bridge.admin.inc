@@ -67,5 +67,13 @@ function zabbix_bridge_settings() {
     '#options' => $debug_options
   );
 
+  $form['zabbix_bridge_debug_verbose'] = array(
+    '#type' => 'radios',
+    '#title' => T('Enable Verbose Debug Messages'),
+    '#default_value' => variable_get('zabbix_bridge_debug_verbose', 'no'),
+    '#description' => t('Determines whether debug messages show full information. Less readable, more debuggable :)'),
+    '#options' => $debug_options
+  );
+
   return system_settings_form($form);
 }

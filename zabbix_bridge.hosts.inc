@@ -11,7 +11,7 @@ define('HOST_SERVER_MAXLENGTH', 64);
 define('DRUPAL_MSG_TYPE_ERR', 'error');
 define('DRUPAL_MSG_TYPE_STATUS', 'status');
 
-include('zabbix_functions.php');
+include_once 'zabbix_functions.php';
 
 /**
  * Form builder; Present the form to edit a given user's hosts.
@@ -24,7 +24,34 @@ function zabbix_hosts($register = FALSE) {
     $account = user_load(array('uid' => arg(1)));
     drupal_set_title('Hosts to monitor');
 
-    return drupal_get_form('zabbix_hosts_form', $account);
+    $output = zabbix_hosts_table();
+
+    $output .= drupal_get_form('zabbix_hosts_form', $account);
+
+    return $output;
+
+}
+
+function zabbix_hosts_table() {
+  global $user;
+
+  $header = array('Hostname', 'IP Address', 'DNS', 'Enabled', 'Role name', 'Role Description', 'Actions');
+  $rows = array();
+
+  $results = db_query("select h.hostname, h.ipaddress, h.dns, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid where h.userid = ".$user->uid);
+
+  while ($node = db_fetch_object($results)) {
+    $rows[] = array(array('data' => $node->hostname, 'align' => 'center'),
+                    $node->ipaddress,
+                    l($node->dns,$node->dns),
+                    $node->enabled,
+                    $node->role_name,
+                    $node->role_desc,
+                    l('Enable',''),
+                );
+   }
+  $table_attributes = array('id' => 'hosts-table', 'align' => 'center');
+  return theme('table', $header, $rows, $table_attributes);
 
 }
 
