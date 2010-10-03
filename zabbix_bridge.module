@@ -103,8 +103,6 @@ function echo_debug($msg, $verbosemsg = 'no') {
     }
 }
 
-include_once 'ZabbixAPI.class.php';
-
 function zabbix_bridge_update_zabbix_user($edit, $account, $category) {
 
     // This logs into Zabbix, and returns false if it fails
@@ -267,6 +265,22 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
     
 }
 
+/**
+ *
+ * This method creates the zabbix user and all of the things associated with it:
+ * - Usergroup
+ * - Hostgroup
+ * - User rights (deny for all other hostgroups)
+ * - User rights (deny this hostgroup to all other usergroups)
+ * - Media
+ * - Alerts
+ * - Fill the zabbix_drupal_account table on the drupal side
+ * 
+ * 
+ * @param object $edit
+ * @param object $account
+ * @param object $category 
+ */
 function zabbix_bridge_create_zabbix_user($edit, $account, $category) {
 
     // This logs into Zabbix, and returns false if it fails
@@ -286,10 +300,11 @@ function zabbix_bridge_create_zabbix_user($edit, $account, $category) {
     echo_debug("Zabbix user created: $zabbixuserid");
 
     //add user to usergroup
-    ZabbixAPI::fetch_string('usergroup', 'massAdd', array(  'usrgrps' => array('usrgrpids' => $zabbixusergroupid),
-                                                               'users' => array('userids' => $zabbixuserid)))
+    $updatedids = array ();
+    $updatedids = ZabbixAPI::fetch_array('usergroup', 'massAdd', array(  'usrgrpids' => array ($zabbixusergroupid),
+                                                               'userids' => array ($zabbixuserid)))
         or drupal_set_message('Unable to add user to usergroup: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
-    echo_debug("Zabbix user $zabbixuserid added to usergroup $zabbixusergroupid");
+    echo_debug("Zabbix user $zabbixuserid added to usergroup $zabbixusergroupid: ".serialize($updatedids));
 
     //add the email address to it's media
     $medias = ZabbixAPI::fetch_array('user', 'addMedia', array( 'users' => array('userid' => $zabbixuserid), 'medias' => array('mediatypeid' => 1, 'sendto' => $edit['mail'], 'active' => 0, 'severity' => 63, 'period' => '1-7,00:00-23:59;')))
@@ -300,16 +315,39 @@ function zabbix_bridge_create_zabbix_user($edit, $account, $category) {
     // create the hostgroup
     $zabbixhostgroupid = ZabbixAPI::fetch_string('hostgroup', 'create', array(array('name' => 'Customer Hostgroup '.$edit['name'])))
             or drupal_set_message('Unable to create zabbix user group: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
-    echo_debug("Zabbix hostgroup created: $zabbixhostgroupid\n");
+    echo_debug("Zabbix hostgroup created $zabbixhostgroupid");
 
     // associate the drupal uid to its relevant zabbix ids
     zabbix_bridge_drupal_to_zabbix($account->uid, $zabbixuserid, $zabbixusergroupid, $zabbixhostgroupid)
             or drupal_set_message('Unable to create drupal-zabbix association', DRUPAL_MSG_TYPE_ERR);
 
+    echo_debug("Drupal-zabbix association created.");
+
+    zabbix_bridge_update_user_rights($zabbixusergroupid, $zabbixhostgroupid);
+
+    zabbix_bridge_create_actions($edit['name'].'INFO_WARN', TRIGGER_SEVERITY_WARNING,  $zabbixusergroupid, $zabbixhostgroupid);
+    zabbix_bridge_create_actions($edit['name'].'HIGH',      TRIGGER_SEVERITY_HIGH,     $zabbixusergroupid, $zabbixhostgroupid);
+    zabbix_bridge_create_actions($edit['name'].'DISASTER',  TRIGGER_SEVERITY_DISASTER, $zabbixusergroupid, $zabbixhostgroupid);
+    zabbix_bridge_create_actions($edit['name'].'AVERAGE',   TRIGGER_SEVERITY_AVERAGE,  $zabbixusergroupid, $zabbixhostgroupid);
+
+}
+
+function zabbix_bridge_drupal_to_zabbix($drupal_uid, $zabbix_uid, $zabbixusrgrpid, $zabbixhostgrpid) {
+    
+    $sql = 'INSERT INTO {zabbix_drupal_account} (drupal_uid, zabbix_uid, zabbix_usrgrp_id, zabbix_hostgrp_id)';
+    $sql .= " VALUES('%s', '%s', '%s', '%s')";
+
+    $result = db_query($sql, $drupal_uid, $zabbix_uid, $zabbixusrgrpid, $zabbixhostgrpid);
+
+    return $result;
+
+}
+
+function zabbix_bridge_update_user_rights($zabbixusergroupid, $zabbixhostgroupid){
 
     // set allow rights for usergroup for hostgroup
-    $allowrights = ZabbixAPI::fetch_array('usergroup', 'addRights', array(  'usrgrpid' => $zabbixusergroupid,
-                                                                            'rights' => array( array(   'permission' => 3,
+    $allowrights = ZabbixAPI::fetch_array('usergroup', 'massAdd', array(  'usrgrpids' => $zabbixusergroupid,
+                                                                            'rights' => array( array(   'permission' => PERM_READ_WRITE,
                                                                                                         'id' => $zabbixhostgroupid
                                                                                                 )
                                                                                             )
@@ -329,8 +367,8 @@ function zabbix_bridge_create_zabbix_user($edit, $account, $category) {
             continue;
 
         // set deny rights for usergroup for other hostgroup
-        $denyrights = ZabbixAPI::fetch_array('usergroup', 'addRights', array(  'usrgrpid' => $zabbixusergroupid,
-                                                                            'rights' => array( array(   'permission' => 0,
+        $denyrights = ZabbixAPI::fetch_array('usergroup', 'massAdd', array(  'usrgrpids' => $zabbixusergroupid,
+                                                                            'rights' => array( array(   'permission' => PERM_DENY,
                                                                                                         'id' => $curr_id)
                                                                                             )
                                                                         ))
@@ -339,11 +377,11 @@ function zabbix_bridge_create_zabbix_user($edit, $account, $category) {
         echo_debug('Zabbix usergroup-hostgroup deny rights created',print_r($denyrights, true));
 
     }
-    
+
     // get other zabbix usergroups
     $otherusergroups = ZabbixAPI::fetch_array('usergroup', 'get')
             or drupal_set_message('Unable to get other zabbix usergroups: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
-    
+
     foreach ($otherusergroups as $otherusergroup) {
 
         $curr_id = $otherusergroup['usrgrpid'];
@@ -352,8 +390,8 @@ function zabbix_bridge_create_zabbix_user($edit, $account, $category) {
             continue;
 
         // set deny rights for other hostgroup to this usergroup
-        $denyrights = ZabbixAPI::fetch_array('usergroup', 'addRights', array(  'usrgrpid' => $curr_id,
-                                                                            'rights' => array( array(   'permission' => 0,
+        $denyrights = ZabbixAPI::fetch_array('usergroup', 'massAdd', array(  'usrgrpids' => $curr_id,
+                                                                            'rights' => array( array(   'permission' => PERM_DENY,
                                                                                                         'id' => $zabbixhostgroupid)
                                                                                             )
                                                                         ))
@@ -362,59 +400,88 @@ function zabbix_bridge_create_zabbix_user($edit, $account, $category) {
         echo_debug('Zabbix hostgroup-usergroup deny rights created', print_r($denyrights, true));
 
     }
+}
+
+function zabbix_bridge_create_actions($actionname, $severity, $zabbixusergroupid, $zabbixhostgroupid) {
+
+    // only for severity level warning the operator needs that and lower, the other seveirties need equal
+    switch ($severity) {
+        case TRIGGER_SEVERITY_WARNING:
+            $conditionoperator = CONDITION_OPERATOR_LESS_EQUAL;
+            $escalationperiod = 7200;
+            break;
+        case TRIGGER_SEVERITY_AVERAGE:
+            $conditionoperator = CONDITION_OPERATOR_EQUAL;
+            $escalationperiod = 1800;
+            break;
+        case TRIGGER_SEVERITY_HIGH:
+            $conditionoperator = CONDITION_OPERATOR_EQUAL;
+            $escalationperiod = 600;
+            break;
+        case TRIGGER_SEVERITY_DISASTER:
+            $conditionoperator = CONDITION_OPERATOR_EQUAL;
+            $escalationperiod = 60;
+            break;
+    }
 
     // create the action
     $actionparams = array();
 
     // still needs testing/completing
-    $actionparams[] = array(    'name' => $edit['name'],
-                                'evaltype' => 0, // ACTION_EVAL_TYPE_AND_OR
-                                'operations' => array ( array(  'object' => 1, // OPERATION_OBJECT_GROUP
-                                                                'objectid' => $zabbixusergroupid,
-                                                                'operationtype' => 0, // OPERATION_TYPE_MESSAGE
-                                                                'shortdata' => '{TRIGGER.NAME}: {STATUS}', // ACTION_DEFAULT_MSG
-                                                                'longdata' => '{TRIGGER.NAME}: {STATUS}', // ACTION_DEFAULT_MSG
-                                                                'default_msg' => 1,
-                                                                'mediatypeid' => 1, // email
-                                                                'esc_period' => 0,
-                                                                'esc_step_from' => 1,
-                                                                'esc_step_to' => 1,
-                                                                'evaltype' => 0
-                                                            )
-                                                       ),
-                                'conditions' => array ( array(  'conditiontype' => 4, // CONDITION_TYPE_TRIGGER_SEVERITY
-                                                                'value' => 2, // TRIGGER_SEVERITY_WARNING
-                                                                'operator' => 5 // CONDITION_OPERATOR_MORE_EQUAL
-                                                        )
-                                                    ),
-                                'eventsource' => 0, //EVENT_SOURCE_TRIGGERS
-                                'def_shortdata' => '{TRIGGER.NAME}: {STATUS}', // ACTION_DEFAULT_MSG
-                                'def_longdata' => '{TRIGGER.NAME}: {STATUS}', // ACTION_DEFAULT_MSG
-                                'r_shortdata' => '{TRIGGER.NAME}: {STATUS}', // ACTION_DEFAULT_MSG
-                                'r_longdata' => '{TRIGGER.NAME}: {STATUS}', // ACTION_DEFAULT_MSG
-                                'status' => 0, // ACTION_STATUS_ENABLED,
-                                'recovery_msg' => 1
+    $actionparams[] = array(    'name' => $actionname,
+                                'eventsource' => EVENT_SOURCE_TRIGGERS,
+                                'evaltype' => ACTION_EVAL_TYPE_AND_OR,
+                                'status' => ACTION_STATUS_ENABLED,
+                                'esc_period' => $escalationperiod,
+                                'def_shortdata' => '{STATUS}: {TRIGGER.NAME}',
+                                'def_longdata' => "Alert: {TRIGGER.NAME}\nStatus: {STATUS}\nSeverity: {TRIGGER.SEVERITY}\nHost: {IPADDRESS}\nHost dns - {HOST.DNS1}\nURL: {TRIGGER.URL}\nLast Value: {ITEM.LASTVALUE}\nEvent age - {EVENT.AGE}\nEvent start date and time - {EVENT.DATE} , {EVENT.TIME}\nAcknowledgement status - {EVENT.ACK.STATUS}\nAcknowledgement history - {EVENT.ACK.HISTORY}",
+                                'r_shortdata' => '{TRIGGER.NAME}: {STATUS}',
+                                'r_longdata' => "Alert: {TRIGGER.NAME}\nStatus: {STATUS}\nSeverity: {TRIGGER.SEVERITY}\nHost: {IPADDRESS}\nHost dns - {HOST.DNS1}\nURL: {TRIGGER.URL}\nLast Value: {ITEM.LASTVALUE}\nEvent age - {EVENT.AGE}\nEvent start date and time - {EVENT.DATE} , {EVENT.TIME}\nAcknowledgement status - {EVENT.ACK.STATUS}\nAcknowledgement history - {EVENT.ACK.HISTORY}",
+                                'recovery_msg' => 1,
+                                'conditions' => array (
+                                    array (
+                                        'conditiontype' => CONDITION_TYPE_TRIGGER_SEVERITY,
+                                        'value' => $severity,
+                                        'operator' => $conditionoperator,
+                                    ),
+                                    array (
+                                        'conditiontype' => CONDITION_TYPE_HOST_GROUP,
+                                        'value' => $zabbixhostgroupid,
+                                        'operator' => CONDITION_OPERATOR_EQUAL,
+                                    ),
+                                    array (
+                                        'conditiontype' => CONDITION_TYPE_MAINTENANCE,
+                                        'operator' => CONDITION_OPERATOR_NOT_IN,
+                                    ),
+                                    array (
+                                        'conditiontype' => CONDITION_TYPE_TRIGGER_VALUE,
+                                        'value' => TRIGGER_VALUE_TRUE,
+                                        'operator' => CONDITION_OPERATOR_EQUAL,
+                                    ),
+
+                                ),
+                                'operations' => array (
+                                    array(
+                                        'object' => OPERATION_OBJECT_GROUP,
+                                        'objectid' => $zabbixusergroupid,
+                                        'operationtype' => OPERATION_TYPE_MESSAGE,
+                                        'default_msg' => 1,
+                                        'esc_period' => 0,
+                                        'esc_step_from' => 1,
+                                        'esc_step_to' => 0,
+                                        'evaltype' => 0,
+                                        'mediatypeid' => 1, //Note: 1 Means email, yet it is NOT MEDIA_TYPE_EMAIL ??
+                                        'opconditions' => array (
+//                                            'conditiontype' => CONDITION_TYPE_EVENT_ACKNOWLEDGED,
+//                                            'operator' => CONDITION_OPERATOR_EQUAL,
+//                                            'value' => EVENT_ACK_DISABLED,
+                                        ),
+                                    ),
+                                ),
                             );
+    $actionids = array ();
+    $actionids = ZabbixAPI::fetch_array('action', 'create', $actionparams)
+            or drupal_set_message('Unable to create zabbix action: '.serialize(ZabbixAPI::getLastError()), DRUPAL_MSG_TYPE_ERR);
 
-    $actionids = ZabbixAPI::fetch_string('action', 'create', $actionparams)
-            or drupal_set_message('Unable to create zabbix action: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
-
-    echo_debug('Zabbix action created', print_r($actionids, true));
-
-}
-
-function zabbix_bridge_drupal_to_zabbix($drupal_uid, $zabbix_uid, $zabbixusrgrpid, $zabbixhostgrpid) {
-    
-    echo_debug(print_r($drupal_uid, true));
-    echo_debug(print_r($zabbix_uid, true));
-    echo_debug(print_r($zabbixusrgrpid, true));
-    echo_debug(print_r($zabbixhostgrpid, true));
-
-    $sql = 'INSERT INTO {zabbix_drupal_account} (drupal_uid, zabbix_uid, zabbix_usrgrp_id, zabbix_hostgrp_id)';
-    $sql .= " VALUES('%s', '%s', '%s', '%s')";
-
-    $result = db_query($sql, $drupal_uid, $zabbix_uid, $zabbixusrgrpid, $zabbixhostgrpid);
-
-    return $result;
-
+    echo_debug('Zabbix action created: '. print_r($actionids, true));
 }

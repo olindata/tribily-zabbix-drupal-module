@@ -6,11 +6,6 @@
  * Settings form.
  */
 
-define('HOST_NAME_MAXLENGTH', 64);
-define('HOST_SERVER_MAXLENGTH', 64);
-define('DRUPAL_MSG_TYPE_ERR', 'error');
-define('DRUPAL_MSG_TYPE_STATUS', 'status');
-
 include_once 'zabbix_functions.php';
 
 /**
