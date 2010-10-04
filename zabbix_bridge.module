@@ -24,52 +24,100 @@ function zabbix_bridge_help($path, $arg) {
  */
 function zabbix_bridge_menu() {
     $items['admin/settings/zabbix_bridge'] = array(
-        'title' => 'Zabbix Bridge',
-        'page callback' => 'drupal_get_form',
-        'page arguments' => array('zabbix_bridge_settings'),
-        'description' => 'Configure the Zabbix Bridge module.',
+        'title' => 'Zabbix Bridge Overview',
+        'page callback' => 'zabbix_overview',
+        'description' => 'Overview of the data stored in the Zabbix Bridge module.',
         'file' => 'zabbix_bridge.admin.inc',
         'access arguments' => array('administer site configuration'),
       );
 
+    $items['admin/settings/zabbix_bridge/overview'] = array(
+        'title' => 'Zabbxi Bridge Overview',
+        'page callback' => 'zabbix_overview',
+        'file' => 'zabbix_bridge.admin.inc',
+        'weight' => 20,
+        'type' => MENU_LOCAL_TASK,
+        'access arguments' => array('administer site configuration'),
+    );
+
     $items['admin/settings/zabbix_bridge/settings'] = array(
-        'title' => 'Zabbix Bridge',
+        'title' => 'Zabbix Bridge Settings',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_settings'),
         'description' => 'Configure the Zabbix Bridge module.',
         'file' => 'zabbix_bridge.admin.inc',
-        'type' => MENU_DEFAULT_LOCAL_TASK,
+        'type' => MENU_LOCAL_TASK,
+        'weight' => 30,
         'access arguments' => array('administer site configuration'),
-  );
+      );
 
-//  $items['admin/settings/zabbix_bridge/synchronise'] = array(
-//    'title' => 'Synchronise',
-//    'page callback' => 'drupal_get_form',
-//    'page arguments' => array('zabbix_bridge_synch'),
-//    'description' => 'Synchronise zabbix and drupal.',
-//    'file' => 'zabbix_bridge.synch.inc',
-//    'type' => MENU_LOCAL_TASK,
-//    'access arguments' => array('administer site configuration'),
-//  );
+    $items['hosts'] = array(
+        'title' => 'Monitored Hosts',
+        'page callback' => 'zabbix_hosts',
+        'page arguments' => array(1,2),
+        'access arguments' => array('access hosts'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.hosts.inc',
+    );
 
-// raj: add hosts tab for host related options
-  $items['user/%user/hosts'] = array(
-    'title' => 'Hosts',
-    'page callback' => 'zabbix_hosts',
-    'page arguments' => array('zabbix_hosts_form'),
-    'access callback' => 'user_edit_access',
-    'access arguments' => array(1),
-    'type' => MENU_LOCAL_TASK,
-    //'load arguments' => array('%map', '%index'),
-    'file' => 'zabbix_bridge.hosts.inc',
-  );
+    $items['hosts/delete/%'] = array(
+        'title' => t('Delete Host'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('host_delete_confirm', 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('access hosts'),
+        'file' => 'zabbix_bridge.hosts.inc',
+    );
 
-  return $items;
+    return $items;
 }
 
 
 /**
- * Implementation of hook_user().
+ * Act on user account actions.
+ *
+ * This hook allows modules to react when operations are performed on user accounts.
+ * 
+ * Parameters
+ * $op What kind of action is being performed. Possible values (in alphabetical order):
+ *
+ *"after_update": The user object has been updated and changed. Use this if (probably along with 'insert') if you want to reuse some information from the user object.
+ *"categories": A set of user information categories is requested.
+ *"delete": The user account is being deleted. The module should remove its custom additions to the user object from the database.
+ *"form": The user account edit form is about to be displayed. The module should present the form elements it wishes to inject into the form.
+ *"insert": The user account is being added. The module should save its custom additions to the user object into the database and set the saved fields to NULL in $edit.
+ *"load": The user account is being loaded. The module may respond to this and insert additional information into the user object.
+ *"login": The user just logged in.
+ *"logout": The user just logged out.
+ *"register": The user account registration form is about to be displayed. The module should present the form elements it wishes to inject into the form.
+ *"submit": Modify the account before it gets saved.
+ *"update": The user account is being changed. The module should save its custom additions to the user object into the database and set the saved fields to NULL in $edit.
+ *"validate": The user account is about to be modified. The module should validate its custom additions to the user object, registering errors as necessary.
+ *"view": The user's account information is being displayed. The module should format its custom additions for display, and add them to the $account->content array.
+ *&$edit The array of form values submitted by the user.
+ *
+ *&$account The user object on which the operation is being performed.
+ *
+ *$category The active category of user information being edited.
+ *
+ *Return value
+ *This varies depending on the operation.
+ *
+ *"categories": A linear array of associative arrays. These arrays have keys:
+ *"name": The internal name of the category.
+ *"title": The human-readable, localized name of the category.
+ *"weight": An integer specifying the category's sort ordering.
+ *"delete": None.
+ *"form", "register": A $form array containing the form elements to display.
+ *"insert": None.
+ *"load": None.
+ *"login": None.
+ *"logout": None.
+ *"submit": None.
+ *"update": None.
+ *"validate": None.
+ *"view": None.
+ *
  */
 function zabbix_bridge_user($op, &$edit, &$account, $category = NULL) {
   switch ($op) {
@@ -80,7 +128,8 @@ function zabbix_bridge_user($op, &$edit, &$account, $category = NULL) {
       zabbix_bridge_delete_zabbix_user($edit, $account, $category);
       break;
     case 'update':
-      zabbix_bridge_update_zabbix_user($edit, $account, $category);
+//TODO: make updates flow correctly
+//      zabbix_bridge_update_zabbix_user($edit, $account, $category);
       break;
   }
 }

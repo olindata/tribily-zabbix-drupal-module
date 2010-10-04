@@ -6,6 +6,23 @@
  * Settings form.
  */
 
+include_once 'zabbix_functions.php';
+
+/**
+ * Module overview page
+ */
+function zabbix_overview() {
+
+    drupal_set_title('Overview of zabbix_bridge');
+
+    $output = zabbix_hosts_table();
+
+    $output .= zabbix_user_mapping_table();
+
+    return $output;
+}
+
+
 /**
  * Module settings page.
  */

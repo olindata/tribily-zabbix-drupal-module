@@ -14,39 +14,85 @@ include_once 'zabbix_functions.php';
  *
  * @ingroup forms
  */
-function zabbix_hosts($register = FALSE) {
+function zabbix_hosts($operation, $hostid) {
 
-    $account = user_load(array('uid' => arg(1)));
     drupal_set_title('Hosts to monitor');
+
+    //drupal_set_message (print_r(arg(),true));
+
+    if (!isset($operation))
+        $operation = 'add';
 
     $output = zabbix_hosts_table();
 
-    $output .= drupal_get_form('zabbix_hosts_form', $account);
+    $output .= drupal_get_form('zabbix_hosts_form', $account, $hostid, $operation);
 
     return $output;
 
 }
 
-function zabbix_hosts_table() {
-  global $user;
+function host_user_load($hostid) {
+	$query = "SELECT * FROM {zabbix_hosts} WHERE hostid = %d";
+	$rs = db_query($query, $hostid);
 
-  $header = array('Hostname', 'IP Address', 'DNS', 'Enabled', 'Role name', 'Role Description', 'Actions');
-  $rows = array();
+	if ($rs) {
+		while ($data = db_fetch_object($rs)) {
+			return $data;
+		}
+	}
 
-  $results = db_query("select h.hostname, h.ipaddress, h.dns, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid where h.userid = ".$user->uid);
+	return FALSE;
+}
 
-  while ($node = db_fetch_object($results)) {
-    $rows[] = array(array('data' => $node->hostname, 'align' => 'center'),
-                    $node->ipaddress,
-                    l($node->dns,$node->dns),
-                    $node->enabled,
-                    $node->role_name,
-                    $node->role_desc,
-                    l('Enable',''),
-                );
-   }
-  $table_attributes = array('id' => 'hosts-table', 'align' => 'center');
-  return theme('table', $header, $rows, $table_attributes);
+function host_delete_confirm(&$form_state, $host) {
+    $form['_host'] = array(
+            '#type' => 'value',
+            '#value' => $host,
+    );
+
+    return confirm_form(
+        $form,
+        t('Are you sure you want to delete this host?'),
+        isset($_GET['destination']) ? $_GET['destination'] : "hosts",
+        t('This action cannot be undone.'),
+        t('Delete'),
+        t('Cancel')
+    );
+}
+
+function host_delete_confirm_submit($form, &$form_state) {
+	$form_values = $form_state['values'];
+
+	if ($form_state['values']['confirm']) {
+		$host = $form_state['values']['_host'];
+
+		if (zabbix_host_delete($form_state['values'], $host)) {
+                    drupal_set_message(t('Host has been deleted successfully.'));
+                } else {
+                    drupal_set_message(t('Host deletion unsuccessful'), DRUPAL_MSG_TYPE_ERR);
+                }
+
+  	}
+
+	drupal_goto("hosts");
+}
+
+function zabbix_host_delete($formvalues, $hostid) {
+    
+    $sql = "delete from {zabbix_hosts_roles} where hostid = %s";
+    
+    $result = db_result(db_query($sql, $hostid));
+
+    var_dump($result);
+
+    $sql = "delete from {zabbix_hosts} where hostid = %s";
+
+    $result = db_result(db_query($sql, $hostid));
+
+    var_dump($result);
+    
+    return db_result($result);
+
 
 }
 
@@ -58,10 +104,19 @@ function zabbix_hosts_table() {
  * @see zabbix_hosts_form_validate()
  * @see zabbix_hosts_form_submit()
  */
-function zabbix_hosts_form($form_state, $account) {
+function zabbix_hosts_form($form_state, $account, $hostid, $operation) {
     
+    
+    if ($operation = 'add') {
+        $title = 'Add Host';
+        $submit = 'Add';
+    } else {
+        $title = 'Update host';
+        $submit = 'Update';
+    }
+
     $form['hosts'] = array('#type' => 'fieldset',
-        '#title' => t('Add Host'),
+        '#title' => t($title),
         '#weight' => -10
     );
 
@@ -115,40 +170,6 @@ function zabbix_hosts_form($form_state, $account) {
 
     }
 
-    /*
-    // retrieve zabbix templates, known as roles in drupal
-    $templates = ZabbixAPI::fetch_array('template', 'get', array())
-            or die('Unable to get Zabbix templates: '.print_r(ZabbixAPI::getLastError(),true));
-
-    $templateids = array();
-
-    foreach($templates as $template) {
-
-        $templateids[] = $template['templateid'];
-
-    }
-
-    //echo_debug($templateids);
-
-    // get the template details (templates are stored as hosts)
-    $template_hosts = ZabbixAPI::fetch_array('host', 'get', array(   'templated_hosts' => true,
-                                                                'extendoutput' => true,
-                                                                'hostids' => $templateids ))
-            or die('Unable to get template Zabbix hosts: '.print_r(ZabbixAPI::getLastError(),true));
-
-    //echo_debug($template_hosts);
-
-    // make the template SELECT options
-    $template_options = array();
-
-    foreach($template_hosts as $template_host) {
-
-        $template_options[$template_host['hostid']] = t($template_host['host']);
-
-    }
-     *
-     */
-
     $form['hosts']['roles'] = array(
         '#type' => 'checkboxes',
         '#title' => t('Roles'),
@@ -157,7 +178,7 @@ function zabbix_hosts_form($form_state, $account) {
         '#description' => t('Assign this host to one or more roles.')
     );
 
-    $form['hosts']['submit'] = array('#type' => 'submit', '#value' => t('Add'), '#weight' => 30);
+    $form['hosts']['submit'] = array('#type' => 'submit', '#value' => t($submit), '#weight' => 30);
 
     return $form;
 
@@ -223,15 +244,11 @@ function zabbix_hosts_form_submit($form, &$form_state) {
     $host['status'] = ('monitored' == $status) ? 0 : 1;
 
     if ('ip' == $connect) {
-
         $host['useip'] = 1;
         $host['ip'] = $server;
-
     }
     else {
-
         $host['dns'] = $server;
-
     }
 
     echo_debug($host);
@@ -241,44 +258,30 @@ function zabbix_hosts_form_submit($form, &$form_state) {
 
     // get the role ids
     foreach($roles as $key=>$value) {
-
         if (0 === $value) {
-
             continue;
-
         }
-
         $role_ids[] = $key;
-
     }
 
     // retrieve zabbix template ids based on role ids
     $result = db_query('SELECT * FROM {zabbix_roles_templates} WHERE roleid IN (%s)', implode(',', $role_ids));
 
     if (!$result) {
-
-                $message = 'Unable to retrieve role-template associations';
-
+        $message = 'Unable to retrieve role-template associations';
     }
     else {
-
         $template_ids = array();
-
         while ($data = db_fetch_array($result)) {
-
             $template_ids[] = $data['templateid'];
-
         }
 
         $created_host_id = ZabbixAPI::fetch_string('host', 'create', array( $host ));
 
         if (!$created_host_id) {
-
-            $message = 'Unable to add host: '.print_r(ZabbixAPI::getLastError(),true);
-
+            $message = 'Unable to add host. Please contact us at info@tribily.com.';
         }
         else {
-
             $message = 'Host successfully added.';
 
             echo_debug($created_host_id);
@@ -289,22 +292,43 @@ function zabbix_hosts_form_submit($form, &$form_state) {
             echo_debug($template_add);
 
             if (!$template_add) {
-
                 $message = 'Unable to link templates: '.print_r(ZabbixAPI::getLastError(), true);
-
             }
             else {
-
                 $message = 'Host successfully added.';
-
             }
-
         }
     }
 
+    // add the host mapping to the drupal database so we can use it for display without contating zabbix
+    $sql = 'INSERT INTO {zabbix_hosts} (userid, hostid, zabbixhostid, ipaddress, dns, hostname, enabled)';
+    $sql .= " VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s')";
+
+    $result = db_query($sql, $account->uid, NULL, $created_host_id, $host['ip'], $host['dns'], $host['host'], $host['status']);
+
+    if (!$result) {
+        $message = 'Problem adding hostmapping to database';
+    } else {
+        $hostid = db_last_insert_id('zabbix_hosts', 'hostid');
+    }
+
+    // addd the host-role mapping to the drupal db so we can use it for display without contacting zabbix
+    $sql = 'INSERT INTO {zabbix_hosts_roles} (hostid, roleid)';
+    $sql .= " VALUES('%s', '%s')";
+
+    foreach($role_ids as $roleid) {
+
+        $result = db_query($sql, $hostid, $roleid);
+        if (!$result) {
+            $message = 'Problem adding host-role-mapping to database';
+        }
+
+    }
+
+
+
     cache_clear_all();
 
-    echo_debug($message);
     drupal_set_message(t($message));
 
     return;

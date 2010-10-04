@@ -10,6 +10,10 @@ define('HOST_NAME_MAXLENGTH', 64);
 define('HOST_SERVER_MAXLENGTH', 64);
 define('DRUPAL_MSG_TYPE_ERR', 'error');
 define('DRUPAL_MSG_TYPE_STATUS', 'status');
+define('PAGER_COUNT', 100);
+define('TABLE_ID_USER_MAPPING', 100);
+define('TABLE_ID_HOSTS_MAPPING', 101);
+
 
         // from zabbix/include/defines.inc.php
         define('PERM_READ_WRITE',	3);
@@ -95,6 +99,120 @@ define('DRUPAL_MSG_TYPE_STATUS', 'status');
 	define('TRIGGER_VALUE_FALSE',		0);
 	define('TRIGGER_VALUE_TRUE',		1);
 	define('TRIGGER_VALUE_UNKNOWN',		2);
+
+
+function zabbix_hosts_table($userid = null) {
+  global $user;
+
+  $rows = array();
+  $count = PAGER_COUNT;
+  $id = TABLE_ID_HOSTS_MAPPING;
+
+  if (isset($userid)) {
+    $header = array('Hostname', 'IP Address', 'DNS', 'Enabled', 'Role name', 'Role Description', 'Actions');
+    $results = pager_query("select
+                            h.hostid,
+                            h.hostname,
+                            h.ipaddress,
+                            h.dns,
+                            h.enabled,
+                            r.name as role_name,
+                            r.description as role_desc
+                         from
+                            {zabbix_hosts} h
+                            left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid
+                            left join {zabbix_role} r on r.roleid = hr.roleid
+                         where
+                            h.userid = %s", $count, $id, null, $user->uid);
+  } else {
+    $header = array('Username', 'Email', 'Hostname', 'IP Address', 'DNS', 'Enabled', 'Role name', 'Role Description', 'Actions');
+
+    $results = pager_query("select
+                            u.name,
+                            u.mail,
+                            h.hostid,
+                            h.hostname,
+                            h.ipaddress,
+                            h.dns,
+                            h.enabled,
+                            r.name as role_name,
+                            r.description as role_desc
+                         from
+                            {zabbix_hosts} h
+                            left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid
+                            left join {zabbix_role} r on r.roleid = hr.roleid
+                            left join {users} u on u.uid = h.userid", $count, $id);
+  }
+
+
+  while ($node = db_fetch_object($results)) {
+    if (!isset($userid)) {
+        $rows[] = array($node->name,
+                        $node->mail,
+                        array('data' => $node->hostname, 'align' => 'center'),
+                        $node->ipaddress,
+                        $node->dns,
+                        $node->enabled == 1 ? 'enabled' : 'disabled',
+                        $node->role_name,
+                        $node->role_desc,
+                        l('Update','hosts/'.$node->hostid.'/update').' | '.
+                                l('Delete','hosts/delete/'.$node->hostid),
+                    );
+
+    } else {
+
+        $rows[] = array(array('data' => $node->hostname, 'align' => 'center'),
+                        $node->ipaddress,
+                        $node->dns,
+                        $node->enabled == 1 ? 'enabled' : 'disabled',
+                        $node->role_name,
+                        $node->role_desc,
+                        l('Update','hosts/'.$node->hostid.'/update').' | '.
+                                l('Delete','hosts/delete/'.$node->hostid),
+                    );
+    }
+  }
+  $table_attributes = array('id' => 'hosts-table', 'align' => 'center');
+  $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
+
+  return $output;
+
+}
+
+function zabbix_user_mapping_table() {
+  $header = array('Username', 'Email', 'Zabbix Userid', 'Zabbix Usergroupid', 'Zabbix Hostrgoupid', 'Actions');
+  $rows = array();
+  $count = PAGER_COUNT;
+  $id = TABLE_ID_USER_MAPPING;
+
+    $results = pager_query("select
+                            du.uid,
+                            du.name,
+                            du.mail,
+                            zda.zabbix_uid,
+                            zda.zabbix_usrgrp_id,
+                            zda.zabbix_hostgrp_id
+                         from
+                            zabbix_drupal_account zda
+                            left join users du on du.uid = zda.drupal_uid", $count, $id);
+
+
+  while ($node = db_fetch_object($results)) {
+    $rows[] = array(array('data' => $node->name, 'align' => 'center'),
+                    $node->mail,
+                    $node->zabbix_uid,
+                    $node->zabbix_usrgrp_id,
+                    $node->zabbix_hostgrp_id,
+                    l('Update','zabbix-user-mapping/update/'.$node->uid).' | '.
+                            l('Delete','zabbix-user-mapping/delete/'.$node->uid),
+                );
+   }
+  $table_attributes = array('id' => 'roles-table', 'align' => 'center');
+
+  $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
+
+  return $output;
+}
 
 
 function zabbix_api_login() {
