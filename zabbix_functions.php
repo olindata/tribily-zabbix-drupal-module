@@ -231,4 +231,38 @@ function zabbix_api_login() {
     
 }
 
+/**
+ * for printing out debugging info, use this instead of echo and what not.
+ */
+function zabbix_bridge_debug($msg, $verbosemsg = '') {
+    // print the message only if debug is enabled!
+
+    $show_verbose = false;
+    
+    if ("yes" == variable_get('zabbix_bridge_debug', 'no')) {
+
+        if ("yes" == variable_get('zabbix_bridge_debug_verbose', 'no')) {
+
+            if ($verbosemsg && strlen($verbosemsg)) {
+
+                $show_verbose = true;
+
+            }
+            
+        }
+
+        if ($show_verbose) {
+
+            drupal_set_message($msg . "\n Extensive msg: \n" . $verbosemsg, DRUPAL_MSG_TYPE_STATUS);
+
+        }
+        else {
+
+            drupal_set_message($msg, DRUPAL_MSG_TYPE_STATUS);
+
+        }
+    }
+
+}
+
 ?>

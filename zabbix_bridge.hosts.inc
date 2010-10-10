@@ -4,13 +4,14 @@
 /**
  * @file
  * Settings form.
+ *
+ * @author raj
  */
 
 include_once 'zabbix_functions.php';
 
 /**
  * Form builder; Present the form to edit a given user's hosts.
- * Added by Raj
  *
  * @ingroup forms
  */
@@ -98,7 +99,6 @@ function zabbix_host_delete($formvalues, $hostid) {
 
 /**
  * Form builder; add/edit a user's hosts.
- * Added by Raj
  * 
  * @ingroup forms
  * @see zabbix_hosts_form_validate()
@@ -107,7 +107,7 @@ function zabbix_host_delete($formvalues, $hostid) {
 function zabbix_hosts_form($form_state, $account, $hostid, $operation) {
     
     
-    if ($operation = 'add') {
+    if ('add' == $operation) {
         $title = 'Add Host';
         $submit = 'Add';
     } else {
@@ -218,10 +218,10 @@ function zabbix_hosts_form_submit($form, &$form_state) {
     zabbix_api_login()
         or drupal_set_message('Unable to login: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
 
-    //echo_debug($form);
+    //zabbix_bridge_debug($form);
     $account = user_load(array('uid' => arg(1)));
     
-    echo_debug($form_state);
+    zabbix_bridge_debug($form_state);
 
     $result = db_query('SELECT * FROM {zabbix_drupal_account} WHERE drupal_uid=%s', $account->uid)
             or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
@@ -251,7 +251,7 @@ function zabbix_hosts_form_submit($form, &$form_state) {
         $host['dns'] = $server;
     }
 
-    echo_debug($host);
+    zabbix_bridge_debug($host);
 
     $roles = $form_state['values']['roles'];
     $role_ids = array();
@@ -284,12 +284,12 @@ function zabbix_hosts_form_submit($form, &$form_state) {
         else {
             $message = 'Host successfully added.';
 
-            echo_debug($created_host_id);
+            zabbix_bridge_debug($created_host_id);
 
             $template_add = ZabbixAPI::fetch_string('template', 'massAdd', array( 'templates' => $template_ids,
                                                                                 'hosts' => array( 'hostid' => $created_host_id ) ));
 
-            echo_debug($template_add);
+            zabbix_bridge_debug($template_add);
 
             if (!$template_add) {
                 $message = 'Unable to link templates: '.print_r(ZabbixAPI::getLastError(), true);
