@@ -60,6 +60,11 @@ function host_delete_confirm(&$form_state, $host) {
     );
 }
 
+/**
+ *
+ * @param array $form
+ * @param array $form_state
+ */
 function host_delete_confirm_submit($form, &$form_state) {
 	$form_values = $form_state['values'];
 
@@ -77,23 +82,23 @@ function host_delete_confirm_submit($form, &$form_state) {
 	drupal_goto("hosts");
 }
 
+/**
+ * Deletes a host and it's assigned roles from the database, both on the drupal 
+ * side and on the zabbix side
+ * 
+ * @param  array    $formvalues ...
+ * @param  int      $hostid     The drupal id of the host to be deleted  
+ * @return bool                 
+ */
 function zabbix_host_delete($formvalues, $hostid) {
     
     $sql = "delete from {zabbix_hosts_roles} where hostid = %s";
-    
     $result = db_result(db_query($sql, $hostid));
-
-    var_dump($result);
 
     $sql = "delete from {zabbix_hosts} where hostid = %s";
-
     $result = db_result(db_query($sql, $hostid));
-
-    var_dump($result);
     
     return db_result($result);
-
-
 }
 
 /**
@@ -214,10 +219,6 @@ function zabbix_hosts_form_validate($form, &$form_state) {
  */
 function zabbix_hosts_form_submit($form, &$form_state) {
 
-    // This logs into Zabbix, and returns false if it fails
-    zabbix_api_login()
-        or drupal_set_message('Unable to login: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
-
     //echo_debug($form);
     $account = user_load(array('uid' => arg(1)));
     
@@ -255,6 +256,7 @@ function zabbix_hosts_form_submit($form, &$form_state) {
 
     $roles = $form_state['values']['roles'];
     $role_ids = array();
+    $rolesadded = 0;
 
     // get the role ids
     foreach($roles as $key=>$value) {
@@ -262,19 +264,23 @@ function zabbix_hosts_form_submit($form, &$form_state) {
             continue;
         }
         $role_ids[] = $key;
+        $rolesadded += 1;
     }
 
-    // retrieve zabbix template ids based on role ids
-    $result = db_query('SELECT * FROM {zabbix_roles_templates} WHERE roleid IN (%s)', implode(',', $role_ids));
+    if ($rolesadded > 0) {
+        // retrieve zabbix template ids based on role ids
+        $result = db_query('SELECT * FROM {zabbix_roles_templates} WHERE roleid IN (%s)', implode(',', $role_ids));
+    } else {
+        $result = TRUE;
+    }
 
     if (!$result) {
         $message = 'Unable to retrieve role-template associations';
     }
     else {
-        $template_ids = array();
-        while ($data = db_fetch_array($result)) {
-            $template_ids[] = $data['templateid'];
-        }
+        // This logs into Zabbix, and returns false if it fails
+        zabbix_api_login()
+            or drupal_set_message('Unable to login: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
 
         $created_host_id = ZabbixAPI::fetch_string('host', 'create', array( $host ));
 
@@ -286,16 +292,22 @@ function zabbix_hosts_form_submit($form, &$form_state) {
 
             echo_debug($created_host_id);
 
-            $template_add = ZabbixAPI::fetch_string('template', 'massAdd', array( 'templates' => $template_ids,
+            if ($rolesadded > 0) {
+                $template_ids = array();
+                while ($data = db_fetch_array($result)) {
+                    $template_ids[] = $data['templateid'];
+                }
+                $template_add = ZabbixAPI::fetch_string('template', 'massAdd', array( 'templates' => $template_ids,
                                                                                 'hosts' => array( 'hostid' => $created_host_id ) ));
 
-            echo_debug($template_add);
+                echo_debug($template_add);
 
-            if (!$template_add) {
-                $message = 'Unable to link templates: '.print_r(ZabbixAPI::getLastError(), true);
-            }
-            else {
-                $message = 'Host successfully added.';
+                if (!$template_add) {
+                    $message = 'Unable to link templates: '.print_r(ZabbixAPI::getLastError(), true);
+                }
+                else {
+                    $message = 'Host succesfully added with selected roles.';
+                }
             }
         }
     }
