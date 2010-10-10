@@ -218,10 +218,14 @@ function zabbix_hosts_form_submit($form, &$form_state) {
     zabbix_api_login()
         or drupal_set_message('Unable to login: '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
 
-    //zabbix_bridge_debug($form);
-    $account = user_load(array('uid' => arg(1)));
+    global $user;
+
+    //$account = user_load(array('uid' => arg(1)));
+    // use global $user for now, arg(1) doesn't seem to return uid here
+    $account = user_load(array('uid' => $user->uid));
     
-    zabbix_bridge_debug($form_state);
+    zabbix_bridge_debug(print_r($form_state, true));
+    zabbix_bridge_debug(print_r($account, true));
 
     $result = db_query('SELECT * FROM {zabbix_drupal_account} WHERE drupal_uid=%s', $account->uid)
             or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
@@ -251,7 +255,7 @@ function zabbix_hosts_form_submit($form, &$form_state) {
         $host['dns'] = $server;
     }
 
-    zabbix_bridge_debug($host);
+    zabbix_bridge_debug(print_r($host, true));
 
     $roles = $form_state['values']['roles'];
     $role_ids = array();
