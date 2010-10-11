@@ -16,15 +16,14 @@ include_once 'zabbix_functions.php';
  * @ingroup forms
  */
 function zabbix_hosts($operation, $hostid) {
+    global $user;
 
     drupal_set_title('Hosts to monitor');
 
-    //drupal_set_message (print_r(arg(),true));
-
-    if (!isset($operation))
+    if ($operation == '')
         $operation = 'add';
 
-    $output = zabbix_hosts_table();
+    $output = zabbix_hosts_table($user->uid);
 
     $output .= drupal_get_form('zabbix_hosts_form', $account, $hostid, $operation);
 
@@ -61,14 +60,60 @@ function host_delete_confirm(&$form_state, $host) {
     );
 }
 
+function host_enable_disable_confirm(&$form_state, $host) {
+    $form['_host'] = array(
+            '#type' => 'value',
+            '#value' => $host,
+    );
+
+    $sql = 'select enabled from {zabbix_hosts} where hostid = %s';
+    $enabled = db_result(db_query($sql, $host));
+
+    $form['_current_state'] = array(
+            '#type' => 'value',
+            '#value' => $enabled,
+    );
+
+    return confirm_form(
+        $form,
+        t('Are you sure you want to change the enabled state of this host?'),
+        isset($_GET['destination']) ? $_GET['destination'] : "hosts",
+        $enabled ? t('This host will be monitored until you disable it.'):
+                    t('This host will not be monitored until you re-enable it.'),
+        t('OK'),
+        t('Cancel')
+    );
+}
+
+
+/**
+ *
+ * @param array $form
+ * @param array $form_state
+ */
+function host_enable_disable_confirm_submit($form, &$form_state) {
+	if ($form_state['values']['confirm']) {
+		$host = $form_state['values']['_host'];
+                $zabbixhostid = zabbix_bridge_drupal_to_zabbix_hostid($host);
+                $enabled = $form_state['values']['_current_state'];
+
+		if (zabbix_host_enable_disable($form_state['values'], $zabbixhostid, $enabled)) {
+                    drupal_set_message(t('Host has been updated successfully.'));
+                } else {
+                    drupal_set_message(t('Host update unsuccessful'), DRUPAL_MSG_TYPE_ERR);
+                }
+
+  	}
+
+	drupal_goto("hosts");
+}
+
 /**
  *
  * @param array $form
  * @param array $form_state
  */
 function host_delete_confirm_submit($form, &$form_state) {
-	$form_values = $form_state['values'];
-
 	if ($form_state['values']['confirm']) {
 		$host = $form_state['values']['_host'];
 
@@ -83,6 +128,25 @@ function host_delete_confirm_submit($form, &$form_state) {
 	drupal_goto("hosts");
 }
 
+function zabbix_host_enable_disable($formvalues, $hostid, $enabled) {
+
+    zabbix_api_login()
+        or drupal_set_message('Unable to login. '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
+
+    $result = ZabbixAPI::fetch_string('host', 'update', array('hostid' => $hostid, 'status' => $enabled ? 0 : 1));
+
+    if (!$result) {
+        drupal_set_message('Unable to enable/disable host. '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
+    } else {
+        $sql = "update {zabbix_hosts} set enabled = '%s' where zabbixhostid = %s";
+        $result = db_query($sql, $enabled ? 0: 1, $hostid);
+    }
+    
+    return $result;
+
+
+}
+
 /**
  * Deletes a host and it's assigned roles from the database, both on the drupal 
  * side and on the zabbix side
@@ -92,14 +156,23 @@ function host_delete_confirm_submit($form, &$form_state) {
  * @return bool                 
  */
 function zabbix_host_delete($formvalues, $hostid) {
-    
+
+    $sql = "select zabbixhostid from {zabbix_hosts} where hostid = %s";
+    $zabbixhostid = db_result(db_query($sql, $hostid));
+
+    zabbix_api_login()
+        or drupal_set_message('Unable to login. '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
+
+    ZabbixAPI::fetch_string('host', 'delete', array($zabbixhostid))
+        or drupal_set_message('Unable to delete host. '.print_r(ZabbixAPI::getLastError(),true), DRUPAL_MSG_TYPE_ERR);
+
     $sql = "delete from {zabbix_hosts_roles} where hostid = %s";
-    $result = db_result(db_query($sql, $hostid));
+    $result = db_query($sql, $hostid);
 
     $sql = "delete from {zabbix_hosts} where hostid = %s";
-    $result = db_result(db_query($sql, $hostid));
+    $result = db_query($sql, $hostid);
     
-    return db_result($result);
+    return $result;
 }
 
 /**
@@ -110,7 +183,6 @@ function zabbix_host_delete($formvalues, $hostid) {
  * @see zabbix_hosts_form_submit()
  */
 function zabbix_hosts_form($form_state, $account, $hostid, $operation) {
-    
     
     if ('add' == $operation) {
         $title = 'Add Host';
@@ -129,25 +201,6 @@ function zabbix_hosts_form($form_state, $account, $hostid, $operation) {
     $form['hosts']['name'] = array('#type' => 'textfield',
         '#title' => t('Name'),
         '#maxlength' => HOST_NAME_MAXLENGTH,
-        '#required' => TRUE
-    );
-
-    // the server address, either IP or DNS based on connection type
-    $form['hosts']['server'] = array('#type' => 'textfield',
-        '#title' => t('Server Address'),
-        '#maxlength' => HOST_SERVER_MAXLENGTH,
-        '#required' => TRUE
-    );
-
-    // connection type - IP/DNS
-    $form['hosts']['connect'] = array('#type' => 'select',
-        '#title' => t('Connect To'),
-        '#default_value' => variable_get('hosts_connect', 'dns'),
-        '#options' => array(
-            'ip' => t('IP Address'),
-            'dns' => t('DNS')
-        ),
-        '#description' => t('Set the connection method'),
         '#required' => TRUE
     );
 
@@ -190,31 +243,6 @@ function zabbix_hosts_form($form_state, $account, $hostid, $operation) {
 }
 
 /**
- * Validation function for the user host add/editing form.
- */
-function zabbix_hosts_form_validate($form, &$form_state) {
-
-    // regexes retrieved from http://stackoverflow.com/questions/106179/regular-expression-to-match-hostname-or-ip-address
-    $reg['ip'] = "/^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/";
-    $reg['dns'] = "/^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])$/";
-
-    $server = $form_state['values']['server'];
-    $connect = $form_state['values']['connect'];
-
-    // messages based on connection type
-    $msg['ip'] = 'You must specify a valid IP address as the Server Address.';
-    $msg['dns'] = 'You must specify a valid DNS as the Server Address.';
-
-    // if the server address doesn't match the connect type, notify the user
-    if (!preg_match($reg[$connect], $server)) {
-        
-        form_set_error('hosts', t($msg[$connect]));
-
-    }
-
-}
-
-/**
  * Submit function for the user host add/editing form.
  */
 function zabbix_hosts_form_submit($form, &$form_state) {
@@ -223,7 +251,6 @@ function zabbix_hosts_form_submit($form, &$form_state) {
 
     global $user;
 
-    //$account = user_load(array('uid' => arg(1)));
     // use global $user for now, arg(1) doesn't seem to return uid here
     $account = user_load(array('uid' => $user->uid));
     
@@ -238,7 +265,6 @@ function zabbix_hosts_form_submit($form, &$form_state) {
     if (!$data)
         drupal_set_message('No drupal-zabbix association exists for this user!', DRUPAL_MSG_TYPE_ERR);
 
-    $connect = $form_state['values']['connect'];
     $server = $form_state['values']['server'];
     $status = $form_state['values']['status'];
 
@@ -249,14 +275,6 @@ function zabbix_hosts_form_submit($form, &$form_state) {
 
     // 0 - status monitored, 1 - status not monitored
     $host['status'] = ('monitored' == $status) ? 0 : 1;
-
-    if ('ip' == $connect) {
-        $host['useip'] = 1;
-        $host['ip'] = $server;
-    }
-    else {
-        $host['dns'] = $server;
-    }
 
     zabbix_bridge_debug(print_r($host, true));
 
@@ -292,6 +310,7 @@ function zabbix_hosts_form_submit($form, &$form_state) {
 
         if (!$created_host_id) {
             $message = 'Unable to add host. Please contact us at info@tribily.com.';
+            zabbix_bridge_debug(print_r(ZabbixAPI::getLastError(), true));
         }
         else {
             $message = 'Host successfully added.';
@@ -319,10 +338,10 @@ function zabbix_hosts_form_submit($form, &$form_state) {
     }
 
     // add the host mapping to the drupal database so we can use it for display without contating zabbix
-    $sql = 'INSERT INTO {zabbix_hosts} (userid, hostid, zabbixhostid, ipaddress, dns, hostname, enabled)';
-    $sql .= " VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s')";
+    $sql = 'INSERT INTO {zabbix_hosts} (userid, hostid, zabbixhostid, hostname, enabled)';
+    $sql .= " VALUES('%s', '%s', '%s', '%s', '%s')";
 
-    $result = db_query($sql, $account->uid, NULL, $created_host_id, $host['ip'], $host['dns'], $host['host'], $host['status']);
+    $result = db_query($sql, $account->uid, NULL, $created_host_id, $host['host'], $host['status']);
 
     if (!$result) {
         $message = 'Problem adding hostmapping to database';

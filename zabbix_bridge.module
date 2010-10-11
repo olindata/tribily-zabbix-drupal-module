@@ -24,7 +24,7 @@ function zabbix_bridge_help($path, $arg) {
  */
 function zabbix_bridge_menu() {
     $items['admin/settings/zabbix_bridge'] = array(
-        'title' => 'Zabbix Bridge Overview',
+        'title' => 'Zabbix Bridge',
         'page callback' => 'zabbix_overview',
         'description' => 'Overview of the data stored in the Zabbix Bridge module.',
         'file' => 'zabbix_bridge.admin.inc',
@@ -32,7 +32,7 @@ function zabbix_bridge_menu() {
       );
 
     $items['admin/settings/zabbix_bridge/overview'] = array(
-        'title' => 'Zabbxi Bridge Overview',
+        'title' => 'Zabbix Bridge Overview',
         'page callback' => 'zabbix_overview',
         'file' => 'zabbix_bridge.admin.inc',
         'weight' => 20,
@@ -64,6 +64,15 @@ function zabbix_bridge_menu() {
         'title' => t('Delete Host'),
         'page callback' => 'drupal_get_form',
         'page arguments' => array('host_delete_confirm', 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('access hosts'),
+        'file' => 'zabbix_bridge.hosts.inc',
+    );
+
+    $items['host/enable-disable/%'] = array(
+        'title' => t('Enable/Disable Host'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('host_enable_disable_confirm', 2),
         'type' => MENU_CALLBACK,
         'access arguments' => array('access hosts'),
         'file' => 'zabbix_bridge.hosts.inc',

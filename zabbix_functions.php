@@ -100,6 +100,18 @@ define('TABLE_ID_HOSTS_MAPPING', 101);
 	define('TRIGGER_VALUE_TRUE',		1);
 	define('TRIGGER_VALUE_UNKNOWN',		2);
 
+function zabbix_bridge_drupal_to_zabbix_hostid ($hostid) {
+
+    $sql = 'select zabbixhostid from {zabbix_hosts} where hostid = %s';
+    $result = db_query($sql, $hostid);
+
+    $host = db_fetch_object($result);
+
+    zabbix_bridge_debug(print_r($host, true));
+
+    return $host->zabbixhostid;
+
+}
 
 function zabbix_hosts_table($userid = null) {
   global $user;
@@ -109,12 +121,10 @@ function zabbix_hosts_table($userid = null) {
   $id = TABLE_ID_HOSTS_MAPPING;
 
   if (isset($userid)) {
-    $header = array('Hostname', 'IP Address', 'DNS', 'Enabled', 'Role name', 'Role Description', 'Actions');
+    $header = array('Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
     $results = pager_query("select
                             h.hostid,
                             h.hostname,
-                            h.ipaddress,
-                            h.dns,
                             h.enabled,
                             r.name as role_name,
                             r.description as role_desc
@@ -125,15 +135,13 @@ function zabbix_hosts_table($userid = null) {
                          where
                             h.userid = %s", $count, $id, null, $user->uid);
   } else {
-    $header = array('Username', 'Email', 'Hostname', 'IP Address', 'DNS', 'Enabled', 'Role name', 'Role Description', 'Actions');
+    $header = array('Username', 'Email', 'Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
 
     $results = pager_query("select
                             u.name,
                             u.mail,
                             h.hostid,
                             h.hostname,
-                            h.ipaddress,
-                            h.dns,
                             h.enabled,
                             r.name as role_name,
                             r.description as role_desc
@@ -149,30 +157,26 @@ function zabbix_hosts_table($userid = null) {
     if (!isset($userid)) {
         $rows[] = array($node->name,
                         $node->mail,
-                        array('data' => $node->hostname, 'align' => 'center'),
-                        $node->ipaddress,
-                        $node->dns,
-                        $node->enabled == 1 ? 'enabled' : 'disabled',
+                        $node->hostname,
+                        $node->enabled == 0 ? 'enabled' : 'disabled',
                         $node->role_name,
                         $node->role_desc,
-                        l('Update','hosts/'.$node->hostid.'/update').' | '.
+                        l($node->enabled == 0 ? 'Disable' : 'Enable','host/enable-disable/'.$node->hostid).' | '.
                                 l('Delete','hosts/delete/'.$node->hostid),
                     );
 
     } else {
 
-        $rows[] = array(array('data' => $node->hostname, 'align' => 'center'),
-                        $node->ipaddress,
-                        $node->dns,
-                        $node->enabled == 1 ? 'enabled' : 'disabled',
+        $rows[] = array($node->hostname,
+                        $node->enabled == 0 ? 'enabled' : 'disabled',
                         $node->role_name,
                         $node->role_desc,
-                        l('Update','hosts/'.$node->hostid.'/update').' | '.
+                        l($node->enabled == 0 ? 'Disable' : 'Enable'    ,'host/enable-disable/'.$node->hostid).' | '.
                                 l('Delete','hosts/delete/'.$node->hostid),
                     );
     }
   }
-  $table_attributes = array('id' => 'hosts-table', 'align' => 'center');
+  $table_attributes = array('id' => 'hosts-table'   , 'align' => 'center');
   $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
 
   return $output;
