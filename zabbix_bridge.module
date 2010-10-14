@@ -52,23 +52,31 @@ function zabbix_bridge_menu() {
         'access arguments' => array('administer site configuration'),
     );
 
-    $items['hosts'] = array(
+    $items['hosts/overview'] = array(
         'title' => 'Monitored Hosts',
         'page callback' => 'zabbix_hosts',
-        'page arguments' => array(1, 2),
         'access arguments' => array('access hosts'),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.hosts.inc',
     );
 
-//    $items['hosts/add'] = array(
-//        'title' => 'Add Monitored Hosts',
-//        'page callback' => 'drupal_get_form',
-//        'page arguments' => array(1, 2),
-//        'access arguments' => array('access hosts'),
-//        'type' => MENU_CALLBACK,
-//        'file' => 'zabbix_bridge.hosts.inc',
-//    );
+    $items['hosts/add'] = array(
+        'title' => 'Add Monitored Hosts',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_hosts_form', 1),
+        'access arguments' => array('access hosts'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.hosts.inc',
+    );
+
+    $items['hosts/update/%'] = array(
+        'title' => 'Add Monitored Hosts',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_hosts_form', 1, 2),
+        'access arguments' => array('access hosts'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.hosts.inc',
+    );
 
     $items['hosts/delete/%'] = array(
         'title' => t('Delete Host'),

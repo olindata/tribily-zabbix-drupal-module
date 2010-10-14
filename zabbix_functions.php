@@ -173,7 +173,8 @@ function zabbix_hosts_table($userid = null) {
                 $node->role_name,
                 $node->role_desc,
                 l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
-                l('Delete', 'hosts/delete/' . $node->hostid),
+                l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
+                l('Update', 'hosts/update/' . $node->hostid),
             );
         } else {
 
@@ -182,7 +183,8 @@ function zabbix_hosts_table($userid = null) {
                 $node->role_name,
                 $node->role_desc,
                 l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
-                l('Delete', 'hosts/delete/' . $node->hostid),
+                l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
+                l('Update', 'hosts/update/' . $node->hostid),
             );
         }
     }
