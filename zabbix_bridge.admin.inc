@@ -1,15 +1,14 @@
 <?php
-// $Id: zabbix_bridge.admin.inc,v 1.7 2009/04/06 02:13:18 rmiddle Exp $
 
 /**
- * @file
- * Settings form.
+ *
  */
 
 include_once 'zabbix_functions.php';
 
 /**
- * Module overview page
+ *
+ * @return <type>
  */
 function zabbix_overview() {
 
@@ -22,15 +21,15 @@ function zabbix_overview() {
     return $output;
 }
 
-
 /**
- * Module settings page.
+ *
+ * @return <type>
  */
 function zabbix_bridge_settings() {
     $form['zabbix_bridge_credentials'] = array(
         '#type' => 'fieldset',
         '#title' => t('Zabbix credentials'),
-      );
+    );
     $form['zabbix_bridge_credentials']['zabbix_bridge_API_url'] = array(
         '#type' => 'textfield',
         '#title' => t('Zabbix API url'),
@@ -56,41 +55,41 @@ function zabbix_bridge_settings() {
     );
 
 
-   // Add zabbix trace deletion options
-  $trace_options = array(
-    'yes' => 'Yes',
-    'no' => 'No'
-  );
+    // Add zabbix trace deletion options
+    $trace_options = array(
+        'yes' => 'Yes',
+        'no' => 'No'
+    );
 
-  $form['zabbix_bridge_trace'] = array(
-    '#type' => 'radios',
-    '#title' => t('Delete Zabbix Traces Upon Account Deletion'),
-    '#default_value' => variable_get('zabbix_bridge_trace', 'no'),
-    '#description' => t('If checked, deleting a user account will remove all Zabbix traces (user, usergroup, host, hostgroup, media, actions)'),
-    '#options' => $trace_options
-  );
-  
-  // add debug message options
-  $debug_options = array(
-    'yes' => 'Yes',
-    'no' => 'No'  
-  );
+    $form['zabbix_bridge_trace'] = array(
+        '#type' => 'radios',
+        '#title' => t('Delete Zabbix Traces Upon Account Deletion'),
+        '#default_value' => variable_get('zabbix_bridge_trace', 'no'),
+        '#description' => t('If checked, deleting a user account will remove all Zabbix traces (user, usergroup, host, hostgroup, media, actions)'),
+        '#options' => $trace_options
+    );
 
-  $form['zabbix_bridge_debug'] = array(
-    '#type' => 'radios',
-    '#title' => T('Enable Debug Messages'),
-    '#default_value' => variable_get('zabbix_bridge_debug', 'no'),
-    '#description' => t('Determines whether debug messages show up or not. This should NOT be enabled in production!'),
-    '#options' => $debug_options
-  );
+    // add debug message options
+    $debug_options = array(
+        'yes' => 'Yes',
+        'no' => 'No'
+    );
 
-  $form['zabbix_bridge_debug_verbose'] = array(
-    '#type' => 'radios',
-    '#title' => T('Enable Verbose Debug Messages'),
-    '#default_value' => variable_get('zabbix_bridge_debug_verbose', 'no'),
-    '#description' => t('Determines whether debug messages show full information. Less readable, more debuggable :)'),
-    '#options' => $debug_options
-  );
+    $form['zabbix_bridge_debug'] = array(
+        '#type' => 'radios',
+        '#title' => T('Enable Debug Messages'),
+        '#default_value' => variable_get('zabbix_bridge_debug', 'no'),
+        '#description' => t('Determines whether debug messages show up or not. This should NOT be enabled in production!'),
+        '#options' => $debug_options
+    );
 
-  return system_settings_form($form);
+    $form['zabbix_bridge_debug_verbose'] = array(
+        '#type' => 'radios',
+        '#title' => T('Enable Verbose Debug Messages'),
+        '#default_value' => variable_get('zabbix_bridge_debug_verbose', 'no'),
+        '#description' => t('Determines whether debug messages show full information. Less readable, more debuggable :)'),
+        '#options' => $debug_options
+    );
+
+    return system_settings_form($form);
 }
