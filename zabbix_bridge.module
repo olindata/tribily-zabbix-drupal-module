@@ -88,6 +88,15 @@ function zabbix_bridge_menu() {
         'file' => 'zabbix_bridge.user_mapping.inc',
     );
 
+    $items['zabbix-user-mapping/delete/%'] = array(
+        'title' => t('Delete Drupal-to-Zabbix user mapping'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_user_mapping_delete_confirm', 1, 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.user_mapping.inc',
+    );
+
 
     return $items;
 }

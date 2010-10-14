@@ -137,4 +137,56 @@ function zabbix_bridge_user_mapping_form_submit($form, &$form_state) {
 
 }
 
+function zabbix_bridge_user_mapping_delete_confirm(&$form_state, $action, $id) {
+
+    $form['_mapping'] = array(
+        '#type' => 'value',
+        '#value' => $id,
+    );
+
+    return confirm_form(
+            $form,
+            t('Are you sure you want to delete this mapping?'),
+            isset($_GET['destination']) ? $_GET['destination'] : "admin/settings/zabbix_bridge",
+            t('This action cannot be undone.'),
+            t('Delete'),
+            t('Cancel')
+    );
+
+
+}
+
+function zabbix_bridge_user_mapping_delete_confirm_submit($form, &$form_state) {
+
+    if ($form_state['values']['confirm']) {
+        $id = $form_state['values']['_mapping'];
+
+        if (zabbix_mapping_delete($id)) {
+            drupal_set_message(t('Mapping has been deleted successfully.'));
+        } else {
+            drupal_set_message(t('Mapping deletion unsuccessful'), DRUPAL_MSG_TYPE_ERR);
+        }
+    }
+
+    drupal_goto("admin/settings/zabbix_bridge");
+
+}
+
+/**
+ * Deletes a host and it's assigned roles from the database, both on the drupal
+ * side and on the zabbix side
+ *
+ * @param  array    $formvalues ...
+ * @param  int      $hostid     The drupal id of the host to be deleted
+ * @return bool
+ */
+function zabbix_mapping_delete($mappingid) {
+
+    $sql = "delete from {zabbix_drupal_account} where id = %s";
+    $result = db_query($sql, $mappingid);
+
+    return $result;
+}
+
+
 ?>
