@@ -16,15 +16,13 @@ include_once 'zabbix_functions.php';
  * @param <type> $drupal_uid
  * @return int
  */
-function zabbix_bridge_user_mapping_form(&$form_state, $action, $id) {
+function zabbix_bridge_user_mapping_form(&$form_state, $action, $id = null) {
 
     if ($action == 'update') {
         $sql = "select id, drupal_uid, zabbix_uid, zabbix_usrgrp_id, zabbix_hostgrp_id from {zabbix_drupal_account} where id = '%s'";
         $result = db_query($sql, $id);
         $zabbix_drupal_account = db_fetch_object($result);
     }
-
-
 
     $form['user_mapping'] = array(
         '#type' => 'fieldset',
@@ -84,7 +82,7 @@ function zabbix_bridge_user_mapping_form(&$form_state, $action, $id) {
  */
 function zabbix_bridge_user_mapping_form_submit($form, &$form_state) {
 
-    
+
     print_r($form_state['clicked_button']['#post']);
 
     $id = $form_state['clicked_button']['#post']['id'];
@@ -109,9 +107,7 @@ function zabbix_bridge_user_mapping_form_submit($form, &$form_state) {
         } else {
             drupal_set_message(t('An error occured updating the Drupal-zabbix account mapping'), DRUPAL_MSG_TYPE_ERR);
         }
-
-
-   } else {
+    } else {
 
         $sql = "insert into
                     {zabbix_drupal_account} (
@@ -124,7 +120,7 @@ function zabbix_bridge_user_mapping_form_submit($form, &$form_state) {
                     %s,
                     %s,
                     %s)";
-        $result = db_query($sql, $id, $drupal_uid, $zabbix_userid, $zabbix_usergroupid, $zabbix_hostgroupid);
+        $result = db_query($sql, $drupal_uid, $zabbix_userid, $zabbix_usergroupid, $zabbix_hostgroupid);
         if ($result) {
             drupal_set_message(t('Drupal-zabbix account mapping added succesfully'));
         } else {
@@ -133,8 +129,60 @@ function zabbix_bridge_user_mapping_form_submit($form, &$form_state) {
     }
 
     drupal_goto('admin/settings/zabbix_bridge');
+}
 
+function zabbix_bridge_user_mapping_generate_confirm(&$form_state, $action, $id) {
 
+    $form['_mapping'] = array(
+        '#type' => 'value',
+        '#value' => $id,
+    );
+
+    return confirm_form(
+            $form,
+            t('Are you sure you want to generate the missing items for this mapping?'),
+            isset($_GET['destination']) ? $_GET['destination'] : "admin/settings/zabbix_bridge",
+            t('This action cannot be undone.'),
+            t('Generate'),
+            t('Cancel')
+    );
+}
+
+function zabbix_bridge_user_mapping_generate_confirm_submit($form, &$form_state) {
+
+    $id = $form_state['values']['_mapping'];
+
+    $sql = 'select drupal_uid, zabbix_uid, zabbix_usrgrp_id, zabbix_hostgrp_id from {zabbix_drupal_account} where id = %s';
+    $result = db_query($sql, $id);
+
+    $mapping = db_fetch_object($result);
+
+    if (!isset($mapping->drupal_uid) && !isset($mapping->zabbix_uid) && !isset($mapping->zabbix_usrgrp_id) && !isset($mapping->zabbix_hostgrp_id)) {
+        drupal_set_message('Completely empty mapping, cannto proceed!', DRUPAL_MSG_TYPE_ERR);
+    } elseif (isset($mapping->drupal_uid) && !isset($mapping->zabbix_uid) && !isset($mapping->zabbix_usrgrp_id) && !isset($mapping->zabbix_hostgrp_id)) {
+
+        $generatezabbixuser = !isset($mapping->zabbix_uid);
+        $generatezabbixusergroup = !isset($mapping->zabbix_usrgrp_id);
+        $generatezabbixhostgroup = !isset($mapping->zabbix_hostgrp_id);
+
+        $drupaluser = user_load(array('uid' => $mapping->drupal_uid));
+    
+        zabbix_bridge_create_zabbix_user(
+                $drupaluser->name,
+                $pass,
+                $drupaluser->mail,
+                $mapping->drupal_uid,
+                null,
+                null,
+                null,
+                true,
+                true,
+                true);
+
+    } else {
+        drupal_set_message('Not yet implemented', DRUPAL_MSG_TYPE_ERR);
+    }
+    drupal_goto('admin/settings/zabbix_bridge');
 }
 
 function zabbix_bridge_user_mapping_delete_confirm(&$form_state, $action, $id) {
@@ -152,8 +200,6 @@ function zabbix_bridge_user_mapping_delete_confirm(&$form_state, $action, $id) {
             t('Delete'),
             t('Cancel')
     );
-
-
 }
 
 function zabbix_bridge_user_mapping_delete_confirm_submit($form, &$form_state) {
@@ -169,7 +215,6 @@ function zabbix_bridge_user_mapping_delete_confirm_submit($form, &$form_state) {
     }
 
     drupal_goto("admin/settings/zabbix_bridge");
-
 }
 
 /**
@@ -187,6 +232,5 @@ function zabbix_mapping_delete($mappingid) {
 
     return $result;
 }
-
 
 ?>

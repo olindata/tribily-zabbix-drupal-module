@@ -172,7 +172,7 @@ function zabbix_hosts_table($userid = null) {
                 $node->enabled == 0 ? 'enabled' : 'disabled',
                 $node->role_name,
                 $node->role_desc,
-                l($node->enabled == 0 ? 'Disable' : 'Enable', 'host/enable-disable/' . $node->hostid) . ' | ' .
+                l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
                 l('Delete', 'hosts/delete/' . $node->hostid),
             );
         } else {
@@ -181,7 +181,7 @@ function zabbix_hosts_table($userid = null) {
                 $node->enabled == 0 ? 'enabled' : 'disabled',
                 $node->role_name,
                 $node->role_desc,
-                l($node->enabled == 0 ? 'Disable' : 'Enable', 'host/enable-disable/' . $node->hostid) . ' | ' .
+                l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
                 l('Delete', 'hosts/delete/' . $node->hostid),
             );
         }
@@ -223,7 +223,8 @@ function zabbix_user_mapping_table() {
             $node->zabbix_usrgrp_id,
             $node->zabbix_hostgrp_id,
             l('Update', 'zabbix-user-mapping/update/' . $node->id) . ' | ' .
-            l('Delete', 'zabbix-user-mapping/delete/' . $node->id),
+                l('Delete', 'zabbix-user-mapping/delete/' . $node->id) . ' | ' .
+                l('Generate missing zabbix items', 'zabbix-user-mapping/generate/' . $node->id),
         );
     }
     $table_attributes = array('id' => 'roles-table', 'align' => 'center');

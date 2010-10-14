@@ -18,6 +18,8 @@ function zabbix_overview() {
 
     $output .= zabbix_user_mapping_table();
 
+    $output .= l('Add mapping', 'zabbix-user-mapping/add');
+
     return $output;
 }
 
