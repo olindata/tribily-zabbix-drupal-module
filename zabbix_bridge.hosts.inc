@@ -314,9 +314,13 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
 
     //create the host if it's not already existing
     if ($hostid == ''){
+        drupal_set_message(print_r($host, true));
         $zabbixhostid = ZabbixAPI::fetch_string('host', 'create', array($host));
         if ($zabbixhostid) {
             drupal_set_message('Host successfully added.');
+        }
+        else {
+            drupal_set_message('Failed to add host' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
         }
     } else {
         $sql = "select zabbixhostid from {zabbix_hosts} where hostid = %s";
@@ -330,6 +334,7 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
     }
 
     if ($hostid != '') {
+        drupal_set_message('in here');
         //remove all roles from the host, so we can add the new ones later on
         $sql = "select templateid from {zabbix_hosts_roles} zhr inner join {zabbix_roles_templates} zrt on zrt.roleid = zhr.roleid where zhr.hostid = %s";
         $result = db_query($sql, $hostid);
@@ -352,12 +357,16 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
     $rolesadded = 0;
 
     // get the role ids
-    foreach ($roles as $key => $value) {
-        if (0 === $value) {
-            continue;
+    if (count($roles) > 0) {
+
+        foreach ($roles as $key => $value) {
+            if (0 === $value) {
+                continue;
+            }
+            $role_ids[] = $key;
+            $rolesadded += 1;
         }
-        $role_ids[] = $key;
-        $rolesadded += 1;
+
     }
 
     if ($rolesadded > 0) {
@@ -366,8 +375,11 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
 
         $addedtemplate_ids = array();
         while ($data = db_fetch_array($result)) {
-            $addedtemplate_ids['templateid'] = $data['templateid'];
+            $addedtemplate_ids[] = $data['templateid'];
         }
+        
+        zabbix_bridge_debug('$addedtemplate_ids: ' . print_r($addedtemplate_ids, true));
+
         $template_add = ZabbixAPI::fetch_string('template', 'massAdd', array('templates' => $addedtemplate_ids,
                     'hosts' => array('hostid' => $zabbixhostid)));
 
@@ -379,7 +391,7 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
             drupal_set_message('Host succesfully added with selected roles.');
         }
     }
-        
+    
     // add the host mapping to the drupal database so we can use it for display without contacting zabbix
     $sql = 'INSERT INTO {zabbix_hosts} (userid, hostid, zabbixhostid, hostname, enabled)';
     $sql .= " VALUES('%s', '%s', '%s', '%s', '%s')";
@@ -393,20 +405,29 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
             $hostid = db_last_insert_id('zabbix_hosts', 'hostid');
     }
 
-    // Delete all previous host mappings, so we can add the new ones in a sec
-    $sql = "delete from {zabbix_hosts_roles} where hostid = '%s'";
-    db_query($sql, $hostid);
+    // if the templates weren't added, don't proceed
+    if ($template_add) {
+        
+        // Delete all previous host mappings, so we can add the new ones in a sec
+        $sql = "DELETE FROM {zabbix_hosts_roles} WHERE hostid = '%s'";
+        db_query($sql, $hostid);
 
-    // addd the host-role mapping to the drupal db so we can use it for display without contacting zabbix
-    $sql = 'INSERT INTO {zabbix_hosts_roles} (hostid, roleid)';
-    $sql .= " VALUES('%s', '%s')";
+        // addd the host-role mapping to the drupal db so we can use it for display without contacting zabbix
+        $sql = 'INSERT INTO {zabbix_hosts_roles} (hostid, roleid)';
+        $sql .= " VALUES('%s', '%s')";
 
-    foreach ($role_ids as $roleid) {
+        if (count($role_ids) > 0) {
 
-        $result = db_query($sql, $hostid, $roleid);
-        if (!$result) {
-            drupal_set_message('Problem adding host-role-mapping to database', DRUPAL_MSG_TYPE_ERR);
+            foreach ($role_ids as $roleid) {
+
+                $result = db_query($sql, $hostid, $roleid);
+                if (!$result) {
+                    drupal_set_message('Problem adding host-role-mapping to database', DRUPAL_MSG_TYPE_ERR);
+                }
+            }
+
         }
+        
     }
 
     drupal_goto("hosts/overview");
