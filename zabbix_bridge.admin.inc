@@ -20,6 +20,8 @@ function zabbix_overview() {
     
     $output .= zabbix_hosts_table();
 
+    $output .= l('Import from Zabbix', 'hosts/import');
+
     $output .= '<h2>'. t('Mapping of Drupal vs Zabbix objects') . '</h2>';
 
     $output .= t('This is teh list of currently configured mappings for drupal users to their corresponding zabbix object id\s');

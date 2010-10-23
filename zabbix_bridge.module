@@ -99,6 +99,14 @@ function zabbix_bridge_menu() {
         'file' => 'zabbix_bridge.hosts.inc',
     );
 
+    $items['hosts/import'] = array(
+        'title' => t('Import hosts from zabbix'),
+        'page callback' => 'zabbix_bridge_import_hosts',
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.hosts.inc',
+    );
+
     // Drupal to zabbix mapping actions (Only accessible to admins)
     $items['zabbix-user-mapping/update/%'] = array(
         'title' => t('Update Drupal-to-Zabbix user mapping'),

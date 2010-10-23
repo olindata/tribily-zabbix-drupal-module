@@ -440,4 +440,22 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
     return;
 }
 
+function zabbix_bridge_import_hosts() {
+    // Get a list of all hosts from zabbix
+    $zabbixhosts = zabbix_bridge_get_all_hosts();
+
+    zabbix_bridge_debug(print_r($zabbixhosts, true));
+    // Go through the hosts and try to map them to the drupal users
+    foreach ($zabbixhosts as $zabbixhost) {
+        $zabbixuserid = zabbix_bridge_get_userid_by_hostgroupid($zabbixhost['hostgroupid']);
+
+        zabbix_bridge_add_host_to_zabbix_userid($zabbixuserid, $zabbixhost['hostid'], $zabbixhost['name'], $zabbixhost['enabled'], $zabbixhost['templateids']);
+    }
+
+    drupal_goto("admin/settings/zabbix_bridge");
+
+    return true;
+
+}
+
 ?>

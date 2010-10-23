@@ -310,4 +310,137 @@ function zabbix_bridge_debug($msg, $verbosemsg = '') {
     }
 }
 
+function zabbix_bridge_get_all_hostgroupids_from_drupal() {
+    $hostgroupids = array();
+
+    $sql = "select zabbix_hostgrp_id from {zabbix_drupal_account} where zabbix_hostgrp_id is not null";
+    $result = db_query($sql);
+
+    while ($node = db_fetch_object($result)) {
+        $hostgroupids[] = $node->zabbix_hostgrp_id;
+    }
+
+    return $hostgroupids;
+
+}
+
+function zabbix_bridge_get_all_templateids_from_zabbix() {
+
+    $zabbixtemplateids = array();
+    $templateids = array();
+
+    // This logs into Zabbix, and returns false if it fails
+    zabbix_api_login()
+            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+
+    $zabbixtemplateids = ZabbixAPI::fetch_array('template', 'get');
+
+    foreach ($zabbixtemplateids as $key => $value) {
+        $templateids[] = $key;
+    }
+
+    return $templateids;
+
+}
+
+/**
+ *
+ * @return array
+ */
+function zabbix_bridge_get_all_hosts($withtemplates = true) {
+    $hosts = array();
+    $zabbixresult = array();
+
+    // This logs into Zabbix, and returns false if it fails
+    zabbix_api_login()
+            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+
+    $hostgroupids = array();
+    $hostgroupids = zabbix_bridge_get_all_hostgroupids_from_drupal();
+
+    // This is a workaround. Zabbxi API call host.get will nto return the list
+    // of templates for a host unless you ask for all hosts that are in a list
+    // of templates.
+    // Therefore, we get a list of all templateids, and ask for all hosts with
+    // those templates. Note that the real selection criteria is the hostgroups
+    // we have just retrieved on the drupal side.
+
+    $alltemplateids = array();
+    $alltemplateids = zabbix_bridge_get_all_templateids_from_zabbix();
+
+    $zabbixresult = ZabbixAPI::fetch_array('host', 'get', array(
+                                                            'output' => array('hostid', 'host', 'status'),
+                                                            'groupids' => $hostgroupids,
+                                                            'templateids' => $alltemplateids));
+
+
+
+
+    foreach ($zabbixresult as $value) {
+
+        if ($withtemplates) {
+            $templateids = array();
+            foreach ($value['templates'] as $template) {
+                $templateids[] = $template['templateid'];
+            }
+
+            $hosts[] = array('hostid' => $value['hostid'],
+                             'name' => $value['host'],
+                             'enabled' => $value['status'],
+                             'hostgroupid' => $value['groups'][0]['groupid'],
+                             'templateids' => $templateids);
+
+        } else {
+            $hosts[] = $value['hostid'];
+        }
+
+    }
+
+    return $hosts;
+}
+
+function zabbix_bridge_get_userid_by_hostgroupid($hostgroupid){
+    $sql = "select drupal_uid from {zabbix_drupal_account} where zabbix_hostgrp_id = '%s'";
+    $result = db_query($sql, $hostgroupid);
+
+    $user = db_fetch_object($result);
+
+    return $user->drupal_uid;
+}
+
+/**
+ *
+ * @param int $zabbixuserid
+ * @param int $zabbixhostid
+ * @param string $zabbixhostname
+ * @param int $zabbixhostenabled
+ * @param array $zabbixhosttemplateids
+ */
+function zabbix_bridge_add_host_to_zabbix_userid(
+        $zabbixuserid,
+        $zabbixhostid,
+        $zabbixhostname,
+        $zabbixhostenabled,
+        $zabbixhosttemplateids) {
+
+    $sql = "insert into {zabbix_hosts} (userid, zabbixhostid, hostname, enabled) values ('%s', '%s', '%s', '%s')";
+    $result = db_query($sql, $zabbixuserid, $zabbixhostid, $zabbixhostname, $zabbixhostenabled);
+    if ($result)
+        $hostid = db_last_insert_id('zabbix_hosts', 'hostid');
+
+    foreach ($zabbixhosttemplateids as $value) {
+
+        $sql = "select roleid from {zabbix_roles_templates} where templateid = '%s'";
+        $result = db_query($sql, $value);
+        $role = db_fetch_object($result);
+
+        $sql = "insert into {zabbix_hosts_roles} (hostid, roleid) values ('%s', '%s')";
+        $result = db_query($sql, $hostid, $role->roleid);
+
+    }
+
+}
+
+
+
 ?>
