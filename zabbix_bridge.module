@@ -24,6 +24,7 @@ function zabbix_bridge_help($path, $arg) {
  * Implementation of hook_menu().
  */
 function zabbix_bridge_menu() {
+    //Module settings menu items (only accessible to admins)
     $items['admin/settings/zabbix_bridge'] = array(
         'title' => 'Zabbix Bridge',
         'page callback' => 'zabbix_overview',
@@ -52,6 +53,7 @@ function zabbix_bridge_menu() {
         'access arguments' => array('administer site configuration'),
     );
 
+    // Hosts menu item (accessible to user)
     $items['hosts/overview'] = array(
         'title' => 'Monitored Hosts',
         'page callback' => 'zabbix_hosts',
@@ -60,6 +62,7 @@ function zabbix_bridge_menu() {
         'file' => 'zabbix_bridge.hosts.inc',
     );
 
+    // Hosts actions (accessible to user and admin)
     $items['hosts/add'] = array(
         'title' => 'Add Monitored Hosts',
         'page callback' => 'drupal_get_form',
@@ -96,6 +99,7 @@ function zabbix_bridge_menu() {
         'file' => 'zabbix_bridge.hosts.inc',
     );
 
+    // Drupal to zabbix mapping actions (Only accessible to admins)
     $items['zabbix-user-mapping/update/%'] = array(
         'title' => t('Update Drupal-to-Zabbix user mapping'),
         'page callback' => 'drupal_get_form',
@@ -131,6 +135,36 @@ function zabbix_bridge_menu() {
         'access arguments' => array('administer site configuration'),
         'file' => 'zabbix_bridge.user_mapping.inc',
     );
+
+    // Host role to Zabbix template mapping actions (Only accessible to admins)
+    $items['zabbix-role-mapping/update/%'] = array(
+        'title' => t('Update Drupal-to-Zabbix role mapping'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_role_mapping_form', 1, 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.role_mapping.inc',
+    );
+
+    $items['zabbix-role-mapping/delete/%'] = array(
+        'title' => t('Delete Drupal-to-Zabbix role mapping'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_role_mapping_delete_confirm', 1, 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.role_mapping.inc',
+    );
+
+    $items['zabbix-role-mapping/add'] = array(
+        'title' => t('Add a new mapping to the bridge'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_role_mapping_form', 1),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.role_mapping.inc',
+    );
+
+
 
 
 
@@ -452,7 +486,18 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
  * @param boolean $updateuserrights
  * @param boolean $createactions 
  */
-function zabbix_bridge_create_zabbix_user($name, $pass, $mail, $drupaluid, $zabbixuserid = null, $zabbixusergroupid = null, $zabbixhostgroupid = null, $updatemembership = true, $updateuserrights = true, $createactions = true
+function zabbix_bridge_create_zabbix_user(
+        $name,
+        $pass,
+        $mail,
+        $drupaluid,
+        $zabbixuserid = null,
+        $zabbixusergroupid = null,
+        $zabbixhostgroupid = null,
+        $updatemembership = true,
+        $updateuserrights = true,
+        $createactions = true,
+        $mappingid = null
 ) {
 
     // This logs into Zabbix, and returns false if it fails
@@ -509,26 +554,36 @@ function zabbix_bridge_create_zabbix_user($name, $pass, $mail, $drupaluid, $zabb
     }
 
     // associate the drupal uid to its relevant zabbix ids
-    zabbix_bridge_drupal_to_zabbix($drupaluid, $zabbixuserid, $zabbixusergroupid, $zabbixhostgroupid)
+    zabbix_bridge_drupal_to_zabbix($drupaluid, $zabbixuserid, $zabbixusergroupid, $zabbixhostgroupid, $mappingid)
             or drupal_set_message('Unable to create drupal-zabbix association', DRUPAL_MSG_TYPE_ERR);
     zabbix_bridge_debug("Drupal-zabbix association created / updated.");
 }
 
 /**
  *
- * @param <type> $drupal_uid
- * @param <type> $zabbix_uid
- * @param <type> $zabbixusrgrpid
- * @param <type> $zabbixhostgrpid
- * @return <type>
+ * @param int $drupal_uid
+ * @param int $zabbix_uid
+ * @param int $zabbixusrgrpid
+ * @param int $zabbixhostgrpid
+ * @param int $mappingid
+ * @return boolean
  */
-function zabbix_bridge_drupal_to_zabbix($drupal_uid, $zabbix_uid, $zabbixusrgrpid, $zabbixhostgrpid) {
+function zabbix_bridge_drupal_to_zabbix($drupal_uid, $zabbix_uid, $zabbixusrgrpid, $zabbixhostgrpid, $mappingid) {
 
-    $sql = 'INSERT INTO {zabbix_drupal_account} (drupal_uid, zabbix_uid, zabbix_usrgrp_id, zabbix_hostgrp_id)';
-    $sql .= " VALUES('%s', '%s', '%s', '%s')";
-    $sql .= " ON DUPLICATE KEY UPDATE zabbix_uid = %s, zabbix_usrgrp_id = %s, zabbix_hostgrp_id = %s";
+    if ($mappingid) {
 
-    $result = db_query($sql, $drupal_uid, $zabbix_uid, $zabbixusrgrpid, $zabbixhostgrpid, $zabbix_uid, $zabbixusrgrpid, $zabbixhostgrpid);
+        $sql = "UPDATE {zabbix_drupal_account} SET drupal_uid = '%s', zabbix_uid = '%s', zabbix_usrgrp_id = '%s', zabbix_hostgrp_id = '%s' WHERE id = '%s'";
+
+        $result = db_query($sql, $drupal_uid, $zabbix_uid, $zabbixusrgrpid, $zabbixhostgrpid, $mappingid);
+        
+    } else {
+
+        $sql = 'INSERT INTO {zabbix_drupal_account} (drupal_uid, zabbix_uid, zabbix_usrgrp_id, zabbix_hostgrp_id)';
+        $sql .= " VALUES('%s', '%s', '%s', '%s')";
+        $sql .= " ON DUPLICATE KEY UPDATE zabbix_uid = '%s', zabbix_usrgrp_id = '%s', zabbix_hostgrp_id = '%s'";
+
+        $result = db_query($sql, $drupal_uid, $zabbix_uid, $zabbixusrgrpid, $zabbixhostgrpid, $zabbix_uid, $zabbixusrgrpid, $zabbixhostgrpid);
+    }
 
     return $result;
 }

@@ -14,11 +14,27 @@ function zabbix_overview() {
 
     drupal_set_title('Overview of zabbix_bridge');
 
-    $output = zabbix_hosts_table();
+    $output = '<h2>'. t('User defined hosts') . '</h2>';
+
+    $output .= t('These are all the hosts with their roles created by all users.');
+    
+    $output .= zabbix_hosts_table();
+
+    $output .= '<h2>'. t('Mapping of Drupal vs Zabbix objects') . '</h2>';
+
+    $output .= t('This is teh list of currently configured mappings for drupal users to their corresponding zabbix object id\s');
 
     $output .= zabbix_user_mapping_table();
 
     $output .= l('Add mapping', 'zabbix-user-mapping/add');
+
+    $output .= '<h2>'. t('Roles and their corresponding Zabbix Templates') . '</h2>';
+
+    $output .= t('These are all the roles with their corresponding zabbix templateids.');
+
+    $output .= zabbix_roles_table();
+
+    $output .= l('Add mapping', 'zabbix-role-mapping/add');
 
     return $output;
 }

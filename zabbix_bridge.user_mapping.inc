@@ -82,9 +82,6 @@ function zabbix_bridge_user_mapping_form(&$form_state, $action, $id = null) {
  */
 function zabbix_bridge_user_mapping_form_submit($form, &$form_state) {
 
-
-    print_r($form_state['clicked_button']['#post']);
-
     $id = $form_state['clicked_button']['#post']['id'];
     $drupal_uid = $form_state['clicked_button']['#post']['drupal_userid'] != '' ? $form_state['clicked_button']['#post']['drupal_userid'] : 'null';
     $zabbix_userid = $form_state['clicked_button']['#post']['zabbix_userid'] != '' ? $form_state['clicked_button']['#post']['zabbix_userid'] : 'null';
@@ -140,9 +137,10 @@ function zabbix_bridge_user_mapping_generate_confirm(&$form_state, $action, $id)
 
     return confirm_form(
             $form,
-            t('Are you sure you want to generate the missing items for this mapping?'),
+            t("Are you sure you want to generate the missing items for this mapping?"),
             isset($_GET['destination']) ? $_GET['destination'] : "admin/settings/zabbix_bridge",
-            t('This action cannot be undone.'),
+            t("This action cannot be undone.\n
+               This will generate a user, usergroup and hostgroup in zabbix."),
             t('Generate'),
             t('Cancel')
     );
@@ -152,21 +150,29 @@ function zabbix_bridge_user_mapping_generate_confirm_submit($form, &$form_state)
 
     $id = $form_state['values']['_mapping'];
 
+    //Get the current mapping
     $sql = 'select drupal_uid, zabbix_uid, zabbix_usrgrp_id, zabbix_hostgrp_id from {zabbix_drupal_account} where id = %s';
     $result = db_query($sql, $id);
 
     $mapping = db_fetch_object($result);
 
-    if (!isset($mapping->drupal_uid) && !isset($mapping->zabbix_uid) && !isset($mapping->zabbix_usrgrp_id) && !isset($mapping->zabbix_hostgrp_id)) {
-        drupal_set_message('Completely empty mapping, cannto proceed!', DRUPAL_MSG_TYPE_ERR);
-    } elseif (isset($mapping->drupal_uid) && !isset($mapping->zabbix_uid) && !isset($mapping->zabbix_usrgrp_id) && !isset($mapping->zabbix_hostgrp_id)) {
-
+    if (!isset($mapping->drupal_uid) && 
+            !isset($mapping->zabbix_uid) &&
+            !isset($mapping->zabbix_usrgrp_id) &&
+            !isset($mapping->zabbix_hostgrp_id)) {
+        //all fields are empty, invalid situation
+        drupal_set_message('Completely empty mapping, cannot proceed!', DRUPAL_MSG_TYPE_ERR);
+    } elseif (isset($mapping->drupal_uid) &&
+            !isset($mapping->zabbix_uid) &&
+            !isset($mapping->zabbix_usrgrp_id) &&
+            !isset($mapping->zabbix_hostgrp_id)) {
+        // drupal user exists, rest is empty
         $generatezabbixuser = !isset($mapping->zabbix_uid);
         $generatezabbixusergroup = !isset($mapping->zabbix_usrgrp_id);
         $generatezabbixhostgroup = !isset($mapping->zabbix_hostgrp_id);
 
         $drupaluser = user_load(array('uid' => $mapping->drupal_uid));
-    
+
         zabbix_bridge_create_zabbix_user(
                 $drupaluser->name,
                 $pass,
@@ -177,10 +183,12 @@ function zabbix_bridge_user_mapping_generate_confirm_submit($form, &$form_state)
                 null,
                 true,
                 true,
-                true);
+                true,
+                $id);
 
     } else {
-        drupal_set_message('Not yet implemented', DRUPAL_MSG_TYPE_ERR);
+        // other situations not yet supported
+        drupal_set_message('Not yet implemented, please create the mapping manually.', DRUPAL_MSG_TYPE_ERR);
     }
     drupal_goto('admin/settings/zabbix_bridge');
 }

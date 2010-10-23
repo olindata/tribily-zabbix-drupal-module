@@ -174,7 +174,53 @@ function zabbix_hosts_table($userid = null) {
         }
         $lastzabbixhostid = $node->zabbixhostid;
     }
+
+    if ($lastzabbixhostid == -1) {
+        if (!isset($userid)) {
+            $rows[] = array(t('No Hosts have been defined yet.'), '', '', '', '', '', '', '',);
+        } else {
+            $rows[] = array(t('No Hosts have been defined yet.'), '', '', '', '');
+        }
+
+    }
+
     $table_attributes = array('id' => 'hosts-table', 'align' => 'center');
+    $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
+
+    return $output;
+}
+
+/**
+ * 
+ * @return string
+ */
+function zabbix_roles_table () {
+
+    $header = array('Roleid', 'Name', 'Description', 'Zabbix Templateid', 'Actions');
+    $rows = array();
+    $count = PAGER_COUNT;
+    $id = TABLE_ID_USER_MAPPING;
+
+    $results = pager_query("select zr.*, zrt.templateid from zabbix_role zr left join zabbix_roles_templates zrt on zrt.roleid = zr.roleid", $count, $id);
+
+
+    while ($node = db_fetch_object($results)) {
+        $rows[] = array(
+            $node->roleid,
+            $node->name,
+            $node->description,
+            $node->templateid,
+            l('Update', 'zabbix-role-mapping/update/' . $node->roleid) . ' | ' .
+                l('Delete', 'zabbix-role-mapping/delete/' . $node->roleid),
+        );
+    }
+
+    if (count($rows) == 0) {
+        $rows[] = array(t('No templates have been defined yet'), '', '', '', '', '');
+    }
+
+    $table_attributes = array('id' => 'roles-table', 'align' => 'center');
+
     $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
 
     return $output;
@@ -205,7 +251,12 @@ function zabbix_user_mapping_table() {
                 l('Generate missing zabbix items', 'zabbix-user-mapping/generate/' . $node->id),
         );
     }
-    $table_attributes = array('id' => 'roles-table', 'align' => 'center');
+
+    if (count($rows) == 0) {
+        $rows[] = array(t('No mappings have been defined yet'), '', '', '', '', '');
+    }
+
+    $table_attributes = array('id' => 'mapping-table', 'align' => 'center');
 
     $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
 
