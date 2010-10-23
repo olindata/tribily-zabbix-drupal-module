@@ -36,7 +36,7 @@ function zabbix_overview() {
 
     $output .= zabbix_roles_table();
 
-    $output .= l('Add mapping', 'zabbix-role-mapping/add');
+    $output .= l('Add mapping', 'zabbix-role-mapping/add'). ' | ' . l('Import from zabbix', 'zabbix-role-mapping/import');
 
     return $output;
 }

@@ -324,7 +324,7 @@ function zabbix_bridge_get_all_hostgroupids_from_drupal() {
 
 }
 
-function zabbix_bridge_get_all_templateids_from_zabbix() {
+function zabbix_bridge_get_all_templateids_from_zabbix($extended = false) {
 
     $zabbixtemplateids = array();
     $templateids = array();
@@ -333,10 +333,18 @@ function zabbix_bridge_get_all_templateids_from_zabbix() {
     zabbix_api_login()
             or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
 
-    $zabbixtemplateids = ZabbixAPI::fetch_array('template', 'get');
+    if ($extended) {
+        $zabbixtemplateids = ZabbixAPI::fetch_array('template', 'get', array('output' => array('host')));
+    } else {
+        $zabbixtemplateids = ZabbixAPI::fetch_array('template', 'get');
+    }
 
     foreach ($zabbixtemplateids as $key => $value) {
-        $templateids[] = $key;
+        if ($extended) {
+            $templateids[] = array('templateid' => $key, 'name' => $value['host']);
+        } else {
+            $templateids[] = $key;
+        }
     }
 
     return $templateids;

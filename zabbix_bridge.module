@@ -172,6 +172,13 @@ function zabbix_bridge_menu() {
         'file' => 'zabbix_bridge.role_mapping.inc',
     );
 
+    $items['zabbix-role-mapping/import'] = array(
+        'title' => t('Import roles to the bridge'),
+        'page callback' => 'zabbix_bridge_import_roles',
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.role_mapping.inc',
+    );
 
 
 

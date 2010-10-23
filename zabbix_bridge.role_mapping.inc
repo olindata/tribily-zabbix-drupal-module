@@ -167,4 +167,38 @@ function zabbix_role_mapping_delete($mappingid) {
     return $result;
 }
 
+/**
+ *
+ * @return <type>
+ */
+function zabbix_bridge_import_roles(){
+
+    $templates = array();
+    $templates = zabbix_bridge_get_all_templateids_from_zabbix(true);
+
+    zabbix_bridge_debug(print_r($templates, true));
+
+    foreach ($templates as $template) {
+        $sql = "select * from {zabbix_roles_templates} where templateid = '%s'";
+        $results = db_query($sql, $template['templateid']);
+
+        $roleid = db_fetch_object($results);
+
+        if ($roleid) {
+            drupal_set_message('Skipped template '.$template['templateid'].' ('.$template['name'].'), as it already exists.');
+        } else {
+
+            $sql = "insert into {zabbix_role} (name, description) values ('%s', '%s')";
+            $results = db_query($sql, $template['name'], $template['name'].' role' );
+
+            $roleid = db_last_insert_id('zabbix_role', 'roleid');
+
+            $sql = "insert into {zabbix_roles_templates} (roleid, templateid) values ('%s', '%s')";
+            $results = db_query($sql, $roleid, $template['templateid']);
+        }
+    }
+
+    drupal_goto("admin/settings/zabbix_bridge");
+}
+
 ?>
