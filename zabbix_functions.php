@@ -133,60 +133,46 @@ function zabbix_hosts_table($userid = null) {
 
     if (isset($userid)) {
         $header = array('Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
-        $results = pager_query("select
-                            h.hostid,
-                            h.hostname,
-                            h.enabled,
-                            r.name as role_name,
-                            r.description as role_desc
-                         from
-                            {zabbix_hosts} h
-                            left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid
-                            left join {zabbix_role} r on r.roleid = hr.roleid
-                         where
-                            h.userid = %s", $count, $id, null, $user->uid);
+        $results = pager_query("select h.hostid, h.hostname, h.zabbixhostid, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid where h.userid = %s", $count, $id, null, $user->uid);
     } else {
-        $header = array('Username', 'Email', 'Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
-
-        $results = pager_query("select
-                            u.name,
-                            u.mail,
-                            h.hostid,
-                            h.hostname,
-                            h.enabled,
-                            r.name as role_name,
-                            r.description as role_desc
-                         from
-                            {zabbix_hosts} h
-                            left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid
-                            left join {zabbix_role} r on r.roleid = hr.roleid
-                            left join {users} u on u.uid = h.userid", $count, $id);
+        $header = array('Username', 'Email', 'Zabbix Hostid', 'Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
+        $results = pager_query("select u.name, u.mail, h.hostid, h.zabbixhostid, h.hostname, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid left join {users} u on u.uid = h.userid", $count, $id);
     }
 
 
+    $lastzabbixhostid = -1;
+
     while ($node = db_fetch_object($results)) {
         if (!isset($userid)) {
-            $rows[] = array($node->name,
+            $rows[] = array(
+                $node->name,
                 $node->mail,
-                $node->hostname,
-                $node->enabled == 0 ? 'enabled' : 'disabled',
+                $lastzabbixhostid == $node->zabbixhostid ? '' : $node->zabbixhostid,
+                $lastzabbixhostid == $node->zabbixhostid ? '' : $node->hostname,
+                $lastzabbixhostid == $node->zabbixhostid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
                 $node->role_name,
                 $node->role_desc,
-                l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
-                l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
-                l('Update', 'hosts/update/' . $node->hostid),
+                $lastzabbixhostid == $node->zabbixhostid ? '' : (
+                    l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
+                    l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
+                    l('Update', 'hosts/update/' . $node->hostid)
+                ),
             );
         } else {
 
-            $rows[] = array($node->hostname,
-                $node->enabled == 0 ? 'enabled' : 'disabled',
+            $rows[] = array(
+                $lastzabbixhostid == $node->zabbixhostid ? '' : $node->hostname,
+                $lastzabbixhostid == $node->zabbixhostid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
                 $node->role_name,
                 $node->role_desc,
-                l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
-                l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
-                l('Update', 'hosts/update/' . $node->hostid),
+                $lastzabbixhostid == $node->zabbixhostid ? '' : (
+                    l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
+                    l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
+                    l('Update', 'hosts/update/' . $node->hostid)
+                ),
             );
         }
+        $lastzabbixhostid = $node->zabbixhostid;
     }
     $table_attributes = array('id' => 'hosts-table', 'align' => 'center');
     $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
@@ -199,22 +185,12 @@ function zabbix_hosts_table($userid = null) {
  * @return string
  */
 function zabbix_user_mapping_table() {
-    $header = array('Username', 'Email', 'Zabbix Userid', 'Zabbix Usergroupid', 'Zabbix Hostrgoupid', 'Actions');
+    $header = array('Username', 'Email', 'Zabbix Userid', 'Zabbix Usergroupid', 'Zabbix Hostgroupid', 'Actions');
     $rows = array();
     $count = PAGER_COUNT;
     $id = TABLE_ID_USER_MAPPING;
 
-    $results = pager_query("select
-                            zda.id,
-                            du.uid,
-                            du.name,
-                            du.mail,
-                            zda.zabbix_uid,
-                            zda.zabbix_usrgrp_id,
-                            zda.zabbix_hostgrp_id
-                         from
-                            zabbix_drupal_account zda
-                            left join users du on du.uid = zda.drupal_uid", $count, $id);
+    $results = pager_query("select zda.id, du.uid, du.name, du.mail, zda.zabbix_uid, zda.zabbix_usrgrp_id, zda.zabbix_hostgrp_id                         from                            zabbix_drupal_account zda                            left join users du on du.uid = zda.drupal_uid", $count, $id);
 
 
     while ($node = db_fetch_object($results)) {

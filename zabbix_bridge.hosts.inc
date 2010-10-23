@@ -27,8 +27,8 @@ function zabbix_hosts() {
 
 /**
  *
- * @param <type> $hostid
- * @return <type>
+ * @param int $hostid
+ * @return object
  */
 function host_user_load($hostid) {
     $query = "SELECT * FROM {zabbix_hosts} WHERE hostid = %d";
@@ -107,7 +107,7 @@ function host_enable_disable_confirm_submit($form, &$form_state) {
         $zabbixhostid = zabbix_bridge_drupal_to_zabbix_hostid($host);
         $enabled = $form_state['values']['_current_state'];
 
-        if (zabbix_host_enable_disable($form_state['values'], $zabbixhostid, $enabled)) {
+        if (zabbix_host_enable_disable($zabbixhostid, $enabled)) {
             drupal_set_message(t('Host has been updated successfully.'));
         } else {
             drupal_set_message(t('Host update unsuccessful'), DRUPAL_MSG_TYPE_ERR);
@@ -126,7 +126,7 @@ function host_delete_confirm_submit($form, &$form_state) {
     if ($form_state['values']['confirm']) {
         $host = $form_state['values']['_host'];
 
-        if (zabbix_host_delete($form_state['values'], $host)) {
+        if (zabbix_host_delete($host)) {
             drupal_set_message(t('Host has been deleted successfully.'));
         } else {
             drupal_set_message(t('Host deletion unsuccessful'), DRUPAL_MSG_TYPE_ERR);
@@ -138,12 +138,11 @@ function host_delete_confirm_submit($form, &$form_state) {
 
 /**
  *
- * @param <type> $formvalues
- * @param <type> $hostid
- * @param <type> $enabled
+ * @param int $hostid
+ * @param int $enabled
  * @return <type>
  */
-function zabbix_host_enable_disable($formvalues, $hostid, $enabled) {
+function zabbix_host_enable_disable($hostid, $enabled) {
 
     zabbix_api_login()
             or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
@@ -168,7 +167,7 @@ function zabbix_host_enable_disable($formvalues, $hostid, $enabled) {
  * @param  int      $hostid     The drupal id of the host to be deleted  
  * @return bool                 
  */
-function zabbix_host_delete($formvalues, $hostid) {
+function zabbix_host_delete($hostid) {
 
     $sql = "select zabbixhostid from {zabbix_hosts} where hostid = %s";
     $zabbixhostid = db_result(db_query($sql, $hostid));
@@ -283,7 +282,12 @@ function zabbix_bridge_hosts_form(&$form_state, $operation, $hostid = null) {
 }
 
 /**
- * Submit function for the user host add/editing form.
+ * Submit function for the user host add/editing form. Note that it handles adding _AND_ updating
+ *
+ * @global object $user
+ * @param array $form
+ * @param array $form_state
+ * @return <type>
  */
 function zabbix_bridge_hosts_form_submit($form, &$form_state) {
     global $user;
@@ -333,9 +337,9 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
                 or drupal_set_message('Problem updating existing host properties', DRUPAL_MSG_TYPE_ERR);
     }
 
+    //remove all roles from the host, so we can add the new ones later on
     if ($hostid != '') {
         drupal_set_message('in here');
-        //remove all roles from the host, so we can add the new ones later on
         $sql = "select templateid from {zabbix_hosts_roles} zhr inner join {zabbix_roles_templates} zrt on zrt.roleid = zhr.roleid where zhr.hostid = %s";
         $result = db_query($sql, $hostid);
 
@@ -388,7 +392,7 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
         if (!$template_add) {
             drupal_set_message('Unable to link templates: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
         } else {
-            drupal_set_message('Host succesfully added with selected roles.');
+            drupal_set_message('Host succesfully added to zabbix with selected roles.');
         }
     }
     
@@ -401,16 +405,17 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
 
     if (!$result) {
         drupal_set_message('Problem adding hostmapping to database', DRUPAL_MSG_TYPE_ERR);
-    } else {
-            $hostid = db_last_insert_id('zabbix_hosts', 'hostid');
+    } elseif ($hostid == '') {
+        $hostid = db_last_insert_id('zabbix_hosts', 'hostid');
     }
 
-    // if the templates weren't added, don't proceed
+    // if the templates was added to zabbix succesfully
     if ($template_add) {
         
         // Delete all previous host mappings, so we can add the new ones in a sec
         $sql = "DELETE FROM {zabbix_hosts_roles} WHERE hostid = '%s'";
-        db_query($sql, $hostid);
+        db_query($sql, $hostid) or
+                drupal_set_message('Error updating roles in drupal database.');
 
         // addd the host-role mapping to the drupal db so we can use it for display without contacting zabbix
         $sql = 'INSERT INTO {zabbix_hosts_roles} (hostid, roleid)';
