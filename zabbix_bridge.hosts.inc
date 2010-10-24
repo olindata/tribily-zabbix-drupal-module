@@ -339,7 +339,6 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
 
     //remove all roles from the host, so we can add the new ones later on
     if ($hostid != '') {
-        drupal_set_message('in here');
         $sql = "select templateid from {zabbix_hosts_roles} zhr inner join {zabbix_roles_templates} zrt on zrt.roleid = zhr.roleid where zhr.hostid = %s";
         $result = db_query($sql, $hostid);
 

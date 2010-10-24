@@ -8,12 +8,14 @@
 include_once('ZabbixAPI.class.php');
 
 define('HOST_NAME_MAXLENGTH', 64);
+define('MEDIA_NAME_MAXLENGTH', 100);
 define('HOST_SERVER_MAXLENGTH', 64);
 define('DRUPAL_MSG_TYPE_ERR', 'error');
 define('DRUPAL_MSG_TYPE_STATUS', 'status');
 define('PAGER_COUNT', 100);
 define('TABLE_ID_USER_MAPPING', 100);
 define('TABLE_ID_HOSTS_MAPPING', 101);
+define('TABLE_ID_EMAILS_MAPPING', 102);
 
 
 // from zabbix/include/defines.inc.php
@@ -449,6 +451,143 @@ function zabbix_bridge_add_host_to_zabbix_userid(
 
 }
 
+/**
+ *
+ * @param <type> $emailid
+ * @return <type>
+ */
+function zabbix_bridge_drupal_to_zabbix_emailid($emailid) {
 
+    $sql = 'select zabbixmediaid from {zabbix_emails} where emailid = %s';
+    $result = db_query($sql, $emailid);
+
+    $email = db_fetch_object($result);
+
+    zabbix_bridge_debug(print_r($email, true));
+
+    return $email->zabbixmediaid;
+}
+
+/**
+ *
+ * @global <type> $user
+ * @param <type> $userid
+ * @return string
+ */
+function zabbix_emails_table($userid = null) {
+    global $user;
+
+    $rows = array();
+    $count = PAGER_COUNT;
+    $id = TABLE_ID_EMAILS_MAPPING;
+
+    if (isset($userid)) {
+        $header = array('Email', 'Zabbix Media Id', 'Severity', 'Enabled');
+        $results = pager_query("select e.emailid, e.email, e.zabbixmediaid, zs.name severity, e.enabled from {zabbix_emails} e left join {zabbix_emails_severities} zes on e.emailid = zes.emailid left join {zabbix_severities} zs on zes.severityid = zs.severityid where e.userid = %s", $count, $id, null, $user->uid);
+    } else {
+        $header = array('Username', 'Email Id', 'Email', 'Zabbix Media Id', 'Severity', 'Enabled');
+        $results = pager_query("select u.name, e.emailid, e.email, e.zabbixmediaid, zs.name severity, e.enabled from {zabbix_emails} e left join {zabbix_emails_severities} zes on e.emailid = zes.emailid left join {zabbix_severities} zs on zes.severityid = zs.severityid left join {users} u on u.uid = e.userid", $count, $id);
+    }
+
+    $lastzabbixmediaid = -1;
+
+    while ($node = db_fetch_object($results)) {
+
+        if (!isset($userid)) {
+
+            $rows[] = array(
+
+                $node->name,
+                $node->emailid,
+                $node->email,
+                $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->zabbixmediaid,
+                $node->severity,
+                $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
+                $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
+                    l($node->enabled == 0 ? 'Disable' : 'Enable', 'emails/enable-disable/' . $node->emailid) . ' | ' .
+                    l('Delete', 'emails/delete/' . $node->emailid) . ' | ' .
+                    l('Update', 'emails/update/' . $node->emailid)
+
+                ),
+
+            );
+
+        }
+        else {
+
+            $rows[] = array(
+
+                $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->email,
+                $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->zabbixmediaid,
+                $node->severity,
+                $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
+                $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
+
+                    l($node->enabled == 0 ? 'Disable' : 'Enable', 'emails/enable-disable/' . $node->emailid) . ' | ' .
+                    l('Delete', 'emails/delete/' . $node->emailid) . ' | ' .
+                    l('Update', 'emails/update/' . $node->emailid)
+
+                ),
+
+            );
+
+        }
+
+        $lastzabbixmediaid = $node->zabbixmediaid;
+
+    }
+    
+    if ($lastzabbixmediaid == -1) {
+
+        if (!isset($userid)) {
+
+            $rows[] = array(t('No Emails have been defined yet.'), '', '', '', '', '');
+
+        }
+        else {
+
+            $rows[] = array(t('No Emails have been defined yet.'), '', '', '');
+
+        }
+
+    }
+
+    $table_attributes = array('id' => 'emails-table', 'align' => 'center');
+    $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
+
+    return $output;
+
+}
+
+/**
+ *
+ * @param <type> $severities
+ * @return int
+ */
+function zabbix_bridge_calculate_severity($severities) {
+
+    if (!is_array($severities)) {
+
+        $tmp = $severities;
+        $severities = array();
+
+        $severities[] = $tmp;
+
+    }
+
+    $sql = 'select value from {zabbix_severities} where severityid in (' . db_placeholders($severities, 'int') . ')';
+    $result = db_query($sql, $severities);
+
+    $severity = 0;
+
+    while ($rs = db_fetch_array($result)) {
+
+        $severity += pow(2, $rs['value']);
+
+    }
+
+    return $severity;
+
+}
 
 ?>

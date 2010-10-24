@@ -180,6 +180,55 @@ function zabbix_bridge_menu() {
         'file' => 'zabbix_bridge.role_mapping.inc',
     );
 
+    // emails overview (accessible to user)
+    $items['emails/overview'] = array(
+        'title' => 'Emails',
+        'page callback' => 'zabbix_bridge_emails',
+        'access arguments' => array('access emails'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.emails.inc',
+    );
+
+    // add emails
+    $items['emails/add'] = array(
+        'title' => 'Add Email',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_emails_form', 1),
+        'access arguments' => array('access emails'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.emails.inc',
+    );
+
+    // update emails
+    $items['emails/update/%'] = array(
+        'title' => 'Update Emails',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_emails_form', 1, 2),
+        'access arguments' => array('access emails'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.emails.inc',
+    );
+
+    // delete emails
+    $items['emails/delete/%'] = array(
+        'title' => t('Delete Email'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_emails_delete_confirm', 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('access emails'),
+        'file' => 'zabbix_bridge.emails.inc',
+    );
+
+    // enable-disable emails
+    $items['emails/enable-disable/%'] = array(
+        'title' => t('Enable/Disable Email'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_emails_enable_disable_confirm', 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('access emails'),
+        'file' => 'zabbix_bridge.emails.inc',
+    );
+
 
 
 
@@ -192,7 +241,7 @@ function zabbix_bridge_menu() {
 
 function zabbix_bridge_perm() {
 
-    return array('access hosts');
+    return array('access hosts', 'access emails');
 }
 
 /**
