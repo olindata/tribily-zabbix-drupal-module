@@ -667,10 +667,10 @@ function zabbix_bridge_update_user_rights($zabbixusergroupid, $zabbixhostgroupid
 
 /**
  *
- * @param <type> $actionname
- * @param <type> $severity
- * @param <type> $zabbixusergroupid
- * @param <type> $zabbixhostgroupid
+ * @param string $actionname
+ * @param int $severity
+ * @param int $zabbixusergroupid
+ * @param int $zabbixhostgroupid
  */
 function zabbix_bridge_create_actions($actionname, $severity, $zabbixusergroupid, $zabbixhostgroupid) {
 
@@ -740,11 +740,11 @@ function zabbix_bridge_create_actions($actionname, $severity, $zabbixusergroupid
                 'esc_step_to' => 0,
                 'evaltype' => 0,
                 'mediatypeid' => 1, //Note: 1 Means email, yet it is NOT MEDIA_TYPE_EMAIL ??
-                'opconditions' => array(
+//                'opconditions' => array(
 //                                            'conditiontype' => CONDITION_TYPE_EVENT_ACKNOWLEDGED,
 //                                            'operator' => CONDITION_OPERATOR_EQUAL,
 //                                            'value' => EVENT_ACK_DISABLED,
-                ),
+//                ),
             ),
         ),
     );
@@ -752,5 +752,5 @@ function zabbix_bridge_create_actions($actionname, $severity, $zabbixusergroupid
     $actionids = ZabbixAPI::fetch_array('action', 'create', $actionparams)
             or drupal_set_message('Unable to create zabbix action: ' . serialize(ZabbixAPI::getLastError()), DRUPAL_MSG_TYPE_ERR);
 
-    zabbix_bridge_debug('Zabbix action created: ' . print_r($actionids, true));
+    zabbix_bridge_debug('Zabbix action created: ' . print_r($actionids, true), $actionparams);
 }
