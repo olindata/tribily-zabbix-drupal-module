@@ -76,13 +76,13 @@ function zabbix_bridge_emails_form(&$form_state, $operation, $emailid = null) {
     $form['emails']['status'] = array('#type' => 'select',
         '#title' => t('Status'),
         '#default_value' => isset($email->enabled) ?
-                                ($email->enabled == 1) ? 'unmonitored' : 'monitored' :
-                                'monitored',
+                                ($email->enabled == 1) ? 'disabled' : 'enabled' :
+                                'enabled',
         '#options' => array(
-            'monitored' => 'monitored',
-            'unmonitored' => 'unmonitored',
+            'enabled' => 'enabled',
+            'disabled' => 'disabled',
         ),
-        '#description' => t('Specify monitoring status'),
+        '#description' => t('Specify status'),
         '#required' => TRUE
     );
 
@@ -419,8 +419,8 @@ function zabbix_bridge_emails_enable_disable_confirm(&$form_state, $email) {
             $form,
             t('Are you sure you want to change the enabled state of this email?'),
             isset($_GET['destination']) ? $_GET['destination'] : "emails/overview",
-            $enabled ? t('This email will be monitored until you disable it.') :
-                    t('This email will not be monitored until you re-enable it.'),
+            $enabled ? t('This email will be enabled until you disable it.') :
+                    t('This email will be disabled until you re-enable it.'),
             t('OK'),
             t('Cancel')
     );

@@ -11,67 +11,7 @@ function zabbix_bridge_install() {
 
     drupal_install_schema('zabbix_bridge');
 
-    db_query("INSERT INTO {zabbix_drupal_account} (drupal_uid) SELECT uid FROM {users}");// u where u.name <> ");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('Linux', 'Linux Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (1, 10001)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('Windows', 'Windows Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (2, 10002)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('App MySQL', 'App MySQL Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (3, 10003)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('Standalone', 'Standalone Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (4, 10004)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('SNMPv2 Device', 'SNMPv2 Device Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (5, 10007)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('FreeBSD', 'FreeBSD Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (6, 10008)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('OpenBSD', 'OpenBSD Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (7, 10009)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('Netware', 'Netware Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (8, 10011)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('HPUX', 'HPUX Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (9, 10013)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('MacOS X', 'MacOS X Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (10, 10014)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('Solaris', 'Solaris Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (11, 10015)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('SNMPv1 Device', 'SNMPv1 Device Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (12, 10016)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('Hibernate', 'Hibernate Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (13, 10035)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('Java', 'Java Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (14, 10039)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('Microsoft Exchange 2003', 'Microsoft Exchange 2003 Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (15, 10040)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('Microsoft Exchange 2007', 'Microsoft Exchange 2007 Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (16, 10041)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('Tomcat', 'Tomcat Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (17, 10043)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('Microsoft SQLServer 2005', 'Microsoft SQLServer 2005 Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (18, 10044)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('pfSense', 'pfSense Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (19, 10045)");
-
-    db_query("INSERT INTO {zabbix_role} (`name`, `description`) VALUES ('NetScreen 25', 'NetScreen 25 Role')");
-    db_query("INSERT INTO {zabbix_roles_templates} (`roleid`, `templateid`) VALUES (20, 10046)");
+    db_query("INSERT INTO {zabbix_drupal_account} (drupal_uid) SELECT uid FROM {users} u where u.uid > 0");
 
     db_query("INSERT INTO {zabbix_severities} (`name`, `value`, `description`) VALUES ('Not classified', 0, 'This is an unclassified severity')");
     db_query("INSERT INTO {zabbix_severities} (`name`, `value`, `description`) VALUES ('Information', 1, 'This is an informative severity')");

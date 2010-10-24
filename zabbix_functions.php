@@ -482,7 +482,7 @@ function zabbix_emails_table($userid = null) {
     $id = TABLE_ID_EMAILS_MAPPING;
 
     if (isset($userid)) {
-        $header = array('Email', 'Zabbix Media Id', 'Severity', 'Enabled');
+        $header = array('Email', 'Severity', 'Enabled');
         $results = pager_query("select e.emailid, e.email, e.zabbixmediaid, zs.name severity, e.enabled from {zabbix_emails} e left join {zabbix_emails_severities} zes on e.emailid = zes.emailid left join {zabbix_severities} zs on zes.severityid = zs.severityid where e.userid = %s", $count, $id, null, $user->uid);
     } else {
         $header = array('Username', 'Email Id', 'Email', 'Zabbix Media Id', 'Severity', 'Enabled');
@@ -518,7 +518,6 @@ function zabbix_emails_table($userid = null) {
             $rows[] = array(
 
                 $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->email,
-                $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->zabbixmediaid,
                 $node->severity,
                 $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
                 $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
