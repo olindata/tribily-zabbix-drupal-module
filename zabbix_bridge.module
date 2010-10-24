@@ -752,5 +752,5 @@ function zabbix_bridge_create_actions($actionname, $severity, $zabbixusergroupid
     $actionids = ZabbixAPI::fetch_array('action', 'create', $actionparams)
             or drupal_set_message('Unable to create zabbix action: ' . serialize(ZabbixAPI::getLastError()), DRUPAL_MSG_TYPE_ERR);
 
-    zabbix_bridge_debug('Zabbix action created: ' . print_r($actionids, true), $actionparams);
+    zabbix_bridge_debug('Zabbix action created: ' . print_r($actionids, true), print_r($actionparams, true));
 }
