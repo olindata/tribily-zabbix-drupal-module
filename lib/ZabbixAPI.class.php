@@ -70,8 +70,8 @@ class ZabbixAPI {
     protected $username         = '';
     protected $password         = '';
     protected $auth_hash        = NULL;
-    protected $debug            = false;
-    protected $last_error       = false;
+    protected $debug            = FALSE;
+    protected $last_error       = FALSE;
     
     // we don't permit an explicit call of the constructor! ($api = new ZabbixAPI())
     protected function __construct() { }
@@ -103,9 +103,9 @@ class ZabbixAPI {
         // Initialize instance if it isn't already
         self::__init();
         if ($value === TRUE)
-            self::$instance->debug = true;
+            self::$instance->debug = TRUE;
         else
-            self::$instance->debug = false;
+            self::$instance->debug = FALSE;
     }
     
     /**
@@ -228,11 +228,11 @@ class ZabbixAPI {
         self::__init();
         
         // Reset our "last error" variable
-        self::$instance->last_error = false;
+        self::$instance->last_error = FALSE;
         
         // Make sure we're logged in, or trying to login...
         if ($this->auth_hash == NULL && $method != 'user.authenticate')
-            return false;  // If we're not logged in, no wasting our time here
+            return FALSE;  // If we're not logged in, no wasting our time here
         
         // Try to retrieve this...
         $data = self::__jsonRequest( 
@@ -244,10 +244,10 @@ class ZabbixAPI {
             echo "Got response from API: ($data)\n";
         
         // Convert return data (JSON) to PHP array
-        $decoded_data = json_decode($data, true);
+        $decoded_data = json_decode($data, TRUE);
         
         if ($this->debug)
-            echo "Response decoded: (".print_r($decoded_data,true)."\n";
+            echo "Response decoded: (".print_r($decoded_data,TRUE)."\n";
         
         // Return the data if it's valid
         if ( isset($decoded_data['id']) && $decoded_data['id'] == 1 && !empty($decoded_data['result']) ) {
@@ -256,7 +256,7 @@ class ZabbixAPI {
             // If we had a actual error, put it in our instance to be able to be retrieved/queried
             if (!empty($decoded_data['error']))
                 self::$instance->last_error = $decoded_data['error'];
-            return false;
+            return FALSE;
         }
     }
     
@@ -272,10 +272,10 @@ class ZabbixAPI {
         
         if (isset($data) && strlen($data) == 32) {
             $this->auth_hash = $data;
-            return true;
+            return TRUE;
         } else {
             $this->auth_hash = NULL;
-            return false;
+            return FALSE;
         }
     }
     
@@ -291,15 +291,15 @@ class ZabbixAPI {
         $headers[]  = 'User-Agent: ZabbixAPI v'.ZabbixAPI::PHPAPI_VERSION.' - http://andrewfarley.com/zabbix_php_api';
     
         $opts = array(
-                CURLOPT_RETURNTRANSFER => true,     // Allows for the return of a curl handle
-                //CURLOPT_VERBOSE => true,          // outputs verbose curl information (like --verbose with curl on the cli)
-                //CURLOPT_HEADER => true,           // In a verbose output, outputs headers
+                CURLOPT_RETURNTRANSFER => TRUE,     // Allows for the return of a curl handle
+                //CURLOPT_VERBOSE => TRUE,          // outputs verbose curl information (like --verbose with curl on the cli)
+                //CURLOPT_HEADER => TRUE,           // In a verbose output, outputs headers
                 CURLOPT_TIMEOUT => 30,              // Maximum number of seconds to allow curl to process the entire request
                 CURLOPT_CONNECTTIMEOUT => 5,        // Maximm number of seconds to establish a connection, shouldn't take 5 seconds
-                CURLOPT_SSL_VERIFYHOST => false,    // Incase we have a fake SSL Cert...
-                CURLOPT_SSL_VERIFYPEER =>false,     //    Ditto
-                CURLOPT_FOLLOWLOCATION => true,     // Incase there's a redirect in place (moved zabbix url), follow it automatically
-                CURLOPT_FRESH_CONNECT => true       // Ensures we don't use a cached connection or response
+                CURLOPT_SSL_VERIFYHOST => FALSE,    // Incase we have a fake SSL Cert...
+                CURLOPT_SSL_VERIFYPEER =>FALSE,     //    Ditto
+                CURLOPT_FOLLOWLOCATION => TRUE,     // Incase there's a redirect in place (moved zabbix url), follow it automatically
+                CURLOPT_FRESH_CONNECT => TRUE       // Ensures we don't use a cached connection or response
                  );
     
         // If we have headers set, put headers into our curl options
@@ -317,7 +317,7 @@ class ZabbixAPI {
         // If we're in debug mode
         if (self::$instance->debug) {
             echo "CURL URL: $url\n<br>";
-            echo "CURL Options: ".print_r($opts, true);
+            echo "CURL Options: ".print_r($opts, TRUE);
         }
 
         // Go go gadget!  Do your magic!

@@ -1,8 +1,5 @@
 <?php
-
-/**
- *
- */
+// $Id$
 
 include_once 'zabbix_functions.php';
 

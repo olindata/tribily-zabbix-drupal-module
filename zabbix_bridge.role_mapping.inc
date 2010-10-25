@@ -1,4 +1,5 @@
 <?php
+// $Id$
 
 /**
  * @file
@@ -16,7 +17,7 @@ include_once 'zabbix_functions.php';
  * @param <type> $drupal_uid
  * @return int
  */
-function zabbix_bridge_role_mapping_form(&$form_state, $action, $roleid = null) {
+function zabbix_bridge_role_mapping_form(&$form_state, $action, $roleid = NULL) {
 
     if ($action == 'update') {
         $sql = "select zr.roleid, zr.name, zr.description, zrt.templateid from {zabbix_role} zr left join {zabbix_roles_templates} zrt on zr.roleid = zrt.roleid where zr.roleid = '%s'";
@@ -174,9 +175,9 @@ function zabbix_role_mapping_delete($mappingid) {
 function zabbix_bridge_import_roles(){
 
     $templates = array();
-    $templates = zabbix_bridge_get_all_templateids_from_zabbix(true);
+    $templates = zabbix_bridge_get_all_templateids_from_zabbix(TRUE);
 
-    zabbix_bridge_debug(print_r($templates, true));
+    zabbix_bridge_debug(print_r($templates, TRUE));
 
     foreach ($templates as $template) {
         $sql = "select * from {zabbix_roles_templates} where templateid = '%s'";

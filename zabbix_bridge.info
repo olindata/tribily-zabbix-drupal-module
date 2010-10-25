@@ -1,4 +1,4 @@
-; $Id: zabbix_bridge.info,v 1.0 2010/10/01 16:20:40 tribily Exp $
+; $Id$
 name = "Zabbix Bridge"
 description = "Provides integration with Zabbix"
 version = "6.x-1.00"

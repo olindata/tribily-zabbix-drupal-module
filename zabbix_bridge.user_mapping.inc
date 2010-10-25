@@ -1,4 +1,5 @@
 <?php
+// $Id$
 
 /**
  * @file
@@ -16,7 +17,7 @@ include_once 'zabbix_functions.php';
  * @param <type> $drupal_uid
  * @return int
  */
-function zabbix_bridge_user_mapping_form(&$form_state, $action, $id = null) {
+function zabbix_bridge_user_mapping_form(&$form_state, $action, $id = NULL) {
 
     if ($action == 'update') {
         $sql = "select id, drupal_uid, zabbix_uid, zabbix_usrgrp_id, zabbix_hostgrp_id from {zabbix_drupal_account} where id = '%s'";
@@ -178,12 +179,12 @@ function zabbix_bridge_user_mapping_generate_confirm_submit($form, &$form_state)
                 $pass,
                 $drupaluser->mail,
                 $mapping->drupal_uid,
-                null,
-                null,
-                null,
-                true,
-                true,
-                true,
+                NULL,
+                NULL,
+                NULL,
+                TRUE,
+                TRUE,
+                TRUE,
                 $id);
 
     } else {

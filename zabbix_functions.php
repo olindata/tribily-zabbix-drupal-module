@@ -1,11 +1,7 @@
 <?php
+// $Id$
 
-/**
- * Description of ZabbixAPI-strong
- *
- * @author olindata
- */
-include_once('ZabbixAPI.class.php');
+include_once('lib/ZabbixAPI.class.php');
 
 define('HOST_NAME_MAXLENGTH', 64);
 define('MEDIA_NAME_MAXLENGTH', 100);
@@ -115,7 +111,7 @@ function zabbix_bridge_drupal_to_zabbix_hostid($hostid) {
 
     $host = db_fetch_object($result);
 
-    zabbix_bridge_debug(print_r($host, true));
+    zabbix_bridge_debug(print_r($host, TRUE));
 
     return $host->zabbixhostid;
 }
@@ -126,7 +122,7 @@ function zabbix_bridge_drupal_to_zabbix_hostid($hostid) {
  * @param <type> $userid
  * @return string
  */
-function zabbix_hosts_table($userid = null) {
+function zabbix_hosts_table($userid = NULL) {
     global $user;
 
     $rows = array();
@@ -280,7 +276,7 @@ function zabbix_api_login() {
         drupal_set_message('Unable to login. API credentials must be set in module setting before using this module!', DRUPAL_MSG_TYPE_ERR);
     }
 
-    // This logs into Zabbix, and returns false if it fails
+    // This logs into Zabbix, and returns FALSE if it fails
     return ZabbixAPI::login($API_url, $API_user, $API_pass);
 }
 
@@ -290,7 +286,7 @@ function zabbix_api_login() {
 function zabbix_bridge_debug($msg, $verbosemsg = '') {
     // print the message only if debug is enabled!
 
-    $show_verbose = false;
+    $show_verbose = FALSE;
 
     if ("yes" == variable_get('zabbix_bridge_debug', 'no')) {
 
@@ -298,7 +294,7 @@ function zabbix_bridge_debug($msg, $verbosemsg = '') {
 
             if ($verbosemsg && strlen($verbosemsg)) {
 
-                $show_verbose = true;
+                $show_verbose = TRUE;
             }
         }
 
@@ -326,14 +322,14 @@ function zabbix_bridge_get_all_hostgroupids_from_drupal() {
 
 }
 
-function zabbix_bridge_get_all_templateids_from_zabbix($extended = false) {
+function zabbix_bridge_get_all_templateids_from_zabbix($extended = FALSE) {
 
     $zabbixtemplateids = array();
     $templateids = array();
 
-    // This logs into Zabbix, and returns false if it fails
+    // This logs into Zabbix, and returns FALSE if it fails
     zabbix_api_login()
-            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     if ($extended) {
         $zabbixtemplateids = ZabbixAPI::fetch_array('template', 'get', array('output' => array('host')));
@@ -357,13 +353,13 @@ function zabbix_bridge_get_all_templateids_from_zabbix($extended = false) {
  *
  * @return array
  */
-function zabbix_bridge_get_all_hosts($withtemplates = true) {
+function zabbix_bridge_get_all_hosts($withtemplates = TRUE) {
     $hosts = array();
     $zabbixresult = array();
 
-    // This logs into Zabbix, and returns false if it fails
+    // This logs into Zabbix, and returns FALSE if it fails
     zabbix_api_login()
-            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     $hostgroupids = array();
     $hostgroupids = zabbix_bridge_get_all_hostgroupids_from_drupal();
@@ -463,7 +459,7 @@ function zabbix_bridge_drupal_to_zabbix_emailid($emailid) {
 
     $email = db_fetch_object($result);
 
-    zabbix_bridge_debug(print_r($email, true));
+    zabbix_bridge_debug(print_r($email, TRUE));
 
     return $email->zabbixmediaid;
 }
@@ -474,7 +470,7 @@ function zabbix_bridge_drupal_to_zabbix_emailid($emailid) {
  * @param <type> $userid
  * @return string
  */
-function zabbix_emails_table($userid = null) {
+function zabbix_emails_table($userid = NULL) {
     global $user;
 
     $rows = array();

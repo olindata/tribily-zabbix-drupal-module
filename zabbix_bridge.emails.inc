@@ -1,4 +1,6 @@
 <?php
+// $Id$
+
 /* 
  * For handling multiple emails
  * 
@@ -30,7 +32,7 @@ function zabbix_bridge_emails() {
  * @see zabbix_bridge_emails_form_validate()
  * @see zabbix_bridge_emails_form_submit()
  */
-function zabbix_bridge_emails_form(&$form_state, $operation, $emailid = null) {
+function zabbix_bridge_emails_form(&$form_state, $operation, $emailid = NULL) {
     
     if (($operation == 'update') && isset($emailid)) {
         
@@ -175,14 +177,14 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
 
     }
 
-    // This logs into Zabbix, and returns false if it fails
+    // This logs into Zabbix, and returns FALSE if it fails
     zabbix_api_login()
-            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     //create the email if it's not already existing
     if ($emailid == '') {
 
-        drupal_set_message(print_r($email, true));
+        drupal_set_message(print_r($email, TRUE));
         $addedmedia = ZabbixAPI::fetch_string('user', 'addMedia', $email);
 
         if ($addedmedia) {
@@ -192,7 +194,7 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
         }
         else {
 
-            drupal_set_message('Failed to add email: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+            drupal_set_message('Failed to add email: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
         }
 
@@ -202,11 +204,11 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
         // get all user media for given user
         $media = array(
             'userids' => array($zabbix_uid),
-            'extendoutput' => true
+            'extendoutput' => TRUE
         );
 
         $usermedia = ZabbixAPI::fetch_array('user', 'getMedia', $media)
-                or drupal_set_message('Problem retrieving existing media properties: '  . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+                or drupal_set_message('Problem retrieving existing media properties: '  . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
         $sql = "select zabbixmediaid from {zabbix_emails} where emailid = %s";
         $result = db_query($sql, $emailid);
@@ -235,13 +237,13 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
             'medias' => $usermedia
         );
 
-        drupal_set_message(print_r($usermedia, true));
+        drupal_set_message(print_r($usermedia, TRUE));
 
         //update the email and enabled status
         $usermedia = ZabbixAPI::fetch_string('user', 'updateMedia', $usermedia)
                 or drupal_set_message('Problem updating existing email properties', DRUPAL_MSG_TYPE_ERR);
 
-        drupal_set_message('update: ' . print_r($usermedia, true));
+        drupal_set_message('update: ' . print_r($usermedia, TRUE));
 
     }
 
@@ -250,7 +252,7 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
         'userids' => array($zabbix_uid),
         'mediatypeid' => 1,
         'sendto' => $sendto,
-        'extendoutput' => true
+        'extendoutput' => TRUE
     ));
 
     if (!$usermedia || !count($usermedia)) {
@@ -380,10 +382,10 @@ function zabbix_bridge_emails_delete($emailid) {
     $zabbixmediaid = db_result(db_query($sql, $emailid));
 
     zabbix_api_login()
-            or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     ZabbixAPI::fetch_string('user', 'deleteMedia', array($zabbixmediaid))
-            or drupal_set_message('Unable to delete media. ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message('Unable to delete media. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     $sql = "delete from {zabbix_emails_severities} where emailid = %s";
     $result = db_query($sql, $emailid);
@@ -477,19 +479,19 @@ function zabbix_bridge_emails_enable_disable($zabbixmediaid, $enabled) {
 
     }
 
-    drupal_set_message(print_r($data, true));
+    drupal_set_message(print_r($data, TRUE));
 
     zabbix_api_login()
-            or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     // get user media
     $media = ZabbixAPI::fetch_array('user', 'getMedia', array(
         'userids' => array($data['zabbix_uid']),
-        'extendoutput' => true
+        'extendoutput' => TRUE
     ));
     
     $result = ZabbixAPI::fetch_string('user', 'getMedia', $media)
-            or drupal_set_message('Unable to retrieve user media. ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message('Unable to retrieve user media. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     foreach($media as $key => $item) {
 
@@ -506,15 +508,15 @@ function zabbix_bridge_emails_enable_disable($zabbixmediaid, $enabled) {
     $usermedia['users'] = array('userid' => $data['zabbix_uid']);
     $usermedia['medias'] = $media;
 
-    drupal_set_message(print_r($usermedia, true));
+    drupal_set_message(print_r($usermedia, TRUE));
 
     $result = ZabbixAPI::fetch_string('user', 'updateMedia', $usermedia);
 
-    drupal_set_message(print_r($result, true));
+    drupal_set_message(print_r($result, TRUE));
 
     if (!$result) {
 
-        drupal_set_message('Unable to enable/disable email. ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+        drupal_set_message('Unable to enable/disable email. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     } else {
 

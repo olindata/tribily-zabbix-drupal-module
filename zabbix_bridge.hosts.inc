@@ -1,4 +1,5 @@
 <?php
+// $Id$
 
 /**
  * @file
@@ -145,12 +146,12 @@ function host_delete_confirm_submit($form, &$form_state) {
 function zabbix_host_enable_disable($hostid, $enabled) {
 
     zabbix_api_login()
-            or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     $result = ZabbixAPI::fetch_string('host', 'update', array('hostid' => $hostid, 'status' => $enabled ? 0 : 1));
 
     if (!$result) {
-        drupal_set_message('Unable to enable/disable host. ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+        drupal_set_message('Unable to enable/disable host. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
     } else {
         $sql = "update {zabbix_hosts} set enabled = '%s' where zabbixhostid = %s";
         $result = db_query($sql, $enabled ? 0 : 1, $hostid);
@@ -173,10 +174,10 @@ function zabbix_host_delete($hostid) {
     $zabbixhostid = db_result(db_query($sql, $hostid));
 
     zabbix_api_login()
-            or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     ZabbixAPI::fetch_string('host', 'delete', array($zabbixhostid))
-            or drupal_set_message('Unable to delete host. ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message('Unable to delete host. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     $sql = "delete from {zabbix_hosts_roles} where hostid = %s";
     $result = db_query($sql, $hostid);
@@ -194,7 +195,7 @@ function zabbix_host_delete($hostid) {
  * @see zabbix_hosts_form_validate()
  * @see zabbix_hosts_form_submit()
  */
-function zabbix_bridge_hosts_form(&$form_state, $operation, $hostid = null) {
+function zabbix_bridge_hosts_form(&$form_state, $operation, $hostid = NULL) {
 
     if (($operation == 'update') && isset($hostid)) {
         $sql = "select userid, hostid, zabbixhostid, hostname, enabled from {zabbix_hosts} where hostid = %s";
@@ -312,19 +313,19 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
         $hostid = $form_state['clicked_button']['#post']['hostid'];
     }
 
-    // This logs into Zabbix, and returns false if it fails
+    // This logs into Zabbix, and returns FALSE if it fails
     zabbix_api_login()
-            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     //create the host if it's not already existing
     if ($hostid == ''){
-        drupal_set_message(print_r($host, true));
+        drupal_set_message(print_r($host, TRUE));
         $zabbixhostid = ZabbixAPI::fetch_string('host', 'create', array($host));
         if ($zabbixhostid) {
             drupal_set_message('Host successfully added.');
         }
         else {
-            drupal_set_message('Failed to add host' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+            drupal_set_message('Failed to add host' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
         }
     } else {
         $sql = "select zabbixhostid from {zabbix_hosts} where hostid = %s";
@@ -381,7 +382,7 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
             $addedtemplate_ids[] = $data['templateid'];
         }
         
-        zabbix_bridge_debug('$addedtemplate_ids: ' . print_r($addedtemplate_ids, true));
+        zabbix_bridge_debug('$addedtemplate_ids: ' . print_r($addedtemplate_ids, TRUE));
 
         $template_add = ZabbixAPI::fetch_string('template', 'massAdd', array('templates' => $addedtemplate_ids,
                     'hosts' => array('hostid' => $zabbixhostid)));
@@ -389,7 +390,7 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
         zabbix_bridge_debug($template_add);
 
         if (!$template_add) {
-            drupal_set_message('Unable to link templates: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+            drupal_set_message('Unable to link templates: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
         } else {
             drupal_set_message('Host succesfully added to zabbix with selected roles.');
         }
@@ -443,7 +444,7 @@ function zabbix_bridge_import_hosts() {
     // Get a list of all hosts from zabbix
     $zabbixhosts = zabbix_bridge_get_all_hosts();
 
-    zabbix_bridge_debug(print_r($zabbixhosts, true));
+    zabbix_bridge_debug(print_r($zabbixhosts, TRUE));
     // Go through the hosts and try to map them to the drupal users
     foreach ($zabbixhosts as $zabbixhost) {
         $zabbixuserid = zabbix_bridge_get_userid_by_hostgroupid($zabbixhost['hostgroupid']);
@@ -453,7 +454,7 @@ function zabbix_bridge_import_hosts() {
 
     drupal_goto("admin/settings/zabbix_bridge");
 
-    return true;
+    return TRUE;
 
 }
 
