@@ -208,7 +208,7 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
         $usermedia = ZabbixAPI::fetch_array('user', 'getMedia', $media)
                 or drupal_set_message('Problem retrieving existing media properties: '  . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
 
-        $sql = "select zabbixmediaid from {zabbix_emails} where emailid = %s";
+        $sql = "SELECT zabbixmediaid FROM {zabbix_emails} WHERE emailid=%s";
         $result = db_query($sql, $emailid);
 
         $data = db_fetch_array($result);
@@ -524,6 +524,53 @@ function zabbix_bridge_emails_enable_disable($zabbixmediaid, $enabled) {
     }
 
     return $result;
+}
+
+/**
+ *
+ * @return <type>
+ */
+function zabbix_bridge_import_emails() {
+
+    $emails = array();
+    $emails = zabbix_bridge_get_all_emails_from_zabbix(true);
+
+    zabbix_bridge_debug(print_r($emails, true));
+
+    foreach ($emails as $email) {
+
+        $sql = "SELECT emailid FROM {zabbix_emails} WHERE zabbixmediaid='%s'";
+        $results = db_query($sql, $email['mediaid']);
+
+        $mediaid = db_fetch_object($results);
+
+        if ($mediaid) {
+
+            drupal_set_message('Skipped email ' . $email['mediaid'] . ' (' . $email['sendto'] . '), as it already exists.');
+
+        }
+        else {
+
+            $sql = "SELECT drupal_uid FROM {zabbix_drupal_account} WHERE zabbix_uid=%s";
+            $results = db_query($sql, $email['userid']);
+
+            zabbix_bridge_debug($sql);
+
+            $user = db_fetch_object($results);
+
+            if ($user) {
+
+                $sql = "INSERT INTO {zabbix_emails} (userid, zabbixmediaid, email, enabled) VALUES ('%s', '%s', '%s', '%s')";
+                $results = db_query($sql, $user->drupal_uid, $email['mediaid'], $email['sendto'], $email['active']);
+
+            }
+
+        }
+
+    }
+
+    drupal_goto("admin/settings/zabbix_bridge");
+
 }
 
 ?>
