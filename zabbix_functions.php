@@ -1,4 +1,5 @@
 <?php
+
 // $Id$
 
 include_once('lib/ZabbixAPI.class.php');
@@ -106,14 +107,14 @@ define('TRIGGER_VALUE_UNKNOWN', 2);
  */
 function zabbix_bridge_drupal_to_zabbix_hostid($hostid) {
 
-    $sql = 'select zabbixhostid from {zabbix_hosts} where hostid = %s';
-    $result = db_query($sql, $hostid);
+  $sql = 'select zabbixhostid from {zabbix_hosts} where hostid = %s';
+  $result = db_query($sql, $hostid);
 
-    $host = db_fetch_object($result);
+  $host = db_fetch_object($result);
 
-    zabbix_bridge_debug(print_r($host, TRUE));
+  zabbix_bridge_debug(print_r($host, TRUE));
 
-    return $host->zabbixhostid;
+  return $host->zabbixhostid;
 }
 
 /**
@@ -123,105 +124,107 @@ function zabbix_bridge_drupal_to_zabbix_hostid($hostid) {
  * @return string
  */
 function zabbix_hosts_table($userid = NULL) {
-    global $user;
+  global $user;
 
-    $rows = array();
-    $count = PAGER_COUNT;
-    $id = TABLE_ID_HOSTS_MAPPING;
+  $rows = array();
+  $count = PAGER_COUNT;
+  $id = TABLE_ID_HOSTS_MAPPING;
 
-    if (isset($userid)) {
-        $header = array('Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
-        $results = pager_query("select h.hostid, h.hostname, h.zabbixhostid, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid where h.userid = %s", $count, $id, null, $user->uid);
-    } else {
-        $header = array('Username', 'Email', 'Zabbix Hostid', 'Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
-        $results = pager_query("select u.name, u.mail, h.hostid, h.zabbixhostid, h.hostname, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid left join {users} u on u.uid = h.userid", $count, $id);
+  if (isset($userid)) {
+    $header = array('Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
+    $results = pager_query("select h.hostid, h.hostname, h.zabbixhostid, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid where h.userid = %s", $count, $id, null, $user->uid);
+  }
+  else {
+    $header = array('Username', 'Email', 'Zabbix Hostid', 'Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
+    $results = pager_query("select u.name, u.mail, h.hostid, h.zabbixhostid, h.hostname, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid left join {users} u on u.uid = h.userid", $count, $id);
+  }
+
+
+  $lastzabbixhostid = -1;
+
+  while ($node = db_fetch_object($results)) {
+    if (!isset($userid)) {
+      $rows[] = array(
+          $node->name,
+          $node->mail,
+          $lastzabbixhostid == $node->zabbixhostid ? '' : $node->zabbixhostid,
+          $lastzabbixhostid == $node->zabbixhostid ? '' : $node->hostname,
+          $lastzabbixhostid == $node->zabbixhostid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
+          $node->role_name,
+          $node->role_desc,
+          $lastzabbixhostid == $node->zabbixhostid ? '' : (
+                  l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
+                  l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
+                  l('Update', 'hosts/update/' . $node->hostid)
+                  ),
+      );
     }
+    else {
 
-
-    $lastzabbixhostid = -1;
-
-    while ($node = db_fetch_object($results)) {
-        if (!isset($userid)) {
-            $rows[] = array(
-                $node->name,
-                $node->mail,
-                $lastzabbixhostid == $node->zabbixhostid ? '' : $node->zabbixhostid,
-                $lastzabbixhostid == $node->zabbixhostid ? '' : $node->hostname,
-                $lastzabbixhostid == $node->zabbixhostid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
-                $node->role_name,
-                $node->role_desc,
-                $lastzabbixhostid == $node->zabbixhostid ? '' : (
-                    l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
-                    l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
-                    l('Update', 'hosts/update/' . $node->hostid)
-                ),
-            );
-        } else {
-
-            $rows[] = array(
-                $lastzabbixhostid == $node->zabbixhostid ? '' : $node->hostname,
-                $lastzabbixhostid == $node->zabbixhostid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
-                $node->role_name,
-                $node->role_desc,
-                $lastzabbixhostid == $node->zabbixhostid ? '' : (
-                    l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
-                    l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
-                    l('Update', 'hosts/update/' . $node->hostid)
-                ),
-            );
-        }
-        $lastzabbixhostid = $node->zabbixhostid;
+      $rows[] = array(
+          $lastzabbixhostid == $node->zabbixhostid ? '' : $node->hostname,
+          $lastzabbixhostid == $node->zabbixhostid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
+          $node->role_name,
+          $node->role_desc,
+          $lastzabbixhostid == $node->zabbixhostid ? '' : (
+                  l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
+                  l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
+                  l('Update', 'hosts/update/' . $node->hostid)
+                  ),
+      );
     }
+    $lastzabbixhostid = $node->zabbixhostid;
+  }
 
-    if ($lastzabbixhostid == -1) {
-        if (!isset($userid)) {
-            $rows[] = array(t('No Hosts have been defined yet.'), '', '', '', '', '', '', '',);
-        } else {
-            $rows[] = array(t('No Hosts have been defined yet.'), '', '', '', '');
-        }
-
+  if ($lastzabbixhostid == -1) {
+    if (!isset($userid)) {
+      $rows[] = array(t('No Hosts have been defined yet.'), '', '', '', '', '', '', '',);
     }
+    else {
+      $rows[] = array(t('No Hosts have been defined yet.'), '', '', '', '');
+    }
+  }
 
-    $table_attributes = array('id' => 'hosts-table', 'align' => 'center');
-    $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
+  $table_attributes = array('id' => 'hosts-table', 'align' => 'center');
+  $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
 
-    return $output;
+  return $output;
 }
 
 /**
  * 
  * @return string
  */
-function zabbix_roles_table () {
+function zabbix_roles_table() {
 
-    $header = array('Roleid', 'Name', 'Description', 'Zabbix Templateid', 'Actions');
-    $rows = array();
-    $count = PAGER_COUNT;
-    $id = TABLE_ID_USER_MAPPING;
+  $header = array('Roleid', 'Name', 'Description', 'Zabbix Templateid', 'Actions');
+  $rows = array();
+  $count = PAGER_COUNT;
+  $id = TABLE_ID_USER_MAPPING;
 
-    $results = pager_query("select zr.*, zrt.templateid from zabbix_role zr left join zabbix_roles_templates zrt on zrt.roleid = zr.roleid", $count, $id);
+  $results = pager_query("select zr.*, zrt.templateid from zabbix_role zr left join zabbix_roles_templates zrt on zrt.roleid = zr.roleid", $count, $id);
 
 
-    while ($node = db_fetch_object($results)) {
-        $rows[] = array(
-            $node->roleid,
-            $node->name,
-            $node->description,
-            $node->templateid,
-            l('Update', 'zabbix-role-mapping/update/' . $node->roleid) . ' | ' .
-                l('Delete', 'zabbix-role-mapping/delete/' . $node->roleid),
-        );
-    }
+  while ($node = db_fetch_object($results)) {
+    $rows[] = array(
+        $node->roleid,
+        $node->name,
+        $node->description,
+        $node->templateid,
+        l('Update', 'zabbix-role-mapping/update/' . $node->roleid) . ' | ' .
+        l('Delete', 'zabbix-role-mapping/delete/' . $node->roleid),
+    );
+  }
 
-    if (count($rows) == 0) {
-        $rows[] = array(t('No templates have been defined yet'), '', '', '', '', '');
-    }
+  if (count($rows) == 0) {
+    $rows[] = array(t('No templates have been defined yet'), '', '', '', '', '');
+  }
 
-    $table_attributes = array('id' => 'roles-table', 'align' => 'center');
+  $table_attributes = array('id' => 'roles-table', 'align' => 'center');
 
-    $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
+  $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
 
-    return $output;
+  return $output;
 }
 
 /**
@@ -229,36 +232,36 @@ function zabbix_roles_table () {
  * @return string
  */
 function zabbix_user_mapping_table() {
-    $header = array('Username', 'Email', 'Zabbix Userid', 'Zabbix Usergroupid', 'Zabbix Hostgroupid', 'Actions');
-    $rows = array();
-    $count = PAGER_COUNT;
-    $id = TABLE_ID_USER_MAPPING;
+  $header = array('Username', 'Email', 'Zabbix Userid', 'Zabbix Usergroupid', 'Zabbix Hostgroupid', 'Actions');
+  $rows = array();
+  $count = PAGER_COUNT;
+  $id = TABLE_ID_USER_MAPPING;
 
-    $results = pager_query("select zda.id, du.uid, du.name, du.mail, zda.zabbix_uid, zda.zabbix_usrgrp_id, zda.zabbix_hostgrp_id                         from                            zabbix_drupal_account zda                            left join users du on du.uid = zda.drupal_uid", $count, $id);
+  $results = pager_query("select zda.id, du.uid, du.name, du.mail, zda.zabbix_uid, zda.zabbix_usrgrp_id, zda.zabbix_hostgrp_id                         from                            zabbix_drupal_account zda                            left join users du on du.uid = zda.drupal_uid", $count, $id);
 
 
-    while ($node = db_fetch_object($results)) {
-        $rows[] = array(
-            $node->name,
-            $node->mail,
-            $node->zabbix_uid,
-            $node->zabbix_usrgrp_id,
-            $node->zabbix_hostgrp_id,
-            l('Update', 'zabbix-user-mapping/update/' . $node->id) . ' | ' .
-                l('Delete', 'zabbix-user-mapping/delete/' . $node->id) . ' | ' .
-                l('Generate missing zabbix items', 'zabbix-user-mapping/generate/' . $node->id),
-        );
-    }
+  while ($node = db_fetch_object($results)) {
+    $rows[] = array(
+        $node->name,
+        $node->mail,
+        $node->zabbix_uid,
+        $node->zabbix_usrgrp_id,
+        $node->zabbix_hostgrp_id,
+        l('Update', 'zabbix-user-mapping/update/' . $node->id) . ' | ' .
+        l('Delete', 'zabbix-user-mapping/delete/' . $node->id) . ' | ' .
+        l('Generate missing zabbix items', 'zabbix-user-mapping/generate/' . $node->id),
+    );
+  }
 
-    if (count($rows) == 0) {
-        $rows[] = array(t('No mappings have been defined yet'), '', '', '', '', '');
-    }
+  if (count($rows) == 0) {
+    $rows[] = array(t('No mappings have been defined yet'), '', '', '', '', '');
+  }
 
-    $table_attributes = array('id' => 'mapping-table', 'align' => 'center');
+  $table_attributes = array('id' => 'mapping-table', 'align' => 'center');
 
-    $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
+  $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
 
-    return $output;
+  return $output;
 }
 
 /**
@@ -267,86 +270,87 @@ function zabbix_user_mapping_table() {
  */
 function zabbix_api_login() {
 
-    // Get the credentials configured in this module
-    $API_url = variable_get('zabbix_bridge_API_url', NULL);
-    $API_user = variable_get('zabbix_bridge_API_user', NULL);
-    $API_pass = variable_get('zabbix_bridge_API_pass', NULL);
+  // Get the credentials configured in this module
+  $API_url = variable_get('zabbix_bridge_API_url', NULL);
+  $API_user = variable_get('zabbix_bridge_API_user', NULL);
+  $API_pass = variable_get('zabbix_bridge_API_pass', NULL);
 
-    if (!isset($API_url, $API_user, $API_pass)) {
-        drupal_set_message('Unable to login. API credentials must be set in module setting before using this module!', DRUPAL_MSG_TYPE_ERR);
-    }
+  if (!isset($API_url, $API_user, $API_pass)) {
+    drupal_set_message('Unable to login. API credentials must be set in module setting before using this module!', DRUPAL_MSG_TYPE_ERR);
+  }
 
-    // This logs into Zabbix, and returns FALSE if it fails
-    return ZabbixAPI::login($API_url, $API_user, $API_pass);
+  // This logs into Zabbix, and returns FALSE if it fails
+  return ZabbixAPI::login($API_url, $API_user, $API_pass);
 }
 
 /**
  * for printing out debugging info, use this instead of echo and what not.
  */
 function zabbix_bridge_debug($msg, $verbosemsg = '') {
-    // print the message only if debug is enabled!
+  // print the message only if debug is enabled!
 
-    $show_verbose = FALSE;
+  $show_verbose = FALSE;
 
-    if ("yes" == variable_get('zabbix_bridge_debug', 'no')) {
+  if ("yes" == variable_get('zabbix_bridge_debug', 'no')) {
 
-        if ("yes" == variable_get('zabbix_bridge_debug_verbose', 'no')) {
+    if ("yes" == variable_get('zabbix_bridge_debug_verbose', 'no')) {
 
-            if ($verbosemsg && strlen($verbosemsg)) {
+      if ($verbosemsg && strlen($verbosemsg)) {
 
-                $show_verbose = TRUE;
-            }
-        }
-
-        if ($show_verbose) {
-
-            drupal_set_message($msg . "\n Extensive msg: \n" . $verbosemsg, DRUPAL_MSG_TYPE_STATUS);
-        } else {
-
-            drupal_set_message($msg, DRUPAL_MSG_TYPE_STATUS);
-        }
+        $show_verbose = TRUE;
+      }
     }
+
+    if ($show_verbose) {
+
+      drupal_set_message($msg . "\n Extensive msg: \n" . $verbosemsg, DRUPAL_MSG_TYPE_STATUS);
+    }
+    else {
+
+      drupal_set_message($msg, DRUPAL_MSG_TYPE_STATUS);
+    }
+  }
 }
 
 function zabbix_bridge_get_all_hostgroupids_from_drupal() {
-    $hostgroupids = array();
+  $hostgroupids = array();
 
-    $sql = "select zabbix_hostgrp_id from {zabbix_drupal_account} where zabbix_hostgrp_id is not null";
-    $result = db_query($sql);
+  $sql = "select zabbix_hostgrp_id from {zabbix_drupal_account} where zabbix_hostgrp_id is not null";
+  $result = db_query($sql);
 
-    while ($node = db_fetch_object($result)) {
-        $hostgroupids[] = $node->zabbix_hostgrp_id;
-    }
+  while ($node = db_fetch_object($result)) {
+    $hostgroupids[] = $node->zabbix_hostgrp_id;
+  }
 
-    return $hostgroupids;
-
+  return $hostgroupids;
 }
 
 function zabbix_bridge_get_all_templateids_from_zabbix($extended = FALSE) {
 
-    $zabbixtemplateids = array();
-    $templateids = array();
+  $zabbixtemplateids = array();
+  $templateids = array();
 
-    // This logs into Zabbix, and returns FALSE if it fails
-    zabbix_api_login()
-            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+  // This logs into Zabbix, and returns FALSE if it fails
+  zabbix_api_login()
+          or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
+  if ($extended) {
+    $zabbixtemplateids = ZabbixAPI::fetch_array('template', 'get', array('output' => array('host')));
+  }
+  else {
+    $zabbixtemplateids = ZabbixAPI::fetch_array('template', 'get');
+  }
+
+  foreach ($zabbixtemplateids as $key => $value) {
     if ($extended) {
-        $zabbixtemplateids = ZabbixAPI::fetch_array('template', 'get', array('output' => array('host')));
-    } else {
-        $zabbixtemplateids = ZabbixAPI::fetch_array('template', 'get');
+      $templateids[] = array('templateid' => $key, 'name' => $value['host']);
     }
-
-    foreach ($zabbixtemplateids as $key => $value) {
-        if ($extended) {
-            $templateids[] = array('templateid' => $key, 'name' => $value['host']);
-        } else {
-            $templateids[] = $key;
-        }
+    else {
+      $templateids[] = $key;
     }
+  }
 
-    return $templateids;
-
+  return $templateids;
 }
 
 /**
@@ -354,64 +358,63 @@ function zabbix_bridge_get_all_templateids_from_zabbix($extended = FALSE) {
  * @return array
  */
 function zabbix_bridge_get_all_hosts($withtemplates = TRUE) {
-    $hosts = array();
-    $zabbixresult = array();
+  $hosts = array();
+  $zabbixresult = array();
 
-    // This logs into Zabbix, and returns FALSE if it fails
-    zabbix_api_login()
-            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+  // This logs into Zabbix, and returns FALSE if it fails
+  zabbix_api_login()
+          or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
-    $hostgroupids = array();
-    $hostgroupids = zabbix_bridge_get_all_hostgroupids_from_drupal();
+  $hostgroupids = array();
+  $hostgroupids = zabbix_bridge_get_all_hostgroupids_from_drupal();
 
-    // This is a workaround. Zabbxi API call host.get will nto return the list
-    // of templates for a host unless you ask for all hosts that are in a list
-    // of templates.
-    // Therefore, we get a list of all templateids, and ask for all hosts with
-    // those templates. Note that the real selection criteria is the hostgroups
-    // we have just retrieved on the drupal side.
+  // This is a workaround. Zabbxi API call host.get will nto return the list
+  // of templates for a host unless you ask for all hosts that are in a list
+  // of templates.
+  // Therefore, we get a list of all templateids, and ask for all hosts with
+  // those templates. Note that the real selection criteria is the hostgroups
+  // we have just retrieved on the drupal side.
 
-    $alltemplateids = array();
-    $alltemplateids = zabbix_bridge_get_all_templateids_from_zabbix();
+  $alltemplateids = array();
+  $alltemplateids = zabbix_bridge_get_all_templateids_from_zabbix();
 
-    $zabbixresult = ZabbixAPI::fetch_array('host', 'get', array(
-                                                            'output' => array('hostid', 'host', 'status'),
-                                                            'groupids' => $hostgroupids,
-                                                            'templateids' => $alltemplateids));
-
-
+  $zabbixresult = ZabbixAPI::fetch_array('host', 'get', array(
+              'output' => array('hostid', 'host', 'status'),
+              'groupids' => $hostgroupids,
+              'templateids' => $alltemplateids));
 
 
-    foreach ($zabbixresult as $value) {
 
-        if ($withtemplates) {
-            $templateids = array();
-            foreach ($value['templates'] as $template) {
-                $templateids[] = $template['templateid'];
-            }
 
-            $hosts[] = array('hostid' => $value['hostid'],
-                             'name' => $value['host'],
-                             'enabled' => $value['status'],
-                             'hostgroupid' => $value['groups'][0]['groupid'],
-                             'templateids' => $templateids);
+  foreach ($zabbixresult as $value) {
 
-        } else {
-            $hosts[] = $value['hostid'];
-        }
+    if ($withtemplates) {
+      $templateids = array();
+      foreach ($value['templates'] as $template) {
+        $templateids[] = $template['templateid'];
+      }
 
+      $hosts[] = array('hostid' => $value['hostid'],
+          'name' => $value['host'],
+          'enabled' => $value['status'],
+          'hostgroupid' => $value['groups'][0]['groupid'],
+          'templateids' => $templateids);
     }
+    else {
+      $hosts[] = $value['hostid'];
+    }
+  }
 
-    return $hosts;
+  return $hosts;
 }
 
-function zabbix_bridge_get_userid_by_hostgroupid($hostgroupid){
-    $sql = "select drupal_uid from {zabbix_drupal_account} where zabbix_hostgrp_id = '%s'";
-    $result = db_query($sql, $hostgroupid);
+function zabbix_bridge_get_userid_by_hostgroupid($hostgroupid) {
+  $sql = "select drupal_uid from {zabbix_drupal_account} where zabbix_hostgrp_id = '%s'";
+  $result = db_query($sql, $hostgroupid);
 
-    $user = db_fetch_object($result);
+  $user = db_fetch_object($result);
 
-    return $user->drupal_uid;
+  return $user->drupal_uid;
 }
 
 /**
@@ -423,28 +426,22 @@ function zabbix_bridge_get_userid_by_hostgroupid($hostgroupid){
  * @param array $zabbixhosttemplateids
  */
 function zabbix_bridge_add_host_to_zabbix_userid(
-        $zabbixuserid,
-        $zabbixhostid,
-        $zabbixhostname,
-        $zabbixhostenabled,
-        $zabbixhosttemplateids) {
+$zabbixuserid, $zabbixhostid, $zabbixhostname, $zabbixhostenabled, $zabbixhosttemplateids) {
 
-    $sql = "insert into {zabbix_hosts} (userid, zabbixhostid, hostname, enabled) values ('%s', '%s', '%s', '%s')";
-    $result = db_query($sql, $zabbixuserid, $zabbixhostid, $zabbixhostname, $zabbixhostenabled);
-    if ($result)
-        $hostid = db_last_insert_id('zabbix_hosts', 'hostid');
+  $sql = "insert into {zabbix_hosts} (userid, zabbixhostid, hostname, enabled) values ('%s', '%s', '%s', '%s')";
+  $result = db_query($sql, $zabbixuserid, $zabbixhostid, $zabbixhostname, $zabbixhostenabled);
+  if ($result)
+    $hostid = db_last_insert_id('zabbix_hosts', 'hostid');
 
-    foreach ($zabbixhosttemplateids as $value) {
+  foreach ($zabbixhosttemplateids as $value) {
 
-        $sql = "select roleid from {zabbix_roles_templates} where templateid = '%s'";
-        $result = db_query($sql, $value);
-        $role = db_fetch_object($result);
+    $sql = "select roleid from {zabbix_roles_templates} where templateid = '%s'";
+    $result = db_query($sql, $value);
+    $role = db_fetch_object($result);
 
-        $sql = "insert into {zabbix_hosts_roles} (hostid, roleid) values ('%s', '%s')";
-        $result = db_query($sql, $hostid, $role->roleid);
-
-    }
-
+    $sql = "insert into {zabbix_hosts_roles} (hostid, roleid) values ('%s', '%s')";
+    $result = db_query($sql, $hostid, $role->roleid);
+  }
 }
 
 /**
@@ -454,14 +451,14 @@ function zabbix_bridge_add_host_to_zabbix_userid(
  */
 function zabbix_bridge_drupal_to_zabbix_emailid($emailid) {
 
-    $sql = 'select zabbixmediaid from {zabbix_emails} where emailid = %s';
-    $result = db_query($sql, $emailid);
+  $sql = 'select zabbixmediaid from {zabbix_emails} where emailid = %s';
+  $result = db_query($sql, $emailid);
 
-    $email = db_fetch_object($result);
+  $email = db_fetch_object($result);
 
-    zabbix_bridge_debug(print_r($email, TRUE));
+  zabbix_bridge_debug(print_r($email, TRUE));
 
-    return $email->zabbixmediaid;
+  return $email->zabbixmediaid;
 }
 
 /**
@@ -471,87 +468,77 @@ function zabbix_bridge_drupal_to_zabbix_emailid($emailid) {
  * @return string
  */
 function zabbix_emails_table($userid = NULL) {
-    global $user;
+  global $user;
 
-    $rows = array();
-    $count = PAGER_COUNT;
-    $id = TABLE_ID_EMAILS_MAPPING;
+  $rows = array();
+  $count = PAGER_COUNT;
+  $id = TABLE_ID_EMAILS_MAPPING;
 
-    if (isset($userid)) {
-        $header = array('Email', 'Severity', 'Enabled');
-        $results = pager_query("select e.emailid, e.email, e.zabbixmediaid, zs.name severity, e.enabled from {zabbix_emails} e left join {zabbix_emails_severities} zes on e.emailid = zes.emailid left join {zabbix_severities} zs on zes.severityid = zs.severityid where e.userid = %s", $count, $id, null, $user->uid);
-    } else {
-        $header = array('Username', 'Email Id', 'Email', 'Zabbix Media Id', 'Severity', 'Enabled');
-        $results = pager_query("select u.name, e.emailid, e.email, e.zabbixmediaid, zs.name severity, e.enabled from {zabbix_emails} e left join {zabbix_emails_severities} zes on e.emailid = zes.emailid left join {zabbix_severities} zs on zes.severityid = zs.severityid left join {users} u on u.uid = e.userid", $count, $id);
+  if (isset($userid)) {
+    $header = array('Email', 'Severity', 'Enabled');
+    $results = pager_query("select e.emailid, e.email, e.zabbixmediaid, zs.name severity, e.enabled from {zabbix_emails} e left join {zabbix_emails_severities} zes on e.emailid = zes.emailid left join {zabbix_severities} zs on zes.severityid = zs.severityid where e.userid = %s", $count, $id, null, $user->uid);
+  }
+  else {
+    $header = array('Username', 'Email Id', 'Email', 'Zabbix Media Id', 'Severity', 'Enabled');
+    $results = pager_query("select u.name, e.emailid, e.email, e.zabbixmediaid, zs.name severity, e.enabled from {zabbix_emails} e left join {zabbix_emails_severities} zes on e.emailid = zes.emailid left join {zabbix_severities} zs on zes.severityid = zs.severityid left join {users} u on u.uid = e.userid", $count, $id);
+  }
+
+  $lastzabbixmediaid = -1;
+
+  while ($node = db_fetch_object($results)) {
+
+    if (!isset($userid)) {
+
+      $rows[] = array(
+          $node->name,
+          $node->emailid,
+          $node->email,
+          $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->zabbixmediaid,
+          $node->severity,
+          $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
+          $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
+                  l($node->enabled == 0 ? 'Disable' : 'Enable', 'emails/enable-disable/' . $node->emailid) . ' | ' .
+                  l('Delete', 'emails/delete/' . $node->emailid) . ' | ' .
+                  l('Update', 'emails/update/' . $node->emailid)
+
+                  ),
+      );
+    }
+    else {
+
+      $rows[] = array(
+          $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->email,
+          $node->severity,
+          $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
+          $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
+
+                  l($node->enabled == 0 ? 'Disable' : 'Enable', 'emails/enable-disable/' . $node->emailid) . ' | ' .
+                  l('Delete', 'emails/delete/' . $node->emailid) . ' | ' .
+                  l('Update', 'emails/update/' . $node->emailid)
+
+                  ),
+      );
     }
 
-    $lastzabbixmediaid = -1;
+    $lastzabbixmediaid = $node->zabbixmediaid;
+  }
 
-    while ($node = db_fetch_object($results)) {
+  if ($lastzabbixmediaid == -1) {
 
-        if (!isset($userid)) {
+    if (!isset($userid)) {
 
-            $rows[] = array(
-
-                $node->name,
-                $node->emailid,
-                $node->email,
-                $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->zabbixmediaid,
-                $node->severity,
-                $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
-                $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
-                    l($node->enabled == 0 ? 'Disable' : 'Enable', 'emails/enable-disable/' . $node->emailid) . ' | ' .
-                    l('Delete', 'emails/delete/' . $node->emailid) . ' | ' .
-                    l('Update', 'emails/update/' . $node->emailid)
-
-                ),
-
-            );
-
-        }
-        else {
-
-            $rows[] = array(
-
-                $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->email,
-                $node->severity,
-                $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
-                $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
-
-                    l($node->enabled == 0 ? 'Disable' : 'Enable', 'emails/enable-disable/' . $node->emailid) . ' | ' .
-                    l('Delete', 'emails/delete/' . $node->emailid) . ' | ' .
-                    l('Update', 'emails/update/' . $node->emailid)
-
-                ),
-
-            );
-
-        }
-
-        $lastzabbixmediaid = $node->zabbixmediaid;
-
+      $rows[] = array(t('No Emails have been defined yet.'), '', '', '', '', '');
     }
-    
-    if ($lastzabbixmediaid == -1) {
+    else {
 
-        if (!isset($userid)) {
-
-            $rows[] = array(t('No Emails have been defined yet.'), '', '', '', '', '');
-
-        }
-        else {
-
-            $rows[] = array(t('No Emails have been defined yet.'), '', '', '');
-
-        }
-
+      $rows[] = array(t('No Emails have been defined yet.'), '', '', '');
     }
+  }
 
-    $table_attributes = array('id' => 'emails-table', 'align' => 'center');
-    $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
+  $table_attributes = array('id' => 'emails-table', 'align' => 'center');
+  $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
 
-    return $output;
-
+  return $output;
 }
 
 /**
@@ -561,28 +548,25 @@ function zabbix_emails_table($userid = NULL) {
  */
 function zabbix_bridge_calculate_severity($severities) {
 
-    if (!is_array($severities)) {
+  if (!is_array($severities)) {
 
-        $tmp = $severities;
-        $severities = array();
+    $tmp = $severities;
+    $severities = array();
 
-        $severities[] = $tmp;
+    $severities[] = $tmp;
+  }
 
-    }
+  $sql = 'select value from {zabbix_severities} where severityid in (' . db_placeholders($severities, 'int') . ')';
+  $result = db_query($sql, $severities);
 
-    $sql = 'select value from {zabbix_severities} where severityid in (' . db_placeholders($severities, 'int') . ')';
-    $result = db_query($sql, $severities);
+  $severity = 0;
 
-    $severity = 0;
+  while ($rs = db_fetch_array($result)) {
 
-    while ($rs = db_fetch_array($result)) {
+    $severity += pow(2, $rs['value']);
+  }
 
-        $severity += pow(2, $rs['value']);
-
-    }
-
-    return $severity;
-
+  return $severity;
 }
 
 ?>

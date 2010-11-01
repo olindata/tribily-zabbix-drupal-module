@@ -1,4 +1,5 @@
 <?php
+
 // $Id$
 
 /**
@@ -10,17 +11,16 @@
  */
 function zabbix_bridge_install() {
 
-    drupal_install_schema('zabbix_bridge');
+  drupal_install_schema('zabbix_bridge');
 
-    db_query("INSERT INTO {zabbix_drupal_account} (drupal_uid) SELECT uid FROM {users} u where u.uid > 0");
+  db_query("INSERT INTO {zabbix_drupal_account} (drupal_uid) SELECT uid FROM {users} u where u.uid > 0");
 
-    db_query("INSERT INTO {zabbix_severities} (`name`, `value`, `description`) VALUES ('Not classified', 0, 'This is an unclassified severity')");
-    db_query("INSERT INTO {zabbix_severities} (`name`, `value`, `description`) VALUES ('Information', 1, 'This is an informative severity')");
-    db_query("INSERT INTO {zabbix_severities} (`name`, `value`, `description`) VALUES ('Warning', 2, 'This is a warning severity')");
-    db_query("INSERT INTO {zabbix_severities} (`name`, `value`, `description`) VALUES ('Average', 3, 'This is an average severity')");
-    db_query("INSERT INTO {zabbix_severities} (`name`, `value`, `description`) VALUES ('High', 4, 'This is a high severity')");
-    db_query("INSERT INTO {zabbix_severities} (`name`, `value`, `description`) VALUES ('Disaster', 5, 'This is a disastrous severity of epic proportions!')");
-
+  db_query("INSERT INTO {zabbix_severities} (`name`, `value`, `description`) VALUES ('Not classified', 0, 'This is an unclassified severity')");
+  db_query("INSERT INTO {zabbix_severities} (`name`, `value`, `description`) VALUES ('Information', 1, 'This is an informative severity')");
+  db_query("INSERT INTO {zabbix_severities} (`name`, `value`, `description`) VALUES ('Warning', 2, 'This is a warning severity')");
+  db_query("INSERT INTO {zabbix_severities} (`name`, `value`, `description`) VALUES ('Average', 3, 'This is an average severity')");
+  db_query("INSERT INTO {zabbix_severities} (`name`, `value`, `description`) VALUES ('High', 4, 'This is a high severity')");
+  db_query("INSERT INTO {zabbix_severities} (`name`, `value`, `description`) VALUES ('Disaster', 5, 'This is a disastrous severity of epic proportions!')");
 }
 
 /**
@@ -28,95 +28,95 @@ function zabbix_bridge_install() {
  */
 function zabbix_bridge_schema() {
 
-    $schema = array();
+  $schema = array();
 
-    $schema['zabbix_drupal_account'] = array(
-        'description' => 'Drupal-Zabbix Association',
-        'fields' => array(
-            'id' => array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE),
-            'drupal_uid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => FALSE),
-            'zabbix_uid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => FALSE),
-            'zabbix_usrgrp_id' => array('type' => 'int', 'size' => 'big', 'unsigned' => TRUE, 'not null' => FALSE),
-            'zabbix_hostgrp_id' => array('type' => 'int', 'size' => 'big', 'unsigned' => TRUE, 'not null' => FALSE)
-        ),
-        'primary key' => array('id'),
-        'unique key' => array('zda_UNIQUE' => 'drupal_uid')
-    );
+  $schema['zabbix_drupal_account'] = array(
+      'description' => 'Drupal-Zabbix Association',
+      'fields' => array(
+          'id' => array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE),
+          'drupal_uid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => FALSE),
+          'zabbix_uid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => FALSE),
+          'zabbix_usrgrp_id' => array('type' => 'int', 'size' => 'big', 'unsigned' => TRUE, 'not null' => FALSE),
+          'zabbix_hostgrp_id' => array('type' => 'int', 'size' => 'big', 'unsigned' => TRUE, 'not null' => FALSE)
+      ),
+      'primary key' => array('id'),
+      'unique key' => array('zda_UNIQUE' => 'drupal_uid')
+  );
 
-    $schema['zabbix_role'] = array(
-        'description' => 'Zabbix role',
-        'fields' => array(
-            'roleid' => array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE),
-            'name' => array('type' => 'varchar', 'not null' => TRUE, 'length' => 50),
-            'description' => array('type' => 'varchar', 'not null' => FALSE, 'length' => 255)
-        ),
-        'primary key' => array('roleid'),
-    );
+  $schema['zabbix_role'] = array(
+      'description' => 'Zabbix role',
+      'fields' => array(
+          'roleid' => array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE),
+          'name' => array('type' => 'varchar', 'not null' => TRUE, 'length' => 50),
+          'description' => array('type' => 'varchar', 'not null' => FALSE, 'length' => 255)
+      ),
+      'primary key' => array('roleid'),
+  );
 
-    $schema['zabbix_roles_templates'] = array(
-        'description' => 'Zabbix role-template association',
-        'fields' => array(
-            'roleid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
-            'templateid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE)
-        ),
-        'primary key' => array('roleid', 'templateid')
-    );
+  $schema['zabbix_roles_templates'] = array(
+      'description' => 'Zabbix role-template association',
+      'fields' => array(
+          'roleid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+          'templateid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE)
+      ),
+      'primary key' => array('roleid', 'templateid')
+  );
 
-    $schema['zabbix_hosts'] = array(
-        'description' => 'Holds the hosts assigned to a user in zabbix',
-        'fields' => array(
-            'userid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
-            'hostid' => array('type' => 'serial', 'not null' => TRUE),
-            'zabbixhostid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
-            'hostname' => array('type' => 'varchar', 'length' => 64, 'not null' => TRUE),
-            'enabled' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE),
-        ),
-        'primary key' => array('hostid')
-    );
+  $schema['zabbix_hosts'] = array(
+      'description' => 'Holds the hosts assigned to a user in zabbix',
+      'fields' => array(
+          'userid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+          'hostid' => array('type' => 'serial', 'not null' => TRUE),
+          'zabbixhostid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+          'hostname' => array('type' => 'varchar', 'length' => 64, 'not null' => TRUE),
+          'enabled' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE),
+      ),
+      'primary key' => array('hostid')
+  );
 
 
-    $schema['zabbix_hosts_roles'] = array(
-        'description' => 'Connects hosts and their assigned roles',
-        'fields' => array(
-            'hostid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
-            'roleid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
-        ),
-        'primary key' => array('hostid, roleid')
-    );
+  $schema['zabbix_hosts_roles'] = array(
+      'description' => 'Connects hosts and their assigned roles',
+      'fields' => array(
+          'hostid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+          'roleid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+      ),
+      'primary key' => array('hostid, roleid')
+  );
 
-    $schema['zabbix_emails'] = array(
-        'description' => 'Holds emails for a given user',
-        'fields' => array(
-            'userid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
-            'emailid' => array('type' => 'serial', 'not null' => TRUE),
-            'zabbixmediaid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
-            'email' => array('type' => 'varchar', 'not null' => TRUE, 'length' => 100),
-            'enabled' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE)
-        ),
-        'primary key' => array('emailid')
-    );
+  $schema['zabbix_emails'] = array(
+      'description' => 'Holds emails for a given user',
+      'fields' => array(
+          'userid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+          'emailid' => array('type' => 'serial', 'not null' => TRUE),
+          'zabbixmediaid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+          'email' => array('type' => 'varchar', 'not null' => TRUE, 'length' => 100),
+          'enabled' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE)
+      ),
+      'primary key' => array('emailid')
+  );
 
-    $schema['zabbix_severities'] = array(
-        'description' => '',
-        'fields' => array(
-            'severityid' => array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE),
-            'name' => array('type' => 'varchar', 'not null' => TRUE, 'length' => 50),
-            'value' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE),
-            'description' => array('type' => 'varchar', 'not null' => FALSE, 'length' => 255)
-        ),
-        'primary key' => array('severityid')
-    );
-
-    $schema['zabbix_emails_severities'] = array(
+  $schema['zabbix_severities'] = array(
       'description' => '',
-        'fields' => array(
-            'emailid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
-            'severityid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE)
-        ),
-        'primary key' => array('emailid,severityid')
-    );
+      'fields' => array(
+          'severityid' => array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE),
+          'name' => array('type' => 'varchar', 'not null' => TRUE, 'length' => 50),
+          'value' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE),
+          'description' => array('type' => 'varchar', 'not null' => FALSE, 'length' => 255)
+      ),
+      'primary key' => array('severityid')
+  );
 
-    return $schema;
+  $schema['zabbix_emails_severities'] = array(
+      'description' => '',
+      'fields' => array(
+          'emailid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+          'severityid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE)
+      ),
+      'primary key' => array('emailid,severityid')
+  );
+
+  return $schema;
 }
 
 /**
@@ -124,6 +124,5 @@ function zabbix_bridge_schema() {
  */
 function zabbix_bridge_uninstall() {
 
-    drupal_uninstall_schema('zabbix_bridge');
-    
+  drupal_uninstall_schema('zabbix_bridge');
 }
