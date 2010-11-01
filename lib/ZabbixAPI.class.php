@@ -298,7 +298,7 @@ class ZabbixAPI {
                 CURLOPT_CONNECTTIMEOUT => 5,        // Maximm number of seconds to establish a connection, shouldn't take 5 seconds
                 CURLOPT_SSL_VERIFYHOST => FALSE,    // Incase we have a fake SSL Cert...
                 CURLOPT_SSL_VERIFYPEER =>FALSE,     //    Ditto
-                CURLOPT_FOLLOWLOCATION => TRUE,     // Incase there's a redirect in place (moved zabbix url), follow it automatically
+                //CURLOPT_FOLLOWLOCATION => TRUE,     // Incase there's a redirect in place (moved zabbix url), follow it automatically
                 CURLOPT_FRESH_CONNECT => TRUE       // Ensures we don't use a cached connection or response
                  );
     
