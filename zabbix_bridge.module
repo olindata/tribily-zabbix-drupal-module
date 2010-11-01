@@ -488,8 +488,8 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
     $hostgroupid = $data['zabbix_hostgrp_id'];
     $usergroupid = $data['zabbix_usrgrp_id'];
 
-    $result = db_query('DELETE FROM {zabbix_drupal_account} WHERE drupal_uid=%s', $account->uid);
-    $result = db_query('DELETE FROM {zabbix_emails} WHERE userid=%s', $account->uid);
+    $result = db_query("DELETE FROM {zabbix_drupal_account} WHERE drupal_uid='%s'", $account->uid);
+    $result = db_query("DELETE FROM {zabbix_emails} WHERE userid='%s'", $account->uid);
 
     //delete the user from zabbix (deletes media as well)
     $deletedusers = ZabbixAPI::fetch_array('user', 'delete', array('userid' => $zabbixuserid))
@@ -500,35 +500,35 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
         $hostparams = array('groupids' => $hostgroupid);
 
         $hostids = ZabbixAPI::fetch_array('host', 'get', $hostparams)
-                or drupal_set_message('Unable to retrieve hosts: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+                or drupal_set_message('Unable to retrieve hosts: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
-        zabbix_bridge_debug('Zabbix hosts retrieved: ', print_r($hostids, true));
+        zabbix_bridge_debug('Zabbix hosts retrieved: ', print_r($hostids, TRUE));
 
         $deletedhosts = ZabbixAPI::fetch_array('host', 'delete', $hostids)
-                or drupal_set_message('Unable to delete hosts: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+                or drupal_set_message('Unable to delete hosts: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
-        zabbix_bridge_debug('Zabbix hosts deleted: ', print_r($deletedhosts, true));
+        zabbix_bridge_debug('Zabbix hosts deleted: ', print_r($deletedhosts, TRUE));
         
         // delete the user's hostgroup
         $deletedhostgroups = ZabbixAPI::fetch_array('hostgroup', 'delete', array(array('groupid' => $hostgroupid)))
-                or drupal_set_message('Unable to delete hostgroup: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
-        zabbix_bridge_debug('Zabbix hostgroup deleted: ', print_r($deletedhostgroups, true));
+                or drupal_set_message('Unable to delete hostgroup: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+        zabbix_bridge_debug('Zabbix hostgroup deleted: ', print_r($deletedhostgroups, TRUE));
 
         // delete the user's usergroup
         $deletedusergroups = ZabbixAPI::fetch_array('usergroup', 'delete', array($usergroupid))
-                or drupal_set_message('Unable to delete usergroup: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
-        zabbix_bridge_debug('Zabbix usergroup deleted: ', print_r($deletedusergroups, true));
+                or drupal_set_message('Unable to delete usergroup: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+        zabbix_bridge_debug('Zabbix usergroup deleted: ', print_r($deletedusergroups, TRUE));
 
         // remove actions
         $actionids = ZabbixAPI::fetch_array('action', 'get', array('pattern' => $account->name))
-                or drupal_set_message('Unable to retrieve actions: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+                or drupal_set_message('Unable to retrieve actions: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
-        zabbix_bridge_debug('Zabbix actions retrieved: ', print_r($actionids, true));
+        zabbix_bridge_debug('Zabbix actions retrieved: ', print_r($actionids, TRUE));
 
         $deletedactions = ZabbixAPI::fetch_array('action', 'delete', $actionids)
-                or drupal_set_message('Unable to delete actions: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+                or drupal_set_message('Unable to delete actions: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
-        zabbix_bridge_debug('Zabbix actions deleted: ', print_r($deletedactions, true));
+        zabbix_bridge_debug('Zabbix actions deleted: ', print_r($deletedactions, TRUE));
 
     }
 }
@@ -560,12 +560,12 @@ $name, $pass, $mail, $drupaluid, $zabbixuserid = NULL, $zabbixusergroupid = NULL
 
     // This logs into Zabbix, and returns false if it fails
     zabbix_api_login()
-            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     if (!isset($zabbixusergroupid)) {
         //create the usergroup
         $zabbixusergroupid = ZabbixAPI::fetch_string('usergroup', 'create', array(array('name' => 'Customer Usergroup ' . $name)))
-                or drupal_set_message('Unable to create zabbix user group: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+                or drupal_set_message('Unable to create zabbix user group: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
         zabbix_bridge_debug("Zabbix usergroup created: $zabbixusergroupid");
     }
 
@@ -574,21 +574,21 @@ $name, $pass, $mail, $drupaluid, $zabbixuserid = NULL, $zabbixusergroupid = NULL
         $zabbixuserid = ZabbixAPI::fetch_string('user', 'create', array('email' => $mail,
                     'alias' => $name,
                     'passwd' => $pass))
-                or drupal_set_message('Unable to create zabbix user: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+                or drupal_set_message('Unable to create zabbix user: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
         zabbix_bridge_debug("Zabbix user created: $zabbixuserid");
 
         //add the email address to it's media
         $medias = ZabbixAPI::fetch_array('user', 'addMedia', array('users' => array('userid' => $zabbixuserid), 'medias' => array('mediatypeid' => 1, 'sendto' => $mail, 'active' => 0, 'severity' => 63, 'period' => '1-7,00:00-23:59;')))
-                or drupal_set_message('Unable to add media to user: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
-        zabbix_bridge_debug("Media added to zabbix user $medias.", print_r($medias, true) . "\n");
+                or drupal_set_message('Unable to add media to user: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+        zabbix_bridge_debug("Media added to zabbix user $medias.", print_r($medias, TRUE) . "\n");
 
         $media = array(
             'userids' => array($zabbixuserid),
-            'extendoutput' => true
+            'extendoutput' => TRUE
         );
 
         $usermedia = ZabbixAPI::fetch_array('user', 'getMedia', $media)
-                or drupal_set_message('Unable to retrieve user media. ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+                or drupal_set_message('Unable to retrieve user media. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
         foreach ($usermedia as $key => $value) {
 
@@ -604,7 +604,7 @@ $name, $pass, $mail, $drupaluid, $zabbixuserid = NULL, $zabbixusergroupid = NULL
         $updatedids = array();
         $updatedids = ZabbixAPI::fetch_array('usergroup', 'massAdd', array('usrgrpids' => array($zabbixusergroupid),
                     'userids' => array($zabbixuserid)))
-                or drupal_set_message('Unable to add user to usergroup: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+                or drupal_set_message('Unable to add user to usergroup: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
         zabbix_bridge_debug("Zabbix user $zabbixuserid added to usergroup $zabbixusergroupid: " . serialize($updatedids));
     }
 
@@ -612,7 +612,7 @@ $name, $pass, $mail, $drupaluid, $zabbixuserid = NULL, $zabbixusergroupid = NULL
 
         // create the hostgroup
         $zabbixhostgroupid = ZabbixAPI::fetch_string('hostgroup', 'create', array(array('name' => 'Customer Hostgroup ' . $name)))
-                or drupal_set_message('Unable to create zabbix hostgroup: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+                or drupal_set_message('Unable to create zabbix hostgroup: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
         zabbix_bridge_debug("Zabbix hostgroup created $zabbixhostgroupid");
     }
 

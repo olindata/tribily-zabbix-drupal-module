@@ -2,8 +2,14 @@
 
 // $Id$
 
-include_once 'zabbix_functions.php';
+/**
+ * @file
+ * Settings form for admin configuration
 
+ *
+ */
+
+include_once 'zabbix_functions.php';
 /**
  *
  * @return <type>
@@ -38,7 +44,7 @@ function zabbix_overview() {
 
   $output .= zabbix_emails_table();
 
-  $output .= l('Add email', 'emails/add'). ' | ' . l('Import from zabbix', 'emails/import');
+  $output .= l('Add email', 'emails/add') . ' | ' . l('Import from zabbix', 'emails/import');
 
   return $output;
 }

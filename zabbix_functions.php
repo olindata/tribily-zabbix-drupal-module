@@ -107,7 +107,7 @@ define('TRIGGER_VALUE_UNKNOWN', 2);
  */
 function zabbix_bridge_drupal_to_zabbix_hostid($hostid) {
 
-  $sql = 'select zabbixhostid from {zabbix_hosts} where hostid = %s';
+  $sql = "select zabbixhostid from {zabbix_hosts} where hostid = '%s'";
   $result = db_query($sql, $hostid);
 
   $host = db_fetch_object($result);
@@ -132,11 +132,11 @@ function zabbix_hosts_table($userid = NULL) {
 
   if (isset($userid)) {
     $header = array('Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
-    $results = pager_query("select h.hostid, h.hostname, h.zabbixhostid, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid where h.userid = %s", $count, $id, null, $user->uid);
+    $results = pager_query("select h.hostid, h.hostname, h.zabbixhostid, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid where h.userid = '%s' order by h.hostname, r.name", $count, $id, null, $user->uid);
   }
   else {
     $header = array('Username', 'Email', 'Zabbix Hostid', 'Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
-    $results = pager_query("select u.name, u.mail, h.hostid, h.zabbixhostid, h.hostname, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid left join {users} u on u.uid = h.userid", $count, $id);
+    $results = pager_query("select u.name, u.mail, h.hostid, h.zabbixhostid, h.hostname, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid left join {users} u on u.uid = h.userid order by u.name, h.hostname, r.name", $count, $id);
   }
 
 
@@ -202,7 +202,7 @@ function zabbix_roles_table() {
   $count = PAGER_COUNT;
   $id = TABLE_ID_USER_MAPPING;
 
-  $results = pager_query("select zr.*, zrt.templateid from zabbix_role zr left join zabbix_roles_templates zrt on zrt.roleid = zr.roleid", $count, $id);
+  $results = pager_query("select zr.*, zrt.templateid from {zabbix_role} zr left join {zabbix_roles_templates} zrt on zrt.roleid = zr.roleid", $count, $id);
 
 
   while ($node = db_fetch_object($results)) {
@@ -237,7 +237,7 @@ function zabbix_user_mapping_table() {
   $count = PAGER_COUNT;
   $id = TABLE_ID_USER_MAPPING;
 
-  $results = pager_query("select zda.id, du.uid, du.name, du.mail, zda.zabbix_uid, zda.zabbix_usrgrp_id, zda.zabbix_hostgrp_id                         from                            zabbix_drupal_account zda                            left join users du on du.uid = zda.drupal_uid", $count, $id);
+  $results = pager_query("select zda.id, du.uid, du.name, du.mail, zda.zabbix_uid, zda.zabbix_usrgrp_id, zda.zabbix_hostgrp_id from {zabbix_drupal_account} zda left join {users} du on du.uid = zda.drupal_uid order by du.name", $count, $id);
 
 
   while ($node = db_fetch_object($results)) {
@@ -451,7 +451,7 @@ $zabbixuserid, $zabbixhostid, $zabbixhostname, $zabbixhostenabled, $zabbixhostte
  */
 function zabbix_bridge_drupal_to_zabbix_emailid($emailid) {
 
-  $sql = 'select zabbixmediaid from {zabbix_emails} where emailid = %s';
+  $sql = "select zabbixmediaid from {zabbix_emails} where emailid = '%s'";
   $result = db_query($sql, $emailid);
 
   $email = db_fetch_object($result);
@@ -476,7 +476,7 @@ function zabbix_emails_table($userid = NULL) {
 
   if (isset($userid)) {
     $header = array('Email', 'Severity', 'Enabled');
-    $results = pager_query("select e.emailid, e.email, e.zabbixmediaid, zs.name severity, e.enabled from {zabbix_emails} e left join {zabbix_emails_severities} zes on e.emailid = zes.emailid left join {zabbix_severities} zs on zes.severityid = zs.severityid where e.userid = %s", $count, $id, null, $user->uid);
+    $results = pager_query("select e.emailid, e.email, e.zabbixmediaid, zs.name severity, e.enabled from {zabbix_emails} e left join {zabbix_emails_severities} zes on e.emailid = zes.emailid left join {zabbix_severities} zs on zes.severityid = zs.severityid where e.userid = '%s'", $count, $id, null, $user->uid);
   }
   else {
     $header = array('Username', 'Email Id', 'Email', 'Zabbix Media Id', 'Severity', 'Enabled');
@@ -548,21 +548,20 @@ function zabbix_emails_table($userid = NULL) {
  */
 function zabbix_bridge_calculate_severity($severities) {
 
+  // if the supplied param is not an array, make it one!
   if (!is_array($severities)) {
-
     $tmp = $severities;
     $severities = array();
-
     $severities[] = $tmp;
   }
 
+  // Get the severities from the database
   $sql = 'select value from {zabbix_severities} where severityid in (' . db_placeholders($severities, 'int') . ')';
   $result = db_query($sql, $severities);
 
+  // $severity needs to be a flag, add the power of 2 to the (zabbix-id)'th to the desired severity levels
   $severity = 0;
-
   while ($rs = db_fetch_array($result)) {
-
     $severity += pow(2, $rs['value']);
   }
 
@@ -576,7 +575,7 @@ function zabbix_bridge_get_all_emails_from_zabbix($extended = false) {
 
     // This logs into Zabbix, and returns false if it fails
     zabbix_api_login()
-            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     $zabbixmedia = ZabbixAPI::fetch_array('user', 'getMedia', array( 'extendoutput' => $extended ));
 
@@ -599,4 +598,3 @@ function zabbix_bridge_get_all_emails_from_zabbix($extended = false) {
 
 }
 
-?>

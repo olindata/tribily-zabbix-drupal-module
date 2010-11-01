@@ -4,7 +4,7 @@
 
 /**
  * @file
- * Settings form.
+ * Settings form for hosts
  *
  * @author raj
  */
@@ -33,7 +33,7 @@ function zabbix_hosts() {
  * @return object
  */
 function host_user_load($hostid) {
-  $query = "SELECT * FROM {zabbix_hosts} WHERE hostid = %d";
+  $query = "SELECT * FROM {zabbix_hosts} WHERE hostid = '%d'";
   $rs = db_query($query, $hostid);
 
   if ($rs) {
@@ -79,7 +79,7 @@ function host_enable_disable_confirm(&$form_state, $host) {
       '#value' => $host,
   );
 
-  $sql = 'select enabled from {zabbix_hosts} where hostid = %s';
+  $sql = "select enabled from {zabbix_hosts} where hostid = '%s'";
   $enabled = db_result(db_query($sql, $host));
 
   $form['_current_state'] = array(
@@ -174,7 +174,7 @@ function zabbix_host_enable_disable($hostid, $enabled) {
  */
 function zabbix_host_delete($hostid) {
 
-  $sql = "select zabbixhostid from {zabbix_hosts} where hostid = %s";
+  $sql = "select zabbixhostid from {zabbix_hosts} where hostid = '%s'";
   $zabbixhostid = db_result(db_query($sql, $hostid));
 
   zabbix_api_login()
@@ -183,10 +183,10 @@ function zabbix_host_delete($hostid) {
   ZabbixAPI::fetch_string('host', 'delete', array($zabbixhostid))
           or drupal_set_message('Unable to delete host. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
-  $sql = "delete from {zabbix_hosts_roles} where hostid = %s";
+  $sql = "delete from {zabbix_hosts_roles} where hostid = '%s'";
   $result = db_query($sql, $hostid);
 
-  $sql = "delete from {zabbix_hosts} where hostid = %s";
+  $sql = "delete from {zabbix_hosts} where hostid = '%s'";
   $result = db_query($sql, $hostid);
 
   return $result;
@@ -202,7 +202,7 @@ function zabbix_host_delete($hostid) {
 function zabbix_bridge_hosts_form(&$form_state, $operation, $hostid = NULL) {
 
   if (($operation == 'update') && isset($hostid)) {
-    $sql = "select userid, hostid, zabbixhostid, hostname, enabled from {zabbix_hosts} where hostid = %s";
+    $sql = "select userid, hostid, zabbixhostid, hostname, enabled from {zabbix_hosts} where hostid = '%s'";
     $result = db_query($sql, $hostid);
     $host = db_fetch_object($result);
   }
@@ -264,7 +264,7 @@ function zabbix_bridge_hosts_form(&$form_state, $operation, $hostid = NULL) {
   // get the assigned roles for this host
   if (isset($host->enabled)) {
 
-    $sql = "select roleid from {zabbix_hosts_roles} where hostid = %s";
+    $sql = "select roleid from {zabbix_hosts_roles} where hostid = '%s'";
     $result = db_query($sql, $hostid);
 
     while ($data = db_fetch_array($result)) {
@@ -333,7 +333,7 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
     }
   }
   else {
-    $sql = "select zabbixhostid from {zabbix_hosts} where hostid = %s";
+    $sql = "select zabbixhostid from {zabbix_hosts} where hostid = '%s'";
     $result = db_query($sql, $hostid);
     $data = db_fetch_array($result);
     $zabbixhostid = $data['zabbixhostid'];
@@ -345,7 +345,7 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
 
   //remove all roles from the host, so we can add the new ones later on
   if ($hostid != '') {
-    $sql = "select templateid from {zabbix_hosts_roles} zhr inner join {zabbix_roles_templates} zrt on zrt.roleid = zhr.roleid where zhr.hostid = %s";
+    $sql = "select templateid from {zabbix_hosts_roles} zhr inner join {zabbix_roles_templates} zrt on zrt.roleid = zhr.roleid where zhr.hostid = '%s'";
     $result = db_query($sql, $hostid);
 
     $template_ids = array();
@@ -380,7 +380,7 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
 
   if ($rolesadded > 0) {
     // retrieve zabbix template ids based on role ids
-    $result = db_query("SELECT * FROM {zabbix_roles_templates} WHERE roleid IN (%s)", implode(',', $role_ids));
+    $result = db_query("SELECT * FROM {zabbix_roles_templates} WHERE roleid IN ('%s')", implode("','", $role_ids));
 
     $addedtemplate_ids = array();
     while ($data = db_fetch_array($result)) {
@@ -462,4 +462,4 @@ function zabbix_bridge_import_hosts() {
   return TRUE;
 }
 
-?>
+

@@ -156,7 +156,7 @@ function zabbix_bridge_user_mapping_generate_confirm_submit($form, &$form_state)
   $id = $form_state['values']['_mapping'];
 
   //Get the current mapping
-  $sql = 'select drupal_uid, zabbix_uid, zabbix_usrgrp_id, zabbix_hostgrp_id from {zabbix_drupal_account} where id = %s';
+  $sql = "select drupal_uid, zabbix_uid, zabbix_usrgrp_id, zabbix_hostgrp_id from {zabbix_drupal_account} where id = '%s'";
   $result = db_query($sql, $id);
 
   $mapping = db_fetch_object($result);
@@ -242,10 +242,9 @@ function zabbix_bridge_user_mapping_delete_confirm_submit($form, &$form_state) {
  */
 function zabbix_mapping_delete($mappingid) {
 
-  $sql = "delete from {zabbix_drupal_account} where id = %s";
+  $sql = "delete from {zabbix_drupal_account} where id = '%s'";
   $result = db_query($sql, $mappingid);
 
   return $result;
 }
 
-?>

@@ -3,6 +3,7 @@
 // $Id$
 
 /*
+ * @file
  * For handling multiple emails
  *
  * @author rajkissu
@@ -34,13 +35,15 @@ function zabbix_bridge_emails() {
  */
 function zabbix_bridge_emails_form(&$form_state, $operation, $emailid = NULL) {
 
+  // Get details of email if we're updating
   if (($operation == 'update') && isset($emailid)) {
 
-    $sql = "select userid, emailid, email, zabbixmediaid, enabled from {zabbix_emails} where emailid = %s";
+    $sql = "select userid, emailid, email, zabbixmediaid, enabled from {zabbix_emails} where emailid = '%s'";
     $result = db_query($sql, $emailid);
     $email = db_fetch_object($result);
   }
 
+  // Set display fo form to reflect operation
   if ('add' == $operation) {
 
     $title = 'Add Email';
@@ -52,11 +55,13 @@ function zabbix_bridge_emails_form(&$form_state, $operation, $emailid = NULL) {
     $submit = 'Update';
   }
 
+  // Put it in the form
   $form['emails'] = array('#type' => 'fieldset',
       '#title' => t($title),
       '#weight' => -10
   );
 
+  // The email's id
   $form['emails']['emailid'] = array(
       '#type' => 'hidden',
       '#value' => $emailid,
@@ -101,7 +106,7 @@ function zabbix_bridge_emails_form(&$form_state, $operation, $emailid = NULL) {
   // get the assigned severities for this email
   if (isset($email->enabled)) {
 
-    $sql = "select severityid from {zabbix_emails_severities} where emailid = %s";
+    $sql = "select severityid from {zabbix_emails_severities} where emailid = '%s'";
     $result = db_query($sql, $emailid);
 
     while ($data = db_fetch_array($result)) {
@@ -133,29 +138,39 @@ function zabbix_bridge_emails_form(&$form_state, $operation, $emailid = NULL) {
  * @return <type>
  */
 function zabbix_bridge_emails_form_submit($form, &$form_state) {
-
+  // Global drupal user object
   global $user;
 
-  $result = db_query("SELECT zabbix_uid FROM {zabbix_drupal_account} WHERE drupal_uid = '%s'", $user->uid)
-          or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
+  // if this was an existing email, retrieve it
+  if (isset($form_state['clicked_button']['#post']['emailid'])) {
+    $emailid = $form_state['clicked_button']['#post']['emailid'];
+  }
 
-  $data = db_fetch_array($result);
+  if ($emailid <> '') {
+    // Get the zabbix userid belonging to the emailid we got from the submitted form
+    $result = db_query("SELECT zda.zabbix_uid FROM {zabbix_drupal_account} zda inner join {zabbix_emails} ze on ze.userid = zda.drupal_uid where ze.emailid = '%s'", $emailid)
+            or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
+    $data = db_fetch_array($result);
+    $zabbix_uid = $data['zabbix_uid'];
+  }
+  else {
+    // Get the zabbix userid belonging to the logged in drupal user
+    $result = db_query("SELECT zda.zabbix_uid FROM {zabbix_drupal_account} zda where zda.drupal_uid = '%s'", $user->uid)
+            or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
+    $data = db_fetch_array($result);
+    $zabbix_uid = $data['zabbix_uid'];
+  }
 
-  if (!$data)
-    drupal_set_message('No drupal-zabbix association exists for this user!', DRUPAL_MSG_TYPE_ERR);
-
-  $email = array();
-
-  $zabbix_uid = $data['zabbix_uid'];
-
-  $email['users'] = array('userid' => $zabbix_uid);
-
+  // Get some of the posted values from the form
   // 0 - status monitored, 1 - status not monitored
   $status = $form_state['clicked_button']['#post']['status'];
   $severities = $form_state['clicked_button']['#post']['severities'];
   $severity = zabbix_bridge_calculate_severity($severities);
   $sendto = $form_state['clicked_button']['#post']['email'];
 
+  // Fill an array to send to zabbix
+  $email = array();
+  $email['users'] = array('userid' => $zabbix_uid);
   $email['medias'] = array(
       'mediatypeid' => 1,
       'active' => ('monitored' == $status) ? 0 : 1,
@@ -164,11 +179,6 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
       'sendto' => $sendto
   );
 
-  if (isset($form_state['clicked_button']['#post']['emailid'])) {
-
-    $emailid = $form_state['clicked_button']['#post']['emailid'];
-  }
-
   // This logs into Zabbix, and returns FALSE if it fails
   zabbix_api_login()
           or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
@@ -176,15 +186,13 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
   //create the email if it's not already existing
   if ($emailid == '') {
 
-    drupal_set_message(print_r($email, TRUE));
+    zabbix_bridge_debug(drupal_set_message(print_r($email, TRUE)));
     $addedmedia = ZabbixAPI::fetch_string('user', 'addMedia', $email);
 
     if ($addedmedia) {
-
       drupal_set_message('Email successfully added.');
     }
     else {
-
       drupal_set_message('Failed to add email: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
     }
   }
@@ -195,11 +203,10 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
         'userids' => array($zabbix_uid),
         'extendoutput' => TRUE
     );
-
     $usermedia = ZabbixAPI::fetch_array('user', 'getMedia', $media)
             or drupal_set_message('Problem retrieving existing media properties: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
-    $sql = "select zabbixmediaid from {zabbix_emails} where emailid = %s";
+    $sql = "select zabbixmediaid from {zabbix_emails} where emailid = '%s'";
     $result = db_query($sql, $emailid);
 
     $data = db_fetch_array($result);
@@ -224,13 +231,13 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
         'medias' => $usermedia
     );
 
-    drupal_set_message(print_r($usermedia, TRUE));
+    zabbix_bridge_debug(drupal_set_message(print_r($usermedia, TRUE)));
 
     //update the email and enabled status
     $usermedia = ZabbixAPI::fetch_string('user', 'updateMedia', $usermedia)
             or drupal_set_message('Problem updating existing email properties', DRUPAL_MSG_TYPE_ERR);
 
-    drupal_set_message('update: ' . print_r($usermedia, TRUE));
+    zabbix_bridge_debug(drupal_set_message('update: ' . print_r($usermedia, TRUE)));
   }
 
   // get user media
@@ -354,7 +361,7 @@ function zabbix_bridge_emails_delete_confirm_submit($form, &$form_state) {
  */
 function zabbix_bridge_emails_delete($emailid) {
 
-  $sql = "select zabbixmediaid from {zabbix_emails} where emailid = %s";
+  $sql = "select zabbixmediaid from {zabbix_emails} where emailid = '%s'";
   $zabbixmediaid = db_result(db_query($sql, $emailid));
 
   zabbix_api_login()
@@ -363,10 +370,10 @@ function zabbix_bridge_emails_delete($emailid) {
   ZabbixAPI::fetch_string('user', 'deleteMedia', array($zabbixmediaid))
           or drupal_set_message('Unable to delete media. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
-  $sql = "delete from {zabbix_emails_severities} where emailid = %s";
+  $sql = "delete from {zabbix_emails_severities} where emailid = '%s'";
   $result = db_query($sql, $emailid);
 
-  $sql = "delete from {zabbix_emails} where emailid = %s";
+  $sql = "delete from {zabbix_emails} where emailid = '%s'";
   $result = db_query($sql, $emailid);
 
   return $result;
@@ -384,7 +391,7 @@ function zabbix_bridge_emails_enable_disable_confirm(&$form_state, $email) {
       '#value' => $email,
   );
 
-  $sql = 'select enabled from {zabbix_emails} where emailid = %s';
+  $sql = "select enabled from {zabbix_emails} where emailid = '%s'";
   $enabled = db_result(db_query($sql, $email));
 
   $form['_current_state'] = array(
@@ -503,45 +510,38 @@ function zabbix_bridge_emails_enable_disable($zabbixmediaid, $enabled) {
  */
 function zabbix_bridge_import_emails() {
 
-    $emails = array();
-    $emails = zabbix_bridge_get_all_emails_from_zabbix(true);
+  $emails = array();
+  $emails = zabbix_bridge_get_all_emails_from_zabbix(TRUE);
 
-    zabbix_bridge_debug(print_r($emails, true));
+  zabbix_bridge_debug(print_r($emails, TRUE));
 
-    foreach ($emails as $email) {
+  foreach ($emails as $email) {
 
-        $sql = "SELECT emailid FROM {zabbix_emails} WHERE zabbixmediaid='%s'";
-        $results = db_query($sql, $email['mediaid']);
+    $sql = "SELECT emailid FROM {zabbix_emails} WHERE zabbixmediaid='%s'";
+    $results = db_query($sql, $email['mediaid']);
 
-        $mediaid = db_fetch_object($results);
+    $mediaid = db_fetch_object($results);
 
-        if ($mediaid) {
+    if ($mediaid) {
 
-            drupal_set_message('Skipped email ' . $email['mediaid'] . ' (' . $email['sendto'] . '), as it already exists.');
-
-        }
-        else {
-
-            $sql = "SELECT drupal_uid FROM {zabbix_drupal_account} WHERE zabbix_uid=%s";
-            $results = db_query($sql, $email['userid']);
-
-            zabbix_bridge_debug($sql);
-
-            $user = db_fetch_object($results);
-
-            if ($user) {
-
-                $sql = "INSERT INTO {zabbix_emails} (userid, zabbixmediaid, email, enabled) VALUES ('%s', '%s', '%s', '%s')";
-                $results = db_query($sql, $user->drupal_uid, $email['mediaid'], $email['sendto'], $email['active']);
-
-            }
-
-        }
-
+      drupal_set_message('Skipped email ' . $email['mediaid'] . ' (' . $email['sendto'] . '), as it already exists.');
     }
+    else {
 
-    drupal_goto("admin/settings/zabbix_bridge");
+      $sql = "SELECT drupal_uid FROM {zabbix_drupal_account} WHERE zabbix_uid='%s'";
+      $results = db_query($sql, $email['userid']);
 
+      zabbix_bridge_debug($sql);
+
+      $user = db_fetch_object($results);
+
+      if ($user) {
+
+        $sql = "INSERT INTO {zabbix_emails} (userid, zabbixmediaid, email, enabled) VALUES ('%s', '%s', '%s', '%s')";
+        $results = db_query($sql, $user->drupal_uid, $email['mediaid'], $email['sendto'], $email['active']);
+      }
+    }
+  }
+
+  drupal_goto("admin/settings/zabbix_bridge");
 }
-
-?>
