@@ -323,7 +323,7 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
 
   //create the host if it's not already existing
   if ($hostid == '') {
-    drupal_set_message(print_r($host, TRUE));
+    zabbix_bridge_debug(drupal_set_message(print_r($host, TRUE)));
     $zabbixhostid = ZabbixAPI::fetch_string('host', 'create', array($host));
     if ($zabbixhostid) {
       drupal_set_message('Host successfully added.');

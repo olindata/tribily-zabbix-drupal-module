@@ -458,7 +458,7 @@ function zabbix_bridge_emails_enable_disable($zabbixmediaid, $enabled) {
     return;
   }
 
-  drupal_set_message(print_r($data, TRUE));
+  zabbix_bridge_debug(drupal_set_message(print_r($data, TRUE)));
 
   zabbix_api_login()
           or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
@@ -485,11 +485,11 @@ function zabbix_bridge_emails_enable_disable($zabbixmediaid, $enabled) {
   $usermedia['users'] = array('userid' => $data['zabbix_uid']);
   $usermedia['medias'] = $media;
 
-  drupal_set_message(print_r($usermedia, TRUE));
+  zabbix_bridge_debug(drupal_set_message(print_r($usermedia, TRUE)));
 
   $result = ZabbixAPI::fetch_string('user', 'updateMedia', $usermedia);
 
-  drupal_set_message(print_r($result, TRUE));
+  zabbix_bridge_debug(drupal_set_message(print_r($result, TRUE)));
 
   if (!$result) {
 
