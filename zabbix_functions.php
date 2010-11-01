@@ -569,4 +569,34 @@ function zabbix_bridge_calculate_severity($severities) {
   return $severity;
 }
 
+function zabbix_bridge_get_all_emails_from_zabbix($extended = false) {
+
+    $zabbixmedia = array();
+    $media = array();
+
+    // This logs into Zabbix, and returns false if it fails
+    zabbix_api_login()
+            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), true), DRUPAL_MSG_TYPE_ERR);
+
+    $zabbixmedia = ZabbixAPI::fetch_array('user', 'getMedia', array( 'extendoutput' => $extended ));
+
+    foreach ($zabbixmedia as $key => $value) {
+
+        if ($extended) {
+
+            $media[] = $value;
+
+        }
+        else {
+
+            $media[] = $key;
+
+        }
+
+    }
+
+    return $media;
+
+}
+
 ?>

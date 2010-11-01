@@ -36,6 +36,10 @@ function zabbix_overview() {
 
   $output .= l('Add mapping', 'zabbix-role-mapping/add') . ' | ' . l('Import from zabbix', 'zabbix-role-mapping/import');
 
+  $output .= zabbix_emails_table();
+
+  $output .= l('Add email', 'emails/add'). ' | ' . l('Import from zabbix', 'emails/import');
+
   return $output;
 }
 
