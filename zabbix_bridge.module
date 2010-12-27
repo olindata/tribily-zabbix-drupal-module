@@ -225,14 +225,69 @@ function zabbix_bridge_menu() {
   );
 
   $items['emails/import'] = array(
-      'title' => t('Import roles to the bridge'),
+      'title' => t('Import email addresses to the bridge'),
       'page callback' => 'zabbix_bridge_import_emails',
       'type' => MENU_CALLBACK,
       'access arguments' => array('administer site configuration'),
       'file' => 'zabbix_bridge.emails.inc',
   );
 
+  // mobile overview (accessible to user)
+  $items['mobiles/overview'] = array(
+      'title' => 'Mobile',
+      'page callback' => 'zabbix_bridge_mobiles',
+      'access arguments' => array('access mobiles'),
+      'type' => MENU_CALLBACK,
+      'file' => 'zabbix_bridge.mobiles.inc',
+  );
 
+  // add mobile number
+  $items['mobiles/add'] = array(
+      'title' => 'Add Mobile',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('zabbix_bridge_mobiles_form', 1),
+      'access arguments' => array('access mobiles'),
+      'type' => MENU_CALLBACK,
+      'file' => 'zabbix_bridge.mobiles.inc',
+  );
+
+  // update mobile number
+  $items['mobiles/update/%'] = array(
+      'title' => 'Update Mobile',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('zabbix_bridge_mobiles_form', 1, 2),
+      'access arguments' => array('access mobiles'),
+      'type' => MENU_CALLBACK,
+      'file' => 'zabbix_bridge.mobiles.inc',
+  );
+
+  // delete emails
+  $items['mobiles/delete/%'] = array(
+      'title' => t('Delete Mobile'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('zabbix_bridge_mobiles_delete_confirm', 2),
+      'type' => MENU_CALLBACK,
+      'access arguments' => array('access mobiles'),
+      'file' => 'zabbix_bridge.mobiles.inc',
+  );
+
+  // enable-disable emails
+  $items['mobiles/enable-disable/%'] = array(
+      'title' => t('Enable/Disable Mobile'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('zabbix_bridge_mobiles_enable_disable_confirm', 2),
+      'type' => MENU_CALLBACK,
+      'access arguments' => array('access mobiles'),
+      'file' => 'zabbix_bridge.mobiles.inc',
+  );
+
+  $items['mobiles/import'] = array(
+      'title' => t('Import mobile numbers to the bridge'),
+      'page callback' => 'zabbix_bridge_import_mobiles',
+      'type' => MENU_CALLBACK,
+      'access arguments' => array('administer site configuration'),
+      'file' => 'zabbix_bridge.mobiles.inc',
+  );
 
     return $items;
 }
@@ -243,7 +298,7 @@ function zabbix_bridge_menu() {
 
 function zabbix_bridge_perm() {
 
-  return array('access hosts', 'access emails');
+  return array('access hosts', 'access emails', 'access mobiles');
 }
 
 /**
@@ -442,7 +497,8 @@ function zabbix_bridge_update_zabbix_user_update_media($data, $edit, $account) {
 
     $media_data['users'] = array('userid' => $data['zabbix_uid']);
 
-    $media_data['medias'] = array('mediatypeid' => 1, 'sendto' => $edit['mail'],
+    $media_data['medias'] = array('mediatypeid' => 1,
+        'sendto' => $edit['mail'],
         'active' => 0, 'severity' => 63,
         'period' => '1-7,00:00-23:59;');
 
@@ -489,7 +545,12 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
     $usergroupid = $data['zabbix_usrgrp_id'];
 
     $result = db_query("DELETE FROM {zabbix_drupal_account} WHERE drupal_uid='%s'", $account->uid);
+
+    // delete emails
     $result = db_query("DELETE FROM {zabbix_emails} WHERE userid='%s'", $account->uid);
+
+    // delete mobile
+    $result = db_query("DELETE FROM {zabbix_mobiles} WHERE userid='%s'", $account->uid);
 
     //delete the user from zabbix (deletes media as well)
     $deletedusers = ZabbixAPI::fetch_array('user', 'delete', array('userid' => $zabbixuserid))
@@ -592,8 +653,23 @@ $name, $pass, $mail, $drupaluid, $zabbixuserid = NULL, $zabbixusergroupid = NULL
 
         foreach ($usermedia as $key => $value) {
 
-            $sql = "INSERT INTO {zabbix_emails} (userid, zabbixmediaid, email, enabled) VALUES ('%s', '%s', '%s', '%s')";
-            db_query($sql, $drupaluid, $value['mediaid'], $value['sendto'], $value['active']);
+            $sql = '';
+
+            switch($value['mediatypeid']) {
+                case 1:
+                    $sql = "INSERT INTO {zabbix_emails} (userid, zabbixmediaid, email, enabled) VALUES ('%s', '%s', '%s', '%s')";
+                    break;
+
+                case 3:
+                    $sql = "INSERT INTO {zabbix_mobiles} (userid, zabbixmediaid, number, enabled) VALUES ('%s', '%s', '%s', '%s')";
+                    break;
+            }
+
+            if (strlen($sql)) {
+                
+                db_query($sql, $drupaluid, $value['mediaid'], $value['sendto'], $value['active']);
+
+            }
 
         }
         

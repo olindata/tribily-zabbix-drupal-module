@@ -577,7 +577,7 @@ function zabbix_bridge_get_all_emails_from_zabbix($extended = false) {
     zabbix_api_login()
             or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
-    $zabbixmedia = ZabbixAPI::fetch_array('user', 'getMedia', array( 'extendoutput' => $extended ));
+    $zabbixmedia = ZabbixAPI::fetch_array('user', 'getMedia', array( 'extendoutput' => $extended, 'mediatypeid' => 1 ));
 
     foreach ($zabbixmedia as $key => $value) {
 
@@ -598,3 +598,129 @@ function zabbix_bridge_get_all_emails_from_zabbix($extended = false) {
 
 }
 
+/**
+ *
+ * @param <type> $mobileid
+ * @return <type>
+ */
+function zabbix_bridge_drupal_to_zabbix_mobileid($mobileid) {
+
+  $sql = "select zabbixmediaid from {zabbix_mobiles} where mobileid = '%s'";
+  $result = db_query($sql, $mobileid);
+
+  $mobile = db_fetch_object($result);
+
+  zabbix_bridge_debug(print_r($mobile, TRUE));
+
+  return $mobile->zabbixmediaid;
+}
+
+/**
+ *
+ * @global <type> $user
+ * @param <type> $userid
+ * @return string
+ */
+function zabbix_mobiles_table($userid = NULL) {
+  global $user;
+
+  $rows = array();
+  $count = PAGER_COUNT;
+  $id = TABLE_ID_EMAILS_MAPPING;
+
+  if (isset($userid)) {
+    $header = array('Mobile', 'Severity', 'Enabled');
+    $results = pager_query("select m.mobileid, m.number, m.zabbixmediaid, zs.name severity, m.enabled from {zabbix_mobiles} m left join {zabbix_mobiles_severities} zms on m.mobileid = zms.mobileid left join {zabbix_severities} zs on zms.severityid = zs.severityid where m.userid = '%s'", $count, $id, null, $user->uid);
+  }
+  else {
+    $header = array('Username', 'Mobile Id', 'Mobile Number', 'Zabbix Media Id', 'Severity', 'Enabled');
+    $results = pager_query("select u.name, m.mobileid, m.number, m.zabbixmediaid, zs.name severity, m.enabled from {zabbix_mobiles} m left join {zabbix_mobiles_severities} zms on m.mobileid = zms.mobileid left join {zabbix_severities} zs on zms.severityid = zs.severityid left join {users} u on u.uid = m.userid", $count, $id);
+  }
+
+  $lastzabbixmediaid = -1;
+
+  while ($node = db_fetch_object($results)) {
+
+    if (!isset($userid)) {
+
+      $rows[] = array(
+          $node->name,
+          $node->mobileid,
+          $node->number,
+          $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->zabbixmediaid,
+          $node->severity,
+          $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
+          $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
+                  l($node->enabled == 0 ? 'Disable' : 'Enable', 'mobiles/enable-disable/' . $node->mobileid) . ' | ' .
+                  l('Delete', 'mobiles/delete/' . $node->mobileid) . ' | ' .
+                  l('Update', 'mobiles/update/' . $node->mobileid)
+
+                  ),
+      );
+    }
+    else {
+
+      $rows[] = array(
+          $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->number,
+          $node->severity,
+          $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
+          $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
+
+                  l($node->enabled == 0 ? 'Disable' : 'Enable', 'mobiles/enable-disable/' . $node->mobileid) . ' | ' .
+                  l('Delete', 'mobiles/delete/' . $node->mobileid) . ' | ' .
+                  l('Update', 'mobiles/update/' . $node->mobileid)
+
+                  ),
+      );
+    }
+
+    $lastzabbixmediaid = $node->zabbixmediaid;
+  }
+
+  if ($lastzabbixmediaid == -1) {
+
+    if (!isset($userid)) {
+
+      $rows[] = array(t('No mobile numbers have been defined yet.'), '', '', '', '', '');
+    }
+    else {
+
+      $rows[] = array(t('No mobile numbers have been defined yet.'), '', '', '');
+    }
+  }
+
+  $table_attributes = array('id' => 'mobiles-table', 'align' => 'center');
+  $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
+
+  return $output;
+}
+
+function zabbix_bridge_get_all_mobiles_from_zabbix($extended = false) {
+
+    $zabbixmedia = array();
+    $media = array();
+
+    // This logs into Zabbix, and returns false if it fails
+    zabbix_api_login()
+            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+
+    $zabbixmedia = ZabbixAPI::fetch_array('user', 'getMedia', array( 'extendoutput' => $extended, 'mediatypeid' => 3 ));
+
+    foreach ($zabbixmedia as $key => $value) {
+
+        if ($extended) {
+
+            $media[] = $value;
+
+        }
+        else {
+
+            $media[] = $key;
+
+        }
+
+    }
+
+    return $media;
+
+}

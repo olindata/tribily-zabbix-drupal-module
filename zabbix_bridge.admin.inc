@@ -46,6 +46,10 @@ function zabbix_overview() {
 
   $output .= l('Add email', 'emails/add') . ' | ' . l('Import from zabbix', 'emails/import');
 
+  $output .= zabbix_mobiles_table();
+
+  $output .= l('Add mobile number', 'mobiles/add') . ' | ' . l('Import from zabbix', 'mobiles/import');
+
   return $output;
 }
 

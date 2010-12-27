@@ -76,7 +76,7 @@ function zabbix_bridge_emails_form(&$form_state, $operation, $emailid = NULL) {
       '#required' => TRUE
   );
 
-  // status - monitored/unmonitored
+  // status - enabled/disabled
   $form['emails']['status'] = array('#type' => 'select',
       '#title' => t('Status'),
       '#default_value' => isset($email->enabled) ?
@@ -162,7 +162,7 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
   }
 
   // Get some of the posted values from the form
-  // 0 - status monitored, 1 - status not monitored
+  // 0 - enabled, 1 - disabled
   $status = $form_state['clicked_button']['#post']['status'];
   $severities = $form_state['clicked_button']['#post']['severities'];
   $severity = zabbix_bridge_calculate_severity($severities);
@@ -173,7 +173,7 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
   $email['users'] = array('userid' => $zabbix_uid);
   $email['medias'] = array(
       'mediatypeid' => 1,
-      'active' => ('monitored' == $status) ? 0 : 1,
+      'active' => ('enabled' == $status) ? 0 : 1,
       'severity' => $severity,
       'period' => '1-7,00:00-23:59;',
       'sendto' => $sendto
@@ -218,7 +218,7 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
       if ($item['mediaid'] == $zabbixmediaid) {
 
         $usermedia[$key]['sendto'] = $sendto;
-        $usermedia[$key]['active'] = ('monitored' == $status) ? 0 : 1;
+        $usermedia[$key]['active'] = ('enabled' == $status) ? 0 : 1;
         $usermedia[$key]['severity'] = $severity;
         $usermedia[$key]['period'] = '1-7,00:00-23:59;';
 
