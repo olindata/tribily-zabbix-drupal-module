@@ -724,3 +724,130 @@ function zabbix_bridge_get_all_mobiles_from_zabbix($extended = false) {
     return $media;
 
 }
+
+/**
+ *
+ * @param <type> $jabberid
+ * @return <type>
+ */
+function zabbix_bridge_drupal_to_zabbix_jabberid($jabberid) {
+
+    $sql = "select zabbixmediaid from {zabbix_jabbers} where jabberid = '%s'";
+    $result = db_query($sql, $jabberid);
+
+    $jabber = db_fetch_object($result);
+
+    zabbix_bridge_debug(print_r($jabber, TRUE));
+
+    return $jabber->zabbixmediaid;
+}
+
+/**
+ *
+ * @global <type> $user
+ * @param <type> $userid
+ * @return string
+ */
+function zabbix_jabbers_table($userid = NULL) {
+    global $user;
+
+    $rows = array();
+    $count = PAGER_COUNT;
+    $id = TABLE_ID_EMAILS_MAPPING;
+
+    if (isset($userid)) {
+        $header = array('Jabber', 'Severity', 'Enabled');
+        $results = pager_query("select j.jabberid, j.jabber, j.zabbixmediaid, zs.name severity, j.enabled from {zabbix_jabbers} j left join {zabbix_jabbers_severities} zjs on j.jabberid = zjs.jabberid left join {zabbix_severities} zs on zjs.severityid = zs.severityid where j.userid = '%s'", $count, $id, null, $user->uid);
+    }
+    else {
+        $header = array('Username', 'Jabber Id', 'Jabber', 'Zabbix Media Id', 'Severity', 'Enabled');
+        $results = pager_query("select u.name, j.jabberid, j.jabber, j.zabbixmediaid, zs.name severity, j.enabled from {zabbix_jabbers} j left join {zabbix_jabbers_severities} zjs on j.jabberid = zjs.jabberid left join {zabbix_severities} zs on zjs.severityid = zs.severityid left join {users} u on u.uid = j.userid", $count, $id);
+    }
+
+    $lastzabbixmediaid = -1;
+
+    while ($node = db_fetch_object($results)) {
+
+        if (!isset($userid)) {
+
+            $rows[] = array(
+                    $node->name,
+                    $node->jabberid,
+                    $node->jabber,
+                    $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->zabbixmediaid,
+                    $node->severity,
+                    $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
+                    $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
+                        l($node->enabled == 0 ? 'Disable' : 'Enable', 'jabbers/enable-disable/' . $node->jabberid) . ' | ' .
+                        l('Delete', 'jabbers/delete/' . $node->jabberid) . ' | ' .
+                        l('Update', 'jabbers/update/' . $node->jabberid)
+
+                        ),
+                    );
+        }
+        else {
+
+            $rows[] = array(
+                    $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->jabber,
+                    $node->severity,
+                    $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
+                    $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
+
+                        l($node->enabled == 0 ? 'Disable' : 'Enable', 'jabbers/enable-disable/' . $node->jabberid) . ' | ' .
+                        l('Delete', 'jabbers/delete/' . $node->jabberid) . ' | ' .
+                        l('Update', 'jabbers/update/' . $node->jabberid)
+
+                        ),
+                    );
+        }
+
+        $lastzabbixmediaid = $node->zabbixmediaid;
+    }
+
+    if ($lastzabbixmediaid == -1) {
+
+        if (!isset($userid)) {
+
+            $rows[] = array(t('No jabbers have been defined yet.'), '', '', '', '', '');
+        }
+        else {
+
+            $rows[] = array(t('No jabbers have been defined yet.'), '', '', '');
+        }
+    }
+
+    $table_attributes = array('id' => 'jabbers-table', 'align' => 'center');
+    $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
+
+    return $output;
+}
+
+function zabbix_bridge_get_all_jabbers_from_zabbix($extended = false) {
+
+    $zabbixmedia = array();
+    $media = array();
+
+    // This logs into Zabbix, and returns false if it fails
+    zabbix_api_login()
+        or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+
+    $zabbixmedia = ZabbixAPI::fetch_array('user', 'getMedia', array( 'extendoutput' => $extended, 'mediatypeid' => 2 ));
+
+    foreach ($zabbixmedia as $key => $value) {
+
+        if ($extended) {
+
+            $media[] = $value;
+
+        }
+        else {
+
+            $media[] = $key;
+
+        }
+
+    }
+
+    return $media;
+
+}

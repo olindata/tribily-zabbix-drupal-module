@@ -50,6 +50,10 @@ function zabbix_overview() {
 
   $output .= l('Add mobile number', 'mobiles/add') . ' | ' . l('Import from zabbix', 'mobiles/import');
 
+  $output .= zabbix_jabbers_table();
+
+  $output .= l('Add jabber', 'jabbers/add') . ' | ' . l('Import from zabbix', 'jabbers/import');
+
   return $output;
 }
 

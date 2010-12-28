@@ -19,275 +19,332 @@ function zabbix_bridge_help($path, $arg) {
  * Implementation of hook_menu().
  */
 function zabbix_bridge_menu() {
-  //Module settings menu items (only accessible to admins)
-  $items['admin/settings/zabbix_bridge'] = array(
-      'title' => 'Zabbix Bridge',
-      'page callback' => 'zabbix_overview',
-      'description' => 'Overview of the data stored in the Zabbix Bridge module.',
-      'file' => 'zabbix_bridge.admin.inc',
-      'access arguments' => array('administer site configuration'),
-  );
+    //Module settings menu items (only accessible to admins)
+    $items['admin/settings/zabbix_bridge'] = array(
+        'title' => 'Zabbix Bridge',
+        'page callback' => 'zabbix_overview',
+        'description' => 'Overview of the data stored in the Zabbix Bridge module.',
+        'file' => 'zabbix_bridge.admin.inc',
+        'access arguments' => array('administer site configuration'),
+    );
 
-  $items['admin/settings/zabbix_bridge/overview'] = array(
-      'title' => 'Zabbix Bridge Overview',
-      'page callback' => 'zabbix_overview',
-      'file' => 'zabbix_bridge.admin.inc',
-      'weight' => 20,
-      'type' => MENU_LOCAL_TASK,
-      'access arguments' => array('administer site configuration'),
-  );
+    $items['admin/settings/zabbix_bridge/overview'] = array(
+        'title' => 'Zabbix Bridge Overview',
+        'page callback' => 'zabbix_overview',
+        'file' => 'zabbix_bridge.admin.inc',
+        'weight' => 20,
+        'type' => MENU_LOCAL_TASK,
+        'access arguments' => array('administer site configuration'),
+    );
 
-  $items['admin/settings/zabbix_bridge/settings'] = array(
-      'title' => 'Zabbix Bridge Settings',
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_settings'),
-      'description' => 'Configure the Zabbix Bridge module.',
-      'file' => 'zabbix_bridge.admin.inc',
-      'type' => MENU_LOCAL_TASK,
-      'weight' => 30,
-      'access arguments' => array('administer site configuration'),
-  );
+    $items['admin/settings/zabbix_bridge/settings'] = array(
+        'title' => 'Zabbix Bridge Settings',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_settings'),
+        'description' => 'Configure the Zabbix Bridge module.',
+        'file' => 'zabbix_bridge.admin.inc',
+        'type' => MENU_LOCAL_TASK,
+        'weight' => 30,
+        'access arguments' => array('administer site configuration'),
+    );
 
-  // Hosts menu item (accessible to user)
-  $items['hosts/overview'] = array(
-      'title' => 'Monitored Hosts',
-      'page callback' => 'zabbix_hosts',
-      'access arguments' => array('access hosts'),
-      'type' => MENU_CALLBACK,
-      'file' => 'zabbix_bridge.hosts.inc',
-  );
+    // Hosts menu item (accessible to user)
+    $items['hosts/overview'] = array(
+        'title' => 'Monitored Hosts',
+        'page callback' => 'zabbix_hosts',
+        'access arguments' => array('access hosts'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.hosts.inc',
+    );
 
-  // Hosts actions (accessible to user and admin)
-  $items['hosts/add'] = array(
-      'title' => 'Add Monitored Hosts',
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_hosts_form', 1),
-      'access arguments' => array('access hosts'),
-      'type' => MENU_CALLBACK,
-      'file' => 'zabbix_bridge.hosts.inc',
-  );
+    // Hosts actions (accessible to user and admin)
+    $items['hosts/add'] = array(
+        'title' => 'Add Monitored Hosts',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_hosts_form', 1),
+        'access arguments' => array('access hosts'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.hosts.inc',
+    );
 
-  $items['hosts/update/%'] = array(
-      'title' => 'Add Monitored Hosts',
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_hosts_form', 1, 2),
-      'access arguments' => array('access hosts'),
-      'type' => MENU_CALLBACK,
-      'file' => 'zabbix_bridge.hosts.inc',
-  );
+    $items['hosts/update/%'] = array(
+        'title' => 'Add Monitored Hosts',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_hosts_form', 1, 2),
+        'access arguments' => array('access hosts'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.hosts.inc',
+    );
 
-  $items['hosts/delete/%'] = array(
-      'title' => t('Delete Host'),
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('host_delete_confirm', 2),
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('access hosts'),
-      'file' => 'zabbix_bridge.hosts.inc',
-  );
+    $items['hosts/delete/%'] = array(
+        'title' => t('Delete Host'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('host_delete_confirm', 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('access hosts'),
+        'file' => 'zabbix_bridge.hosts.inc',
+    );
 
-  $items['hosts/enable-disable/%'] = array(
-      'title' => t('Enable/Disable Host'),
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('host_enable_disable_confirm', 2),
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('access hosts'),
-      'file' => 'zabbix_bridge.hosts.inc',
-  );
+    $items['hosts/enable-disable/%'] = array(
+        'title' => t('Enable/Disable Host'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('host_enable_disable_confirm', 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('access hosts'),
+        'file' => 'zabbix_bridge.hosts.inc',
+    );
 
-  $items['hosts/import'] = array(
-      'title' => t('Import hosts from zabbix'),
-      'page callback' => 'zabbix_bridge_import_hosts',
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('administer site configuration'),
-      'file' => 'zabbix_bridge.hosts.inc',
-  );
+    $items['hosts/import'] = array(
+        'title' => t('Import hosts from zabbix'),
+        'page callback' => 'zabbix_bridge_import_hosts',
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.hosts.inc',
+    );
 
-  // Drupal to zabbix mapping actions (Only accessible to admins)
-  $items['zabbix-user-mapping/update/%'] = array(
-      'title' => t('Update Drupal-to-Zabbix user mapping'),
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_user_mapping_form', 1, 2),
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('administer site configuration'),
-      'file' => 'zabbix_bridge.user_mapping.inc',
-  );
+    // Drupal to zabbix mapping actions (Only accessible to admins)
+    $items['zabbix-user-mapping/update/%'] = array(
+        'title' => t('Update Drupal-to-Zabbix user mapping'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_user_mapping_form', 1, 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.user_mapping.inc',
+    );
 
-  $items['zabbix-user-mapping/delete/%'] = array(
-      'title' => t('Delete Drupal-to-Zabbix user mapping'),
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_user_mapping_delete_confirm', 1, 2),
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('administer site configuration'),
-      'file' => 'zabbix_bridge.user_mapping.inc',
-  );
+    $items['zabbix-user-mapping/delete/%'] = array(
+        'title' => t('Delete Drupal-to-Zabbix user mapping'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_user_mapping_delete_confirm', 1, 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.user_mapping.inc',
+    );
 
-  $items['zabbix-user-mapping/generate/%'] = array(
-      'title' => t('Generate missing zabbix object for this Drupal-to-Zabbix user mapping'),
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_user_mapping_generate_confirm', 1, 2),
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('administer site configuration'),
-      'file' => 'zabbix_bridge.user_mapping.inc',
-  );
+    $items['zabbix-user-mapping/generate/%'] = array(
+        'title' => t('Generate missing zabbix object for this Drupal-to-Zabbix user mapping'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_user_mapping_generate_confirm', 1, 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.user_mapping.inc',
+    );
 
-  $items['zabbix-user-mapping/add'] = array(
-      'title' => t('Add a new mapping to the bridge'),
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_user_mapping_form', 1),
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('administer site configuration'),
-      'file' => 'zabbix_bridge.user_mapping.inc',
-  );
+    $items['zabbix-user-mapping/add'] = array(
+        'title' => t('Add a new mapping to the bridge'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_user_mapping_form', 1),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.user_mapping.inc',
+    );
 
-  // Host role to Zabbix template mapping actions (Only accessible to admins)
-  $items['zabbix-role-mapping/update/%'] = array(
-      'title' => t('Update Drupal-to-Zabbix role mapping'),
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_role_mapping_form', 1, 2),
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('administer site configuration'),
-      'file' => 'zabbix_bridge.role_mapping.inc',
-  );
+    // Host role to Zabbix template mapping actions (Only accessible to admins)
+    $items['zabbix-role-mapping/update/%'] = array(
+        'title' => t('Update Drupal-to-Zabbix role mapping'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_role_mapping_form', 1, 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.role_mapping.inc',
+    );
 
-  $items['zabbix-role-mapping/delete/%'] = array(
-      'title' => t('Delete Drupal-to-Zabbix role mapping'),
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_role_mapping_delete_confirm', 1, 2),
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('administer site configuration'),
-      'file' => 'zabbix_bridge.role_mapping.inc',
-  );
+    $items['zabbix-role-mapping/delete/%'] = array(
+        'title' => t('Delete Drupal-to-Zabbix role mapping'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_role_mapping_delete_confirm', 1, 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.role_mapping.inc',
+    );
 
-  $items['zabbix-role-mapping/add'] = array(
-      'title' => t('Add a new mapping to the bridge'),
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_role_mapping_form', 1),
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('administer site configuration'),
-      'file' => 'zabbix_bridge.role_mapping.inc',
-  );
+    $items['zabbix-role-mapping/add'] = array(
+        'title' => t('Add a new mapping to the bridge'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_role_mapping_form', 1),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.role_mapping.inc',
+    );
 
-  $items['zabbix-role-mapping/import'] = array(
-      'title' => t('Import roles to the bridge'),
-      'page callback' => 'zabbix_bridge_import_roles',
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('administer site configuration'),
-      'file' => 'zabbix_bridge.role_mapping.inc',
-  );
+    $items['zabbix-role-mapping/import'] = array(
+        'title' => t('Import roles to the bridge'),
+        'page callback' => 'zabbix_bridge_import_roles',
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.role_mapping.inc',
+    );
 
-  // emails overview (accessible to user)
-  $items['emails/overview'] = array(
-      'title' => 'Emails',
-      'page callback' => 'zabbix_bridge_emails',
-      'access arguments' => array('access emails'),
-      'type' => MENU_CALLBACK,
-      'file' => 'zabbix_bridge.emails.inc',
-  );
+    // emails overview (accessible to user)
+    $items['emails/overview'] = array(
+        'title' => 'Emails',
+        'page callback' => 'zabbix_bridge_emails',
+        'access arguments' => array('access emails'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.emails.inc',
+    );
 
-  // add emails
-  $items['emails/add'] = array(
-      'title' => 'Add Email',
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_emails_form', 1),
-      'access arguments' => array('access emails'),
-      'type' => MENU_CALLBACK,
-      'file' => 'zabbix_bridge.emails.inc',
-  );
+    // add emails
+    $items['emails/add'] = array(
+        'title' => 'Add Email',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_emails_form', 1),
+        'access arguments' => array('access emails'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.emails.inc',
+    );
 
-  // update emails
-  $items['emails/update/%'] = array(
-      'title' => 'Update Emails',
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_emails_form', 1, 2),
-      'access arguments' => array('access emails'),
-      'type' => MENU_CALLBACK,
-      'file' => 'zabbix_bridge.emails.inc',
-  );
+    // update emails
+    $items['emails/update/%'] = array(
+        'title' => 'Update Emails',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_emails_form', 1, 2),
+        'access arguments' => array('access emails'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.emails.inc',
+    );
 
-  // delete emails
-  $items['emails/delete/%'] = array(
-      'title' => t('Delete Email'),
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_emails_delete_confirm', 2),
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('access emails'),
-      'file' => 'zabbix_bridge.emails.inc',
-  );
+    // delete emails
+    $items['emails/delete/%'] = array(
+        'title' => t('Delete Email'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_emails_delete_confirm', 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('access emails'),
+        'file' => 'zabbix_bridge.emails.inc',
+    );
 
-  // enable-disable emails
-  $items['emails/enable-disable/%'] = array(
-      'title' => t('Enable/Disable Email'),
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_emails_enable_disable_confirm', 2),
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('access emails'),
-      'file' => 'zabbix_bridge.emails.inc',
-  );
+    // enable-disable emails
+    $items['emails/enable-disable/%'] = array(
+        'title' => t('Enable/Disable Email'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_emails_enable_disable_confirm', 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('access emails'),
+        'file' => 'zabbix_bridge.emails.inc',
+    );
 
-  $items['emails/import'] = array(
-      'title' => t('Import email addresses to the bridge'),
-      'page callback' => 'zabbix_bridge_import_emails',
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('administer site configuration'),
-      'file' => 'zabbix_bridge.emails.inc',
-  );
+    $items['emails/import'] = array(
+        'title' => t('Import email addresses to the bridge'),
+        'page callback' => 'zabbix_bridge_import_emails',
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.emails.inc',
+    );
 
-  // mobile overview (accessible to user)
-  $items['mobiles/overview'] = array(
-      'title' => 'Mobile',
-      'page callback' => 'zabbix_bridge_mobiles',
-      'access arguments' => array('access mobiles'),
-      'type' => MENU_CALLBACK,
-      'file' => 'zabbix_bridge.mobiles.inc',
-  );
+    // mobile number overview (accessible to user)
+    $items['mobiles/overview'] = array(
+        'title' => 'Mobile',
+        'page callback' => 'zabbix_bridge_mobiles',
+        'access arguments' => array('access mobiles'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.mobiles.inc',
+    );
 
-  // add mobile number
-  $items['mobiles/add'] = array(
-      'title' => 'Add Mobile',
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_mobiles_form', 1),
-      'access arguments' => array('access mobiles'),
-      'type' => MENU_CALLBACK,
-      'file' => 'zabbix_bridge.mobiles.inc',
-  );
+    // add mobile number
+    $items['mobiles/add'] = array(
+        'title' => 'Add Mobile',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_mobiles_form', 1),
+        'access arguments' => array('access mobiles'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.mobiles.inc',
+    );
 
-  // update mobile number
-  $items['mobiles/update/%'] = array(
-      'title' => 'Update Mobile',
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_mobiles_form', 1, 2),
-      'access arguments' => array('access mobiles'),
-      'type' => MENU_CALLBACK,
-      'file' => 'zabbix_bridge.mobiles.inc',
-  );
+    // update mobile number
+    $items['mobiles/update/%'] = array(
+        'title' => 'Update Mobile',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_mobiles_form', 1, 2),
+        'access arguments' => array('access mobiles'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.mobiles.inc',
+    );
 
-  // delete emails
-  $items['mobiles/delete/%'] = array(
-      'title' => t('Delete Mobile'),
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_mobiles_delete_confirm', 2),
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('access mobiles'),
-      'file' => 'zabbix_bridge.mobiles.inc',
-  );
+    // delete mobile numbers
+    $items['mobiles/delete/%'] = array(
+        'title' => t('Delete Mobile'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_mobiles_delete_confirm', 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('access mobiles'),
+        'file' => 'zabbix_bridge.mobiles.inc',
+    );
 
-  // enable-disable emails
-  $items['mobiles/enable-disable/%'] = array(
-      'title' => t('Enable/Disable Mobile'),
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('zabbix_bridge_mobiles_enable_disable_confirm', 2),
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('access mobiles'),
-      'file' => 'zabbix_bridge.mobiles.inc',
-  );
+    // enable-disable mobile numbers
+    $items['mobiles/enable-disable/%'] = array(
+        'title' => t('Enable/Disable Mobile'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_mobiles_enable_disable_confirm', 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('access mobiles'),
+        'file' => 'zabbix_bridge.mobiles.inc',
+    );
 
-  $items['mobiles/import'] = array(
-      'title' => t('Import mobile numbers to the bridge'),
-      'page callback' => 'zabbix_bridge_import_mobiles',
-      'type' => MENU_CALLBACK,
-      'access arguments' => array('administer site configuration'),
-      'file' => 'zabbix_bridge.mobiles.inc',
-  );
+    $items['mobiles/import'] = array(
+        'title' => t('Import mobile numbers to the bridge'),
+        'page callback' => 'zabbix_bridge_import_mobiles',
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.mobiles.inc',
+    );
+
+    // jabber overview (accessible to user)
+    $items['jabbers/overview'] = array(
+        'title' => 'Jabber',
+        'page callback' => 'zabbix_bridge_jabbers',
+        'access arguments' => array('access jabbers'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.jabbers.inc',
+    );
+
+    // add jabber
+    $items['jabbers/add'] = array(
+        'title' => 'Add Jabber',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_jabbers_form', 1),
+        'access arguments' => array('access jabbers'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.jabbers.inc',
+    );
+
+    // update jabber
+    $items['jabbers/update/%'] = array(
+        'title' => 'Update Jabber',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_jabbers_form', 1, 2),
+        'access arguments' => array('access jabbers'),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.mobiles.inc',
+    );
+
+    // delete jabber
+    $items['jabbers/delete/%'] = array(
+        'title' => t('Delete Jabber'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_jabbers_delete_confirm', 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('access jabbers'),
+        'file' => 'zabbix_bridge.jabbers.inc',
+    );
+
+    // enable-disable jabber
+    $items['jabbers/enable-disable/%'] = array(
+        'title' => t('Enable/Disable Jabber'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_jabbers_enable_disable_confirm', 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('access jabbers'),
+        'file' => 'zabbix_bridge.jabbers.inc',
+    );
+
+    $items['jabbers/import'] = array(
+        'title' => t('Import Jabber IDs to the bridge'),
+        'page callback' => 'zabbix_bridge_import_jabbers',
+        'type' => MENU_CALLBACK,
+        'access arguments' => array('administer site configuration'),
+        'file' => 'zabbix_bridge.jabbers.inc',
+    );
 
     return $items;
 }
@@ -298,7 +355,7 @@ function zabbix_bridge_menu() {
 
 function zabbix_bridge_perm() {
 
-  return array('access hosts', 'access emails', 'access mobiles');
+  return array('access hosts', 'access emails', 'access mobiles', 'access jabbers');
 }
 
 /**
@@ -549,7 +606,10 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
     // delete emails
     $result = db_query("DELETE FROM {zabbix_emails} WHERE userid='%s'", $account->uid);
 
-    // delete mobile
+    // delete jabbers
+    $result = db_query("DELETE FROM {zabbix_jabbers} WHERE userid='%s'", $account->uid);
+
+    // delete mobiles
     $result = db_query("DELETE FROM {zabbix_mobiles} WHERE userid='%s'", $account->uid);
 
     //delete the user from zabbix (deletes media as well)
@@ -658,6 +718,10 @@ $name, $pass, $mail, $drupaluid, $zabbixuserid = NULL, $zabbixusergroupid = NULL
             switch($value['mediatypeid']) {
                 case 1:
                     $sql = "INSERT INTO {zabbix_emails} (userid, zabbixmediaid, email, enabled) VALUES ('%s', '%s', '%s', '%s')";
+                    break;
+
+                case 2:
+                    $sql = "INSERT INTO {zabbix_jabbers} (userid, zabbixmediaid, jabber, enabled) VALUES ('%s', '%s', '%s', '%s')";
                     break;
 
                 case 3:
