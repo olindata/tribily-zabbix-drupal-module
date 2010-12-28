@@ -938,7 +938,12 @@ function zabbix_bridge_create_actions($actionname, $severity, $zabbixusergroupid
               'esc_step_from' => 1,
               'esc_step_to' => 0,
               'evaltype' => 0,
-              'mediatypeid' => 1, //Note: 1 Means email, yet it is NOT MEDIA_TYPE_EMAIL ??
+              'mediatypeid' => 1,
+//Note: 1 Means email, yet it is NOT MEDIA_TYPE_EMAIL. This is because there are
+//      several media_type records with type MEDIA_TYPE_EMAIL. This is done so
+//      you can have multiple email gateways for instance. Naming is very confusing!
+//
+//
 //                'opconditions' => array(
 //                                            'conditiontype' => CONDITION_TYPE_EVENT_ACKNOWLEDGED,
 //                                            'operator' => CONDITION_OPERATOR_EQUAL,
