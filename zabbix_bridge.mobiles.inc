@@ -4,84 +4,84 @@
 
 /*
  * @file
- * For handling multiple emails
+ * For handling multiple mobile numbers
  *
  * @author rajkissu
  */
 
 /**
- * Form builder; Present the form to edit a given user's emails.
+ * Form builder; Present the form to edit a given user's mobile numbers.
  *
  * @ingroup forms
  */
-function zabbix_bridge_emails() {
+function zabbix_bridge_mobiles() {
 
   global $user;
 
-  drupal_set_title('Emails');
+  drupal_set_title('Mobile Numbers');
 
-  $output = zabbix_emails_table($user->uid);
-  $output .= l('Add Email', 'emails/add');
+  $output = zabbix_mobiles_table($user->uid);
+  $output .= l('Add Mobile Number', 'mobiles/add');
 
   return $output;
 }
 
 /**
- * Form builder; add/edit a user's emails.
+ * Form builder; add/edit a user's mobile numbers.
  *
  * @ingroup forms
- * @see zabbix_bridge_emails_form_validate()
- * @see zabbix_bridge_emails_form_submit()
+ * @see zabbix_bridge_mobiles_form_validate()
+ * @see zabbix_bridge_mobiles_form_submit()
  */
-function zabbix_bridge_emails_form(&$form_state, $operation, $emailid = NULL) {
+function zabbix_bridge_mobiles_form(&$form_state, $operation, $mobileid = NULL) {
 
-  // Get details of email if we're updating
-  if (($operation == 'update') && isset($emailid)) {
+  // Get details of mobile if we're updating
+  if (($operation == 'update') && isset($mobileid)) {
 
-    $sql = "select userid, emailid, email, zabbixmediaid, enabled from {zabbix_emails} where emailid = '%s'";
-    $result = db_query($sql, $emailid);
-    $email = db_fetch_object($result);
+    $sql = "select userid, mobileid, number, zabbixmediaid, enabled from {zabbix_mobiles} where mobileid = '%s'";
+    $result = db_query($sql, $mobileid);
+    $mobile = db_fetch_object($result);
   }
 
   // Set display fo form to reflect operation
   if ('add' == $operation) {
 
-    $title = 'Add Email';
+    $title = 'Add Mobile Number';
     $submit = 'Add';
   }
   else {
 
-    $title = 'Update Email';
+    $title = 'Update Mobile Number';
     $submit = 'Update';
   }
 
   // Put it in the form
-  $form['emails'] = array('#type' => 'fieldset',
+  $form['mobiles'] = array('#type' => 'fieldset',
       '#title' => t($title),
       '#weight' => -10
   );
 
-  // The email's id
-  $form['emails']['emailid'] = array(
+  // The mobile number's id
+  $form['mobiles']['mobileid'] = array(
       '#type' => 'hidden',
-      '#value' => $emailid,
+      '#value' => $mobileid,
   );
 
-  // the email's email
-  $form['emails']['email'] = array(
+  // the mobile's number
+  $form['mobiles']['number'] = array(
       '#type' => 'textfield',
-      '#title' => t('Email'),
+      '#title' => t('Number'),
       '#maxlength' => MEDIA_NAME_MAXLENGTH,
-      '#value' => isset($email->email) ? $email->email : '',
+      '#value' => isset($mobile->number) ? $mobile->number : '',
       '#required' => TRUE
   );
 
   // status - enabled/disabled
-  $form['emails']['status'] = array('#type' => 'select',
+  $form['mobiles']['status'] = array('#type' => 'select',
       '#title' => t('Status'),
-      '#default_value' => isset($email->enabled) ?
-              ($email->enabled == 1) ? 'disabled' : 'enabled' :
-              'enabled',
+      '#default_value' => isset($mobile->enabled)
+              ? (($mobile->enabled == 1) ? 'enabled' : 'disabled')
+              : 'enabled',
       '#options' => array(
           'enabled' => 'enabled',
           'disabled' => 'disabled',
@@ -91,7 +91,7 @@ function zabbix_bridge_emails_form(&$form_state, $operation, $emailid = NULL) {
   );
 
   // make the severity SELECT options
-  $result = db_query('SELECT severityid, name FROM {zabbix_severities}')
+  $result = db_query("SELECT severityid, name FROM {zabbix_severities} WHERE name IN ('High', 'Disaster')")
           or drupal_set_message('Unable to retrieve zabbix severities', DRUPAL_MSG_TYPE_ERR);
 
   $template_options = array();
@@ -103,11 +103,11 @@ function zabbix_bridge_emails_form(&$form_state, $operation, $emailid = NULL) {
 
   $default_value = array();
 
-  // get the assigned severities for this email
-  if (isset($email->enabled)) {
+  // get the assigned severities for this mobile
+  if (isset($mobile->enabled)) {
 
-    $sql = "select severityid from {zabbix_emails_severities} where emailid = '%s'";
-    $result = db_query($sql, $emailid);
+    $sql = "select severityid from {zabbix_mobiles_severities} where mobileid = '%s'";
+    $result = db_query($sql, $mobileid);
 
     while ($data = db_fetch_array($result)) {
 
@@ -116,39 +116,39 @@ function zabbix_bridge_emails_form(&$form_state, $operation, $emailid = NULL) {
   }
 
 
-  $form['emails']['severities'] = array(
+  $form['mobiles']['severities'] = array(
       '#type' => 'checkboxes',
       '#title' => t('Severities'),
       '#default_value' => $default_value,
       '#options' => $template_options,
-      '#description' => t('Assign one or more severities to this email.')
+      '#description' => t('Assign one or more severities to this mobile.')
   );
 
-  $form['emails']['submit'] = array('#type' => 'submit', '#value' => t($submit), '#weight' => 30);
+  $form['mobiles']['submit'] = array('#type' => 'submit', '#value' => t($submit), '#weight' => 30);
 
   return $form;
 }
 
 /**
- * Submit function for the user email add/editing form. Note that it handles adding _AND_ updating
+ * Submit function for the user mobile add/editing form. Note that it handles adding _AND_ updating
  *
  * @global object $user
  * @param array $form
  * @param array $form_state
  * @return <type>
  */
-function zabbix_bridge_emails_form_submit($form, &$form_state) {
+function zabbix_bridge_mobiles_form_submit($form, &$form_state) {
   // Global drupal user object
   global $user;
 
-  // if this was an existing email, retrieve it
-  if (isset($form_state['clicked_button']['#post']['emailid'])) {
-    $emailid = $form_state['clicked_button']['#post']['emailid'];
+  // if this was an existing mobile, retrieve it
+  if (isset($form_state['clicked_button']['#post']['mobileid'])) {
+    $mobileid = $form_state['clicked_button']['#post']['mobileid'];
   }
 
-  if ($emailid <> '') {
-    // Get the zabbix userid belonging to the emailid we got from the submitted form
-    $result = db_query("SELECT zda.zabbix_uid FROM {zabbix_drupal_account} zda inner join {zabbix_emails} ze on ze.userid = zda.drupal_uid where ze.emailid = '%s'", $emailid)
+  if ($mobileid <> '') {
+    // Get the zabbix userid belonging to the mobileid we got from the submitted form
+    $result = db_query("SELECT zda.zabbix_uid FROM {zabbix_drupal_account} zda inner join {zabbix_mobiles} zm on zm.userid = zda.drupal_uid where zm.mobileid = '%s'", $mobileid)
             or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
     $data = db_fetch_array($result);
     $zabbix_uid = $data['zabbix_uid'];
@@ -166,13 +166,13 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
   $status = $form_state['clicked_button']['#post']['status'];
   $severities = $form_state['clicked_button']['#post']['severities'];
   $severity = zabbix_bridge_calculate_severity($severities);
-  $sendto = $form_state['clicked_button']['#post']['email'];
+  $sendto = $form_state['clicked_button']['#post']['number'];
 
   // Fill an array to send to zabbix
-  $email = array();
-  $email['users'] = array('userid' => $zabbix_uid);
-  $email['medias'] = array(
-      'mediatypeid' => 1,
+  $mobile = array();
+  $mobile['users'] = array('userid' => $zabbix_uid);
+  $mobile['medias'] = array(
+      'mediatypeid' => 3,
       'active' => ('enabled' == $status) ? 0 : 1,
       'severity' => $severity,
       'period' => '1-7,00:00-23:59;',
@@ -183,17 +183,17 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
   zabbix_api_login()
           or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
-  //create the email if it's not already existing
-  if ($emailid == '') {
+  //create the mobile if it's not already existing
+  if ($mobileid == '') {
 
-    zabbix_bridge_debug(drupal_set_message(print_r($email, TRUE)));
-    $addedmedia = ZabbixAPI::fetch_string('user', 'addMedia', $email);
+    zabbix_bridge_debug(drupal_set_message(print_r($mobile, TRUE)));
+    $addedmedia = ZabbixAPI::fetch_string('user', 'addMedia', $mobile);
 
     if ($addedmedia) {
-      drupal_set_message('Email successfully added.');
+      drupal_set_message('Mobile number successfully added.');
     }
     else {
-      drupal_set_message('Failed to add email: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+      drupal_set_message('Failed to add mobile number: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
     }
   }
   else {
@@ -206,8 +206,8 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
     $usermedia = ZabbixAPI::fetch_array('user', 'getMedia', $media)
             or drupal_set_message('Problem retrieving existing media properties: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
-    $sql = "select zabbixmediaid from {zabbix_emails} where emailid = '%s'";
-    $result = db_query($sql, $emailid);
+    $sql = "select zabbixmediaid from {zabbix_mobiles} where mobileid = '%s'";
+    $result = db_query($sql, $mobileid);
 
     $data = db_fetch_array($result);
     $zabbixmediaid = $data['zabbixmediaid'];
@@ -233,9 +233,9 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
 
     zabbix_bridge_debug(drupal_set_message(print_r($usermedia, TRUE)));
 
-    //update the email and enabled status
+    //update the mobile and enabled status
     $usermedia = ZabbixAPI::fetch_string('user', 'updateMedia', $usermedia)
-            or drupal_set_message('Problem updating existing email properties', DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message('Problem updating existing mobile properties', DRUPAL_MSG_TYPE_ERR);
 
     zabbix_bridge_debug(drupal_set_message('update: ' . print_r($usermedia, TRUE)));
   }
@@ -243,7 +243,7 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
   // get user media
   $usermedia = ZabbixAPI::fetch_array('user', 'getMedia', array(
               'userids' => array($zabbix_uid),
-              'mediatypeid' => 1,
+              'mediatypeid' => 3,
               'sendto' => $sendto,
               'extendoutput' => TRUE
           ));
@@ -253,53 +253,53 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
     return;
   }
 
-  // add the email mapping to the drupal database so we can use it for display without contacting zabbix
-  $sql = 'INSERT INTO {zabbix_emails} (userid, emailid, zabbixmediaid, email, enabled)';
+  // add the mobile mapping to the drupal database so we can use it for display without contacting zabbix
+  $sql = 'INSERT INTO {zabbix_mobiles} (userid, mobileid, zabbixmediaid, number, enabled)';
   $sql .= " VALUES('%s', '%s', '%s', '%s', '%s')";
-  $sql .= " ON DUPLICATE KEY UPDATE email='%s', enabled='%s'";
+  $sql .= " ON DUPLICATE KEY UPDATE number='%s', enabled='%s'";
 
   foreach ($usermedia as $media) {
 
     $zabbixmediaid = $media['mediaid'];
     $active = $media['active'];
 
-    $result = db_query($sql, $user->uid, $emailid, $zabbixmediaid, $sendto, $active, $sendto, $active);
+    $result = db_query($sql, $user->uid, $mobileid, $zabbixmediaid, $sendto, $active, $sendto, $active);
 
     if (!$result) {
 
-      drupal_set_message('Problem adding email-mapping to database', DRUPAL_MSG_TYPE_ERR);
+      drupal_set_message('Problem adding mobile-mapping to database', DRUPAL_MSG_TYPE_ERR);
     }
   }
 
-  if ($emailid == '') {
+  if ($mobileid == '') {
 
-    $emailid = db_last_insert_id('zabbix_emails', 'emailid');
+    $mobileid = db_last_insert_id('zabbix_mobiles', 'mobileid');
   }
 
   // if severities was added
-  // Delete all previous email mappings, so we can add the new ones in a sec
-  $sql = "DELETE FROM {zabbix_emails_severities} WHERE emailid = '%s'";
-  db_query($sql, $emailid) or
+  // Delete all previous mobile mappings, so we can add the new ones in a sec
+  $sql = "DELETE FROM {zabbix_mobiles_severities} WHERE mobileid = '%s'";
+  db_query($sql, $mobileid) or
           drupal_set_message('Error updating severities in drupal database.');
 
-  // addd the email-severity mapping to the drupal db so we can use it for display without contacting zabbix
-  $sql = 'INSERT INTO {zabbix_emails_severities} (emailid, severityid)';
+  // addd the mobile-severity mapping to the drupal db so we can use it for display without contacting zabbix
+  $sql = 'INSERT INTO {zabbix_mobiles_severities} (mobileid, severityid)';
   $sql .= " VALUES('%s', '%s')";
 
   if (count($severities) > 0) {
 
     foreach ($severities as $severityid) {
 
-      $result = db_query($sql, $emailid, $severityid);
+      $result = db_query($sql, $mobileid, $severityid);
 
       if (!$result) {
 
-        drupal_set_message('Problem adding email-severity-mapping to database', DRUPAL_MSG_TYPE_ERR);
+        drupal_set_message('Problem adding mobile-severity-mapping to database', DRUPAL_MSG_TYPE_ERR);
       }
     }
   }
 
-  drupal_goto("emails/overview");
+  drupal_goto("mobiles/overview");
 
   return;
 }
@@ -307,20 +307,20 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
 /**
  *
  * @param <type> $form_state
- * @param <type> $email
+ * @param <type> $mobile
  * @return <type>
  */
-function zabbix_bridge_emails_delete_confirm(&$form_state, $email) {
+function zabbix_bridge_mobiles_delete_confirm(&$form_state, $mobile) {
 
-  $form['_email'] = array(
+  $form['_mobile'] = array(
       '#type' => 'value',
-      '#value' => $email,
+      '#value' => $mobile,
   );
 
   return confirm_form(
           $form,
-          t('Are you sure you want to delete this email?'),
-          isset($_GET['destination']) ? $_GET['destination'] : "emails/overview",
+          t('Are you sure you want to delete this mobile number?'),
+          isset($_GET['destination']) ? $_GET['destination'] : "mobiles/overview",
           t('This action cannot be undone.'),
           t('Delete'),
           t('Cancel')
@@ -332,37 +332,37 @@ function zabbix_bridge_emails_delete_confirm(&$form_state, $email) {
  * @param array $form
  * @param array $form_state
  */
-function zabbix_bridge_emails_delete_confirm_submit($form, &$form_state) {
+function zabbix_bridge_mobiles_delete_confirm_submit($form, &$form_state) {
 
   if ($form_state['values']['confirm']) {
 
-    $email = $form_state['values']['_email'];
+    $mobile = $form_state['values']['_mobile'];
 
-    if (zabbix_bridge_emails_delete($email)) {
+    if (zabbix_bridge_mobiles_delete($mobile)) {
 
-      drupal_set_message(t('Email has been deleted successfully.'));
+      drupal_set_message(t('Mobile number has been deleted successfully.'));
     }
     else {
 
-      drupal_set_message(t('Email deletion unsuccessful'), DRUPAL_MSG_TYPE_ERR);
+      drupal_set_message(t('Mobile number deletion unsuccessful'), DRUPAL_MSG_TYPE_ERR);
     }
   }
 
-  drupal_goto("emails/overview");
+  drupal_goto("mobiles/overview");
 }
 
 /**
- * Deletes an email and it's assigned severity from the database, both on the drupal
+ * Deletes a mobile number and it's assigned severity from the database, both on the drupal
  * side and on the zabbix side
  *
  * @param  array    $formvalues ...
- * @param  int      $emailid     The drupal id of the email to be deleted
+ * @param  int      $mobileid     The drupal id of the mobile number to be deleted
  * @return bool
  */
-function zabbix_bridge_emails_delete($emailid) {
+function zabbix_bridge_mobiles_delete($mobileid) {
 
-  $sql = "select zabbixmediaid from {zabbix_emails} where emailid = '%s'";
-  $zabbixmediaid = db_result(db_query($sql, $emailid));
+  $sql = "select zabbixmediaid from {zabbix_mobiles} where mobileid = '%s'";
+  $zabbixmediaid = db_result(db_query($sql, $mobileid));
 
   zabbix_api_login()
           or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
@@ -370,11 +370,11 @@ function zabbix_bridge_emails_delete($emailid) {
   ZabbixAPI::fetch_string('user', 'deleteMedia', array($zabbixmediaid))
           or drupal_set_message('Unable to delete media. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
-  $sql = "delete from {zabbix_emails_severities} where emailid = '%s'";
-  $result = db_query($sql, $emailid);
+  $sql = "delete from {zabbix_mobiles_severities} where mobileid = '%s'";
+  $result = db_query($sql, $mobileid);
 
-  $sql = "delete from {zabbix_emails} where emailid = '%s'";
-  $result = db_query($sql, $emailid);
+  $sql = "delete from {zabbix_mobiles} where mobileid = '%s'";
+  $result = db_query($sql, $mobileid);
 
   return $result;
 }
@@ -382,17 +382,17 @@ function zabbix_bridge_emails_delete($emailid) {
 /**
  *
  * @param <type> $form_state
- * @param <type> $email
+ * @param <type> $mobile
  * @return <type>
  */
-function zabbix_bridge_emails_enable_disable_confirm(&$form_state, $email) {
-  $form['_email'] = array(
+function zabbix_bridge_mobiles_enable_disable_confirm(&$form_state, $mobile) {
+  $form['_mobile'] = array(
       '#type' => 'hidden',
-      '#value' => $email,
+      '#value' => $mobile,
   );
 
-  $sql = "select enabled from {zabbix_emails} where emailid = '%s'";
-  $enabled = db_result(db_query($sql, $email));
+  $sql = "select enabled from {zabbix_mobiles} where mobileid = '%s'";
+  $enabled = db_result(db_query($sql, $mobile));
 
   $form['_current_state'] = array(
       '#type' => 'hidden',
@@ -401,10 +401,10 @@ function zabbix_bridge_emails_enable_disable_confirm(&$form_state, $email) {
 
   return confirm_form(
           $form,
-          t('Are you sure you want to change the enabled state of this email?'),
-          isset($_GET['destination']) ? $_GET['destination'] : "emails/overview",
-          $enabled ? t('This email will be enabled until you disable it.') :
-                  t('This email will be disabled until you re-enable it.'),
+          t('Are you sure you want to change the enabled state of this mobile number?'),
+          isset($_GET['destination']) ? $_GET['destination'] : "mobiles/overview",
+          $enabled ? t('This mobile number will be enabled until you disable it.') :
+                  t('This mobile number will be disabled until you re-enable it.'),
           t('OK'),
           t('Cancel')
   );
@@ -415,34 +415,34 @@ function zabbix_bridge_emails_enable_disable_confirm(&$form_state, $email) {
  * @param array $form
  * @param array $form_state
  */
-function zabbix_bridge_emails_enable_disable_confirm_submit($form, &$form_state) {
+function zabbix_bridge_mobiles_enable_disable_confirm_submit($form, &$form_state) {
 
   if ($form_state['values']['confirm']) {
 
-    $email = $form_state['values']['_email'];
-    $zabbixmediaid = zabbix_bridge_drupal_to_zabbix_emailid($email);
+    $mobile = $form_state['values']['_mobile'];
+    $zabbixmediaid = zabbix_bridge_drupal_to_zabbix_mobileid($mobile);
     $enabled = $form_state['values']['_current_state'];
 
-    if (zabbix_bridge_emails_enable_disable($zabbixmediaid, $enabled)) {
+    if (zabbix_bridge_mobiles_enable_disable($zabbixmediaid, $enabled)) {
 
-      drupal_set_message(t('Email has been updated successfully.'));
+      drupal_set_message(t('Mobile number has been updated successfully.'));
     }
     else {
 
-      drupal_set_message(t('Email update unsuccessful'), DRUPAL_MSG_TYPE_ERR);
+      drupal_set_message(t('Mobile number update unsuccessful'), DRUPAL_MSG_TYPE_ERR);
     }
   }
 
-  drupal_goto("emails/overview");
+  drupal_goto("mobiles/overview");
 }
 
 /**
  *
- * @param int $emailid
+ * @param int $mobileid
  * @param int $enabled
  * @return <type>
  */
-function zabbix_bridge_emails_enable_disable($zabbixmediaid, $enabled) {
+function zabbix_bridge_mobiles_enable_disable($zabbixmediaid, $enabled) {
 
   global $user;
 
@@ -493,11 +493,11 @@ function zabbix_bridge_emails_enable_disable($zabbixmediaid, $enabled) {
 
   if (!$result) {
 
-    drupal_set_message('Unable to enable/disable email. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+    drupal_set_message('Unable to enable/disable mobile. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
   }
   else {
 
-    $sql = "update {zabbix_emails} set enabled = '%s' where zabbixmediaid = %s";
+    $sql = "update {zabbix_mobiles} set enabled = '%s' where zabbixmediaid = %s";
     $result = db_query($sql, $enabled ? 0 : 1, $zabbixmediaid);
   }
 
@@ -508,35 +508,37 @@ function zabbix_bridge_emails_enable_disable($zabbixmediaid, $enabled) {
  *
  * @return <type>
  */
-function zabbix_bridge_import_emails() {
+function zabbix_bridge_import_mobiles() {
 
-  $emails = array();
-  $emails = zabbix_bridge_get_all_emails_from_zabbix(TRUE);
+  $mobiles = array();
+  $mobiles = zabbix_bridge_get_all_mobiles_from_zabbix(TRUE);
 
-  zabbix_bridge_debug(print_r($emails, TRUE));
+  zabbix_bridge_debug(print_r($mobiles, TRUE));
 
-  foreach ($emails as $email) {
+  foreach ($mobiles as $mobile) {
 
-    $sql = "SELECT emailid FROM {zabbix_emails} WHERE zabbixmediaid='%s'";
-    $results = db_query($sql, $email['mediaid']);
+    $sql = "SELECT mobileid FROM {zabbix_mobiles} WHERE zabbixmediaid='%s'";
+    $results = db_query($sql, $mobile['mediaid']);
 
     $mediaid = db_fetch_object($results);
 
     if ($mediaid) {
 
-      drupal_set_message('Skipped email ' . $email['mediaid'] . ' (' . $email['sendto'] . '), as it already exists.');
+      drupal_set_message('Skipped mobile ' . $mobile['mediaid'] . ' (' . $mobile['sendto'] . '), as it already exists.');
     }
     else {
 
       $sql = "SELECT drupal_uid FROM {zabbix_drupal_account} WHERE zabbix_uid='%s'";
-      $results = db_query($sql, $email['userid']);
+      $results = db_query($sql, $mobile['userid']);
+
+      zabbix_bridge_debug($sql);
 
       $user = db_fetch_object($results);
 
       if ($user) {
 
-        $sql = "INSERT INTO {zabbix_emails} (userid, zabbixmediaid, email, enabled) VALUES ('%s', '%s', '%s', '%s')";
-        $results = db_query($sql, $user->drupal_uid, $email['mediaid'], $email['sendto'], $email['active']);
+        $sql = "INSERT INTO {zabbix_mobiles} (userid, zabbixmediaid, number, enabled) VALUES ('%s', '%s', '%s', '%s')";
+        $results = db_query($sql, $user->drupal_uid, $mobile['mediaid'], $mobile['sendto'], $mobile['active']);
       }
     }
   }

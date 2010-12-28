@@ -113,7 +113,49 @@ function zabbix_bridge_schema() {
           'emailid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
           'severityid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE)
       ),
-      'primary key' => array('emailid,severityid')
+      'primary key' => array('emailid, severityid')
+  );
+
+  $schema['zabbix_mobiles'] = array(
+      'description' => 'Holds mobile numbers for a given user',
+      'fields' => array(
+          'userid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+          'mobileid' => array('type' => 'serial', 'not null' => TRUE),
+          'zabbixmediaid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+          'number' => array('type' => 'varchar', 'not null' => TRUE, 'length' => 100),
+          'enabled' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE)
+      ),
+      'primary key' => array('mobileid')
+  );
+
+  $schema['zabbix_mobiles_severities'] = array(
+      'description' => '',
+      'fields' => array(
+          'mobileid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+          'severityid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE)
+      ),
+      'primary key' => array('mobileid, severityid')
+  );
+
+  $schema['zabbix_jabbers'] = array(
+      'description' => 'Holds jabber ids for a given user',
+      'fields' => array(
+          'userid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+          'jabberid' => array('type' => 'serial', 'not null' => TRUE),
+          'zabbixmediaid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+          'jabber' => array('type' => 'varchar', 'not null' => TRUE, 'length' => 100),
+          'enabled' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE)
+      ),
+      'primary key' => array('jabberid')
+  );
+
+  $schema['zabbix_jabbers_severities'] = array(
+      'description' => '',
+      'fields' => array(
+          'jabberid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+          'severityid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE)
+      ),
+      'primary key' => array('jabberid, severityid')
   );
 
   return $schema;
@@ -125,4 +167,5 @@ function zabbix_bridge_schema() {
 function zabbix_bridge_uninstall() {
 
   drupal_uninstall_schema('zabbix_bridge');
+  
 }

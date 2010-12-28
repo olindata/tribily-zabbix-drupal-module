@@ -307,7 +307,7 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
 
   $host = array();
   $host['host'] = $form_state['clicked_button']['#post']['name'];
-  $host['groups'] = array($data['zabbix_hostgrp_id']);
+  $host['groups'] = array('groupid' => $data['zabbix_hostgrp_id']);
 
   // 0 - status monitored, 1 - status not monitored
   $status = $form_state['clicked_button']['#post']['status'];
@@ -363,6 +363,8 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
   }
 
   $roles = $form_state['clicked_button']['#post']['roles'];
+  zabbix_bridge_debug('$roles: ' . print_r($roles, TRUE));
+
   $role_ids = array();
   $rolesadded = 0;
 
@@ -380,11 +382,12 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
 
   if ($rolesadded > 0) {
     // retrieve zabbix template ids based on role ids
-    $result = db_query("SELECT * FROM {zabbix_roles_templates} WHERE roleid IN ('%s')", implode("','", $role_ids));
-
+    $result2 = db_query("SELECT * FROM {zabbix_roles_templates} WHERE roleid IN ('". implode("','", $role_ids)."')");
+    
     $addedtemplate_ids = array();
-    while ($data = db_fetch_array($result)) {
-      $addedtemplate_ids[] = $data['templateid'];
+    while ($data2 = db_fetch_array($result2)) {
+      $addedtemplate_ids[$data2['templateid']] = $data2['templateid'];
+      zabbix_bridge_debug('$data2: ' . print_r($data2, TRUE));
     }
 
     zabbix_bridge_debug('$addedtemplate_ids: ' . print_r($addedtemplate_ids, TRUE));
@@ -392,7 +395,7 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
     $template_add = ZabbixAPI::fetch_string('template', 'massAdd', array('templates' => $addedtemplate_ids,
                 'hosts' => array('hostid' => $zabbixhostid)));
 
-    zabbix_bridge_debug($template_add);
+    //zabbix_bridge_debug($template_add);
 
     if (!$template_add) {
       drupal_set_message('Unable to link templates: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
