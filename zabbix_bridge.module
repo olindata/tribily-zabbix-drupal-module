@@ -909,21 +909,21 @@ function zabbix_bridge_create_actions($actionname, $severity, $zabbixusergroupid
       'recovery_msg' => 1,
       'conditions' => array(
           array(
-              'conditiontype' => CONDITION_TYPE_TRIGGER_SEVERITY,
+              'type' => CONDITION_TYPE_TRIGGER_SEVERITY,
               'value' => $severity,
               'operator' => $conditionoperator,
           ),
           array(
-              'conditiontype' => CONDITION_TYPE_HOST_GROUP,
+              'type' => CONDITION_TYPE_HOST_GROUP,
               'value' => $zabbixhostgroupid,
               'operator' => CONDITION_OPERATOR_EQUAL,
           ),
           array(
-              'conditiontype' => CONDITION_TYPE_MAINTENANCE,
+              'type' => CONDITION_TYPE_MAINTENANCE,
               'operator' => CONDITION_OPERATOR_NOT_IN,
           ),
           array(
-              'conditiontype' => CONDITION_TYPE_TRIGGER_VALUE,
+              'type' => CONDITION_TYPE_TRIGGER_VALUE,
               'value' => TRIGGER_VALUE_TRUE,
               'operator' => CONDITION_OPERATOR_EQUAL,
           ),
