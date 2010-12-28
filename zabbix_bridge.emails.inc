@@ -531,8 +531,6 @@ function zabbix_bridge_import_emails() {
       $sql = "SELECT drupal_uid FROM {zabbix_drupal_account} WHERE zabbix_uid='%s'";
       $results = db_query($sql, $email['userid']);
 
-      zabbix_bridge_debug($sql);
-
       $user = db_fetch_object($results);
 
       if ($user) {
