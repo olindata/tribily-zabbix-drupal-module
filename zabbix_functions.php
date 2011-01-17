@@ -390,15 +390,17 @@ function zabbix_bridge_get_all_hosts($withtemplates = TRUE) {
 
     if ($withtemplates) {
       $templateids = array();
-      foreach ($value['templates'] as $template) {
-        $templateids[] = $template['templateid'];
-      }
+      if ($value['templates']) {
+        foreach ($value['templates'] as $template) {
+          $templateids[] = $template['templateid'];
+        }
 
-      $hosts[] = array('hostid' => $value['hostid'],
-          'name' => $value['host'],
-          'enabled' => $value['status'],
-          'hostgroupid' => $value['groups'][0]['groupid'],
-          'templateids' => $templateids);
+        $hosts[] = array('hostid' => $value['hostid'],
+            'name' => $value['host'],
+            'enabled' => $value['status'],
+            'hostgroupid' => $value['groups'][0]['groupid'],
+            'templateids' => $templateids);
+      }
     }
     else {
       $hosts[] = $value['hostid'];
