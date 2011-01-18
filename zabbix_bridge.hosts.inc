@@ -323,11 +323,11 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
 
   //create the host if it's not already existing
   if ($hostid == '') {
-    zabbix_bridge_debug(drupal_set_message("host data: ". print_r($host, TRUE)));
+    zabbix_bridge_debug("host data: ". print_r($host, TRUE));
     $zabbixhostid = ZabbixAPI::fetch_string('host', 'create', array($host));
     if ($zabbixhostid) {
-      drupal_set_message('Host successfully added.');
-      zabbix_bridge_debug(drupal_set_message("zabbixhostid: $zabbixhostid"));
+      //drupal_set_message('Host successfully added.');
+      zabbix_bridge_debug("zabbixhostid: $zabbixhostid");
     }
     else {
       drupal_set_message('Failed to add host' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
