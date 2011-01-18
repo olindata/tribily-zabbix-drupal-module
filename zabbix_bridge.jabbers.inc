@@ -186,7 +186,7 @@ function zabbix_bridge_jabbers_form_submit($form, &$form_state) {
   //create the jabber if it's not already existing
   if ($jabberid == '') {
 
-    zabbix_bridge_debug(drupal_set_message(print_r($jabber, TRUE)));
+    zabbix_bridge_debug(print_r($jabber, TRUE));
     $addedmedia = ZabbixAPI::fetch_string('user', 'addMedia', $jabber);
 
     if ($addedmedia) {
@@ -231,13 +231,13 @@ function zabbix_bridge_jabbers_form_submit($form, &$form_state) {
         'medias' => $usermedia
     );
 
-    zabbix_bridge_debug(drupal_set_message(print_r($usermedia, TRUE)));
+    zabbix_bridge_debug(print_r($usermedia, TRUE));
 
     //update the jabber and enabled status
     $usermedia = ZabbixAPI::fetch_string('user', 'updateMedia', $usermedia)
             or drupal_set_message('Problem updating existing jabber properties', DRUPAL_MSG_TYPE_ERR);
 
-    zabbix_bridge_debug(drupal_set_message('update: ' . print_r($usermedia, TRUE)));
+    zabbix_bridge_debug('update: ' . print_r($usermedia, TRUE));
   }
 
   // get user media
@@ -458,7 +458,7 @@ function zabbix_bridge_jabbers_enable_disable($zabbixmediaid, $enabled) {
     return;
   }
 
-  zabbix_bridge_debug(drupal_set_message(print_r($data, TRUE)));
+  zabbix_bridge_debug(print_r($data, TRUE));
 
   zabbix_api_login()
           or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
@@ -485,11 +485,11 @@ function zabbix_bridge_jabbers_enable_disable($zabbixmediaid, $enabled) {
   $usermedia['users'] = array('userid' => $data['zabbix_uid']);
   $usermedia['medias'] = $media;
 
-  zabbix_bridge_debug(drupal_set_message(print_r($usermedia, TRUE)));
+  zabbix_bridge_debug(print_r($usermedia, TRUE));
 
   $result = ZabbixAPI::fetch_string('user', 'updateMedia', $usermedia);
 
-  zabbix_bridge_debug(drupal_set_message(print_r($result, TRUE)));
+  zabbix_bridge_debug(print_r($result, TRUE));
 
   if (!$result) {
 
