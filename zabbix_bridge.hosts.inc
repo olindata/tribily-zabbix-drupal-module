@@ -411,6 +411,14 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
   $sql .= " VALUES('%s', '%s', '%s', '%s', '%s')";
   $sql .= " ON DUPLICATE KEY UPDATE hostname='%s', enabled='%s'";
 
+  if (!$hostid) {
+    zabbix_bridge_debug('no hostid');
+  } elseif ($hostid == '') {
+    zabbix_bridge_debug('hostid empty');
+  } else {
+    zabbix_bridge_debug("hostid unknown: $hostid");
+  }
+
   $result = db_query($sql, $user->uid, $hostid, $zabbixhostid, $host['host'], $host['status'], $host['host'], $host['status']);
 
   if (!$result) {
@@ -418,6 +426,7 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
   }
   elseif ($hostid == '') {
     $hostid = db_last_insert_id('zabbix_hosts', 'hostid');
+    zabbix_bridge_debug('hostid: $hostid');
   }
 
   // if the templates was added to zabbix succesfully
