@@ -323,10 +323,11 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
 
   //create the host if it's not already existing
   if ($hostid == '') {
-    zabbix_bridge_debug(drupal_set_message(print_r($host, TRUE)));
+    zabbix_bridge_debug("host data: ". print_r($host, TRUE));
     $zabbixhostid = ZabbixAPI::fetch_string('host', 'create', array($host));
     if ($zabbixhostid) {
-      drupal_set_message('Host successfully added.');
+      //drupal_set_message('Host successfully added.');
+      zabbix_bridge_debug("zabbixhostid: $zabbixhostid");
     }
     else {
       drupal_set_message('Failed to add host' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
@@ -410,6 +411,14 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
   $sql .= " VALUES('%s', '%s', '%s', '%s', '%s')";
   $sql .= " ON DUPLICATE KEY UPDATE hostname='%s', enabled='%s'";
 
+  if (!$hostid) {
+    zabbix_bridge_debug('no hostid');
+  } elseif ($hostid == '') {
+    zabbix_bridge_debug('hostid empty');
+  } else {
+    zabbix_bridge_debug("hostid unknown: $hostid");
+  }
+
   $result = db_query($sql, $user->uid, $hostid, $zabbixhostid, $host['host'], $host['status'], $host['host'], $host['status']);
 
   if (!$result) {
@@ -417,6 +426,7 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
   }
   elseif ($hostid == '') {
     $hostid = db_last_insert_id('zabbix_hosts', 'hostid');
+    zabbix_bridge_debug('hostid: $hostid');
   }
 
   // if the templates was added to zabbix succesfully
