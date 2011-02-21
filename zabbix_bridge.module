@@ -22,7 +22,7 @@ function zabbix_bridge_menu() {
     //Module settings menu items (only accessible to admins)
     $items['admin/settings/zabbix_bridge'] = array(
         'title' => 'Zabbix Bridge',
-        'page callback' => 'zabbix_overview',
+        'page callback' => 'zabbix_bridge_overview_form',
         'description' => 'Overview of the data stored in the Zabbix Bridge module.',
         'file' => 'zabbix_bridge.admin.inc',
         'access arguments' => array('administer site configuration'),
@@ -30,7 +30,7 @@ function zabbix_bridge_menu() {
 
     $items['admin/settings/zabbix_bridge/overview'] = array(
         'title' => 'Zabbix Bridge Overview',
-        'page callback' => 'zabbix_overview',
+        'page callback' => 'zabbix_bridge_overview_form',
         'file' => 'zabbix_bridge.admin.inc',
         'weight' => 20,
         'type' => MENU_LOCAL_TASK,
@@ -40,7 +40,7 @@ function zabbix_bridge_menu() {
     $items['admin/settings/zabbix_bridge/settings'] = array(
         'title' => 'Zabbix Bridge Settings',
         'page callback' => 'drupal_get_form',
-        'page arguments' => array('zabbix_bridge_settings'),
+        'page arguments' => array('zabbix_bridge_settings_form'),
         'description' => 'Configure the Zabbix Bridge module.',
         'file' => 'zabbix_bridge.admin.inc',
         'type' => MENU_LOCAL_TASK,
@@ -51,7 +51,7 @@ function zabbix_bridge_menu() {
     // Hosts menu item (accessible to user)
     $items['hosts/overview'] = array(
         'title' => 'Monitored Hosts',
-        'page callback' => 'zabbix_hosts',
+        'page callback' => 'zabbix_hosts_overview',
         'access arguments' => array('access hosts'),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.hosts.inc',
@@ -62,7 +62,7 @@ function zabbix_bridge_menu() {
         'title' => 'Add Monitored Hosts',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_hosts_form', 1),
-        'access arguments' => array('access hosts'),
+        'access arguments' => array('access hosts', 'add hosts'),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.hosts.inc',
     );
@@ -71,7 +71,7 @@ function zabbix_bridge_menu() {
         'title' => 'Add Monitored Hosts',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_hosts_form', 1, 2),
-        'access arguments' => array('access hosts'),
+        'access arguments' => array('access hosts', 'update hosts'),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.hosts.inc',
     );
@@ -81,7 +81,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('host_delete_confirm', 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('access hosts'),
+        'access arguments' => array('access hosts', 'delete hosts'),
         'file' => 'zabbix_bridge.hosts.inc',
     );
 
@@ -90,7 +90,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('host_enable_disable_confirm', 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('access hosts'),
+        'access arguments' => array('access hosts', 'update hosts'),
         'file' => 'zabbix_bridge.hosts.inc',
     );
 
@@ -189,7 +189,7 @@ function zabbix_bridge_menu() {
         'title' => 'Add Email',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_emails_form', 1),
-        'access arguments' => array('access emails'),
+        'access arguments' => array('access emails', 'add emails'),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.emails.inc',
     );
@@ -199,7 +199,7 @@ function zabbix_bridge_menu() {
         'title' => 'Update Emails',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_emails_form', 1, 2),
-        'access arguments' => array('access emails'),
+        'access arguments' => array('access emails', 'update emails'),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.emails.inc',
     );
@@ -210,7 +210,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_emails_delete_confirm', 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('access emails'),
+        'access arguments' => array('access emails', 'delete emails'),
         'file' => 'zabbix_bridge.emails.inc',
     );
 
@@ -220,7 +220,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_emails_enable_disable_confirm', 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('access emails'),
+        'access arguments' => array('access emails', 'update emails'),
         'file' => 'zabbix_bridge.emails.inc',
     );
 
@@ -246,7 +246,7 @@ function zabbix_bridge_menu() {
         'title' => 'Add Mobile',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_mobiles_form', 1),
-        'access arguments' => array('access mobiles'),
+        'access arguments' => array('access mobiles', 'add mobiles'),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.mobiles.inc',
     );
@@ -256,7 +256,7 @@ function zabbix_bridge_menu() {
         'title' => 'Update Mobile',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_mobiles_form', 1, 2),
-        'access arguments' => array('access mobiles'),
+        'access arguments' => array('access mobiles', 'update mobiles'),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.mobiles.inc',
     );
@@ -267,7 +267,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_mobiles_delete_confirm', 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('access mobiles'),
+        'access arguments' => array('access mobiles', 'delete mobiles'),
         'file' => 'zabbix_bridge.mobiles.inc',
     );
 
@@ -277,7 +277,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_mobiles_enable_disable_confirm', 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('access mobiles'),
+        'access arguments' => array('access mobiles', 'update mobiles'),
         'file' => 'zabbix_bridge.mobiles.inc',
     );
 
@@ -303,7 +303,7 @@ function zabbix_bridge_menu() {
         'title' => 'Add Jabber',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_jabbers_form', 1),
-        'access arguments' => array('access jabbers'),
+        'access arguments' => array('access jabbers', 'add jabbers'),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.jabbers.inc',
     );
@@ -313,7 +313,7 @@ function zabbix_bridge_menu() {
         'title' => 'Update Jabber',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_jabbers_form', 1, 2),
-        'access arguments' => array('access jabbers'),
+        'access arguments' => array('access jabbers', 'update jabbers'),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.mobiles.inc',
     );
@@ -324,7 +324,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_jabbers_delete_confirm', 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('access jabbers'),
+        'access arguments' => array('access jabbers', 'delete jabbers'),
         'file' => 'zabbix_bridge.jabbers.inc',
     );
 
@@ -334,7 +334,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_jabbers_enable_disable_confirm', 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('access jabbers'),
+        'access arguments' => array('access jabbers', 'update jabbers'),
         'file' => 'zabbix_bridge.jabbers.inc',
     );
 
@@ -355,7 +355,23 @@ function zabbix_bridge_menu() {
 
 function zabbix_bridge_perm() {
 
-  return array('access hosts', 'access emails', 'access mobiles', 'access jabbers');
+  return array(
+    'access hosts',
+    'add hosts',
+    'delete hosts',
+    'update hosts',
+    'access emails',
+    'add emails',
+    'delete emails',
+    'update emails',
+    'access mobiles',
+    'add mobiles',
+    'delete mobiles',
+    'update mobiles',
+    'access jabbers',
+    'add jabbers',
+    'delete jabbers',
+    'update jabbers');
 }
 
 /**

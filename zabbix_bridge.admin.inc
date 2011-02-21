@@ -14,7 +14,7 @@ include_once 'zabbix_functions.php';
  *
  * @return <type>
  */
-function zabbix_overview() {
+function zabbix_bridge_overview_form() {
 
   drupal_set_title('Overview of zabbix_bridge');
 
@@ -61,7 +61,7 @@ function zabbix_overview() {
  *
  * @return <type>
  */
-function zabbix_bridge_settings() {
+function zabbix_bridge_settings_form() {
   $form['zabbix_bridge_credentials'] = array(
       '#type' => 'fieldset',
       '#title' => t('Zabbix credentials'),
@@ -126,6 +126,8 @@ function zabbix_bridge_settings() {
       '#description' => t('Determines whether debug messages show full information. Less readable, more debuggable :)'),
       '#options' => $debug_options
   );
+
+
 
   return system_settings_form($form);
 }

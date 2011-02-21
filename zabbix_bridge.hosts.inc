@@ -15,7 +15,7 @@ include_once 'zabbix_functions.php';
  *
  * @ingroup forms
  */
-function zabbix_hosts() {
+function zabbix_hosts_overview() {
   global $user;
 
   drupal_set_title('Hosts to monitor');
