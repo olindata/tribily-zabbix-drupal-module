@@ -10,48 +10,50 @@
  */
 
 include_once 'zabbix_functions.php';
+
 /**
  *
  * @return <type>
  */
-function zabbix_overview() {
+function zabbix_bridge_admin_hosts() {
 
-  drupal_set_title('Overview of zabbix_bridge');
+  drupal_set_title('Hosts of zabbix_bridge');
 
   $output = '<h2>' . t('User defined hosts') . '</h2>';
-
   $output .= t('These are all the hosts with their roles created by all users.');
-
   $output .= zabbix_hosts_table();
-
   $output .= l('Import from Zabbix', 'hosts/import');
 
-  $output .= '<h2>' . t('Mapping of Drupal vs Zabbix objects') . '</h2>';
+  return $output;
+}
 
-  $output .= t('This is teh list of currently configured mappings for drupal users to their corresponding zabbix object id\s');
+/**
+ *
+ * @return <type>
+ */
+function zabbix_bridge_admin_emails() {
 
-  $output .= zabbix_user_mapping_table();
+  drupal_set_title('Emails of zabbix_bridge');
 
-  $output .= l('Add mapping', 'zabbix-user-mapping/add');
-
-  $output .= '<h2>' . t('Roles and their corresponding Zabbix Templates') . '</h2>';
-
-  $output .= t('These are all the roles with their corresponding zabbix templateids.');
-
-  $output .= zabbix_roles_table();
-
-  $output .= l('Add mapping', 'zabbix-role-mapping/add') . ' | ' . l('Import from zabbix', 'zabbix-role-mapping/import');
-
+  $output = '<h2>' . t('User defined emails') . '</h2>';
+  $output .= t('These are all the emails defined by users for notification.');
   $output .= zabbix_emails_table();
-
   $output .= l('Add email', 'emails/add') . ' | ' . l('Import from zabbix', 'emails/import');
 
-  $output .= zabbix_mobiles_table();
+  return $output;
+}
 
-  $output .= l('Add mobile number', 'mobiles/add') . ' | ' . l('Import from zabbix', 'mobiles/import');
+/**
+ *
+ * @return <type>
+ */
+function zabbix_bridge_admin_jabbers() {
 
+  drupal_set_title('Jabbers of zabbix_bridge');
+
+  $output = '<h2>' . t('User defined jabbers') . '</h2>';
+  $output .= t('These are all the jabber accounts defined by users for notification.');
   $output .= zabbix_jabbers_table();
-
   $output .= l('Add jabber', 'jabbers/add') . ' | ' . l('Import from zabbix', 'jabbers/import');
 
   return $output;
@@ -61,7 +63,56 @@ function zabbix_overview() {
  *
  * @return <type>
  */
-function zabbix_bridge_settings() {
+function zabbix_bridge_admin_mobiles() {
+
+  drupal_set_title('Mobiles of zabbix_bridge');
+
+  $output = '<h2>' . t('User defined mobiles') . '</h2>';
+  $output .= t('These are all the jabber accounts defined by users for notification.');
+  $output .= zabbix_mobiles_table();
+  $output .= l('Add mobile number', 'mobiles/add') . ' | ' . l('Import from zabbix', 'mobiles/import');
+
+  return $output;
+}
+
+/**
+ *
+ * @return <type>
+ */
+function zabbix_bridge_admin_user_mappings() {
+
+  drupal_set_title('User mappings of zabbix_bridge');
+
+  $output .= '<h2>' . t('Mapping of Drupal vs Zabbix objects') . '</h2>';
+  $output .= t('This is teh list of currently configured mappings for drupal users to their corresponding zabbix object id\s');
+  $output .= zabbix_user_mapping_table();
+  $output .= l('Add mapping', 'zabbix-user-mapping/add');
+
+  return $output;
+}
+
+/**
+ *
+ * @return <type>
+ */
+function zabbix_bridge_admin_roles_mapping() {
+
+  drupal_set_title('Mapping of roles of zabbix_bridge');
+
+  $output .= '<h2>' . t('Roles and their corresponding Zabbix Templates') . '</h2>';
+  $output .= t('These are all the roles with their corresponding zabbix templateids.');
+  $output .= zabbix_roles_table();
+  $output .= l('Add mapping', 'zabbix-role-mapping/add') . ' | ' . l('Import from zabbix', 'zabbix-role-mapping/import');
+
+  return $output;
+}
+
+
+/**
+ *
+ * @return <type>
+ */
+function zabbix_bridge_admin_settings() {
   $form['zabbix_bridge_credentials'] = array(
       '#type' => 'fieldset',
       '#title' => t('Zabbix credentials'),
@@ -78,14 +129,12 @@ function zabbix_bridge_settings() {
       '#type' => 'textfield',
       '#title' => t('Zabbix API user'),
       '#default_value' => variable_get('zabbix_bridge_API_user', zabbix_bridge_API_user),
-      '#required' => TRUE,
       '#description' => t('User used for API calls. Has to have API calling enabled, and has to be a super-admin.')
   );
 
   $form['zabbix_bridge_credentials']['zabbix_bridge_API_pass'] = array(
       '#type' => 'password_confirm',
       '#title' => t('Zabbix API password'),
-      '#required' => TRUE,
       '#size' => 25,
       '#description' => t('Password used for API calls. This is the zabbix password of the API user.')
   );
@@ -129,3 +178,7 @@ function zabbix_bridge_settings() {
 
   return system_settings_form($form);
 }
+
+
+
+

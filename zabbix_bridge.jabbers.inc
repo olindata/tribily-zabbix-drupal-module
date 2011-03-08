@@ -18,10 +18,13 @@ function zabbix_bridge_jabbers() {
 
   global $user;
 
-  drupal_set_title('Jabbers');
+  drupal_set_title('Jabber ids');
 
-  $output = zabbix_jabbers_table($user->uid);
-  $output .= l('Add Jabber', 'jabbers/add');
+  $output = "<div id=\"jabber-explain\"><p>Here you can add your jabber/xmpp id. We will notify you on your jabber account for alerts of the selected severities.</p>";
+  $output .= "<p>Among many other services, <strong>Google Talk (GTalk)</strong> also supports the jabber protocol, so add your GTalk address here and give it a try!</p>";
+  $output .= "<p><strong>Important Note:</strong> After adding a jabber id here, make sure to do a friend request from your jabber client to <strong>tribily@jabberes.org</strong>. Only after that is done will you start receiving alerts from Tribily!</p></div>\n";
+  $output .= zabbix_jabbers_table($user->uid);
+  $output .= l('Add Jabber id', 'jabbers/add');
 
   return $output;
 }
@@ -56,7 +59,8 @@ function zabbix_bridge_jabbers_form(&$form_state, $operation, $jabberid = NULL) 
   }
 
   // Put it in the form
-  $form['jabbers'] = array('#type' => 'fieldset',
+  $form['jabbers'] = array(
+      '#type' => 'fieldset',
       '#title' => t($title),
       '#weight' => -10
   );
@@ -70,10 +74,11 @@ function zabbix_bridge_jabbers_form(&$form_state, $operation, $jabberid = NULL) 
   // the jabber
   $form['jabbers']['jabber'] = array(
       '#type' => 'textfield',
-      '#title' => t('Jabber'),
+      '#title' => t('Jabber id'),
       '#maxlength' => MEDIA_NAME_MAXLENGTH,
       '#value' => isset($jabber->jabber) ? $jabber->jabber : '',
-      '#required' => TRUE
+      '#required' => TRUE,
+      '#description' => t("Your jabber id. This is usually your email address, e.g. 'johndoe@example.com'. For GTalk, try your gmail address.")
   );
 
   // status - enabled/disabled
@@ -121,7 +126,7 @@ function zabbix_bridge_jabbers_form(&$form_state, $operation, $jabberid = NULL) 
       '#title' => t('Severities'),
       '#default_value' => $default_value,
       '#options' => $template_options,
-      '#description' => t('Assign one or more severities to this jabber.')
+      '#description' => t('Select one or more severities this jabber id will receive alerts for.')
   );
 
   $form['jabbers']['submit'] = array('#type' => 'submit', '#value' => t($submit), '#weight' => 30);

@@ -20,8 +20,9 @@ function zabbix_hosts() {
 
   drupal_set_title('Hosts to monitor');
 
-  $output = zabbix_hosts_table($user->uid);
 
+  $output = "<div id=\"hosts-explain\"><p>Here you can add the hosts you would like to monitor. After you add hosts here, make sure to also add notification settings for one or more of emails, mobile phone or jabber.</p></div>";
+  $output .= zabbix_hosts_table($user->uid);
   $output .= l('Add host', 'hosts/add');
 
   return $output;
@@ -229,10 +230,11 @@ function zabbix_bridge_hosts_form(&$form_state, $operation, $hostid = NULL) {
   // the host's name
   $form['hosts']['name'] = array(
       '#type' => 'textfield',
-      '#title' => t('Name'),
+      '#title' => t('Name of the host'),
       '#maxlength' => HOST_NAME_MAXLENGTH,
       '#value' => isset($host->hostname) ? $host->hostname : '',
-      '#required' => TRUE
+      '#required' => TRUE,
+      '#description' => t("This is the name you use for the 'Hostname =' parameter in your zabbix_agentd.conf file on the server. It is important these two match, otherwise your server won't be reporting properly."),
   );
 
   // status - monitored/unmonitored
@@ -250,13 +252,13 @@ function zabbix_bridge_hosts_form(&$form_state, $operation, $hostid = NULL) {
   );
 
   // make the template SELECT options
-  $result = db_query('SELECT roleid, name FROM {zabbix_role}')
+  $result = db_query('SELECT roleid, name, description FROM {zabbix_role}')
           or drupal_set_message('Unable to retrieve zabbix roles', DRUPAL_MSG_TYPE_ERR);
 
   $template_options = array();
 
   while ($data = db_fetch_array($result)) {
-    $template_options[$data['roleid']] = $data['name'];
+    $template_options[$data['roleid']] = $data['name']."<div class='description'>".$data['description']."</div>";
   }
 
   $default_value = array();
@@ -278,7 +280,6 @@ function zabbix_bridge_hosts_form(&$form_state, $operation, $hostid = NULL) {
       '#title' => t('Roles'),
       '#default_value' => $default_value,
       '#options' => $template_options,
-      '#description' => t('Assign this host to one or more roles.')
   );
 
   $form['hosts']['submit'] = array('#type' => 'submit', '#value' => t($submit), '#weight' => 30);
