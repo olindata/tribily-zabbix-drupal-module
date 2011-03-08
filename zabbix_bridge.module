@@ -1104,21 +1104,21 @@ function zabbix_bridge_create_basic_actions($actionname, $severity, $zabbixuserg
       'recovery_msg' => 1,
       'conditions' => array(
           array(
-              'type' => CONDITION_TYPE_TRIGGER_SEVERITY,
+              'conditiontype' => CONDITION_TYPE_TRIGGER_SEVERITY,
               'value' => $severity,
               'operator' => $conditionoperator,
           ),
           array(
-              'type' => CONDITION_TYPE_HOST_GROUP,
+              'conditiontype' => CONDITION_TYPE_HOST_GROUP,
               'value' => $zabbixhostgroupid,
               'operator' => CONDITION_OPERATOR_EQUAL,
           ),
           array(
-              'type' => CONDITION_TYPE_MAINTENANCE,
+              'conditiontype' => CONDITION_TYPE_MAINTENANCE,
               'operator' => CONDITION_OPERATOR_NOT_IN,
           ),
           array(
-              'type' => CONDITION_TYPE_TRIGGER_VALUE,
+              'conditiontype' => CONDITION_TYPE_TRIGGER_VALUE,
               'value' => TRIGGER_VALUE_TRUE,
               'operator' => CONDITION_OPERATOR_EQUAL,
           ),
