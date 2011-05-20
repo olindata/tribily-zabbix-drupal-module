@@ -14,7 +14,7 @@ include_once 'zabbix_functions.php';
  *
  * @return <type>
  */
-function zabbix_bridge_overview_form() {
+function zabbix_bridge_hosts_form() {
 
   drupal_set_title('Hosts of zabbix_bridge');
 
@@ -180,6 +180,50 @@ function zabbix_bridge_settings_form() {
   return system_settings_form($form);
 }
 
+function zabbix_bridge_alert_notifications_form() {
 
+  $form['zabbix_bridge_notifications'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Zabbix Alert Notifications'),
+  );
+  $form['zabbix_bridge_notifications']['zabbix_bridge_alert_average'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Average alert'),
+      '#default_value' => variable_get('zabbix_bridge_alert_average', zabbix_bridge_alert_average),
+      '#required' => TRUE,
+      '#description' => t('The full email that you want to send to customers when they receive an alert of the level <strong>average</strong>. This can use all of the template variables available to zabbix.')
+  );
+  $form['zabbix_bridge_notifications']['zabbix_bridge_alert_high'] = array(
+      '#type' => 'textarea',
+      '#title' => t('High alert'),
+      '#default_value' => variable_get('zabbix_bridge_alert_high', zabbix_bridge_alert_high),
+      '#required' => TRUE,
+      '#description' => t('The full email that you want to send to customers when they receive an alert of the level <strong>high</strong>. This can use all of the template variables available to zabbix.')
+  );
+  $form['zabbix_bridge_notifications']['zabbix_bridge_alert_disaster'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Disaster alert'),
+      '#default_value' => variable_get('zabbix_bridge_alert_disaster', zabbix_bridge_alert_disaster),
+      '#required' => TRUE,
+      '#description' => t('The full email that you want to send to customers when they receive an alert of the level <strong>disaster</strong>. This can use all of the template variables available to zabbix.')
+  );
+  $form['zabbix_bridge_notifications']['zabbix_bridge_alert_info_warn'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Information & Warning alert'),
+      '#default_value' => variable_get('zabbix_bridge_alert_info_warn', zabbix_bridge_alert_info_warn),
+      '#required' => TRUE,
+      '#description' => t('The full email that you want to send to customers when they receive an alert of the level <strong>Information</strong> or <strong>Warning</strong>. This can use all of the template variables available to zabbix.')
+  );
+  $form['zabbix_bridge_notifications']['zabbix_bridge_alert_sms'] = array(
+      '#type' => 'textarea',
+      '#title' => t('SMS alert'),
+      '#default_value' => variable_get('zabbix_bridge_alert_sms', zabbix_bridge_alert_sms),
+      '#required' => TRUE,
+      '#description' => t('The full email that you want to send to customers when they receive an alert by text message. This can use all of the template variables available to zabbix.')
+  );
+
+
+  return system_settings_form($form);
+}
 
 

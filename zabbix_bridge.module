@@ -22,7 +22,7 @@ function zabbix_bridge_menu() {
     //Module settings menu items (only accessible to admins)
     $items['admin/settings/zabbix_bridge'] = array(
         'title' => 'Zabbix Bridge',
-        'page callback' => 'Hosts',
+        'page callback' => 'zabbix_bridge_hosts_form',
         'description' => 'List of the hosts created by this module',
         'file' => 'zabbix_bridge.admin.inc',
         'access arguments' => array(PERM_ADMIN),
@@ -30,7 +30,7 @@ function zabbix_bridge_menu() {
 
     $items['admin/settings/zabbix_bridge/hosts'] = array(
         'title' => 'Hosts',
-        'page callback' => 'zabbix_bridge_overview_form',
+        'page callback' => 'zabbix_bridge_hosts_form',
         'file' => 'zabbix_bridge.admin.inc',
         'weight' => 20,
         'type' => MENU_LOCAL_TASK,
@@ -87,6 +87,18 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_settings_form'),
         'description' => 'Configure the Zabbix Bridge module.',
+        'file' => 'zabbix_bridge.admin.inc',
+        'type' => MENU_LOCAL_TASK,
+        'weight' => 30,
+        'access arguments' => array(PERM_ADMIN),
+    );
+
+    // settins page to change alert notifications
+  $items['admin/settings/zabbix_bridge/alert_notifications'] = array(
+        'title' => 'Alert Notifications',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_alert_notifications_form'),
+        'description' => 'Change the alert texts sent by zabbix when an alert happens.',
         'file' => 'zabbix_bridge.admin.inc',
         'type' => MENU_LOCAL_TASK,
         'weight' => 30,
