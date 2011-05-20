@@ -14,6 +14,24 @@ define('TABLE_ID_USER_MAPPING', 100);
 define('TABLE_ID_HOSTS_MAPPING', 101);
 define('TABLE_ID_EMAILS_MAPPING', 102);
 
+//the permissions defined/used by this module
+define('PERM_ADMIN', 'administer site configuration');
+define('PERM_HOSTS_SELECT', 'access hosts');
+define('PERM_HOSTS_INSERT', 'add hosts');
+define('PERM_HOSTS_DELETE', 'delete hosts');
+define('PERM_HOSTS_UPDATE', 'update hosts');
+define('PERM_JABBER_SELECT', 'access jabbers');
+define('PERM_JABBER_INSERT', 'add jabbers');
+define('PERM_JABBER_DELETE', 'delete jabbers');
+define('PERM_JABBER_UPDATE', 'update jabbers');
+define('PERM_MOBILES_SELECT', 'access mobiles');
+define('PERM_MOBILES_INSERT', 'add mobiles');
+define('PERM_MOBILES_DELETE', 'delete mobiles');
+define('PERM_MOBILES_UPDATE', 'update mobiles');
+define('PERM_EMAIL_SELECT', 'access emails');
+define('PERM_EMAIL_INSERT', 'add emails');
+define('PERM_EMAIL_DELETE', 'delete emails');
+define('PERM_EMAIL_UPDATE', 'update emails');
 
 // from zabbix/include/defines.inc.php
 define('PERM_READ_WRITE', 3);
@@ -810,11 +828,11 @@ function zabbix_jabbers_table($userid = NULL) {
 
         if (!isset($userid)) {
 
-            $rows[] = array(t('No jabbers have been defined yet.'), '', '', '', '', '');
+            $rows[] = array(t('No jabber ids have been defined yet.'), '', '', '', '', '');
         }
         else {
 
-            $rows[] = array(t('No jabbers have been defined yet.'), '', '', '');
+            $rows[] = array(t('No jabber ids have been added. Click "Add Jabber id" below to get started!'), '', '', '');
         }
     }
 

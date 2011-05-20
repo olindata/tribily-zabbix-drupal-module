@@ -22,37 +22,82 @@ function zabbix_bridge_menu() {
     //Module settings menu items (only accessible to admins)
     $items['admin/settings/zabbix_bridge'] = array(
         'title' => 'Zabbix Bridge',
-        'page callback' => 'zabbix_bridge_overview_form',
-        'description' => 'Overview of the data stored in the Zabbix Bridge module.',
+        'page callback' => 'Hosts',
+        'description' => 'List of the hosts created by this module',
         'file' => 'zabbix_bridge.admin.inc',
-        'access arguments' => array('administer site configuration'),
+        'access arguments' => array(PERM_ADMIN),
     );
 
-    $items['admin/settings/zabbix_bridge/overview'] = array(
-        'title' => 'Zabbix Bridge Overview',
+    $items['admin/settings/zabbix_bridge/hosts'] = array(
+        'title' => 'Hosts',
         'page callback' => 'zabbix_bridge_overview_form',
         'file' => 'zabbix_bridge.admin.inc',
         'weight' => 20,
         'type' => MENU_LOCAL_TASK,
-        'access arguments' => array('administer site configuration'),
+        'access arguments' => array(PERM_ADMIN),
+    );
+
+    $items['admin/settings/zabbix_bridge/emails'] = array(
+        'title' => 'Emails',
+        'page callback' => 'zabbix_bridge_admin_emails',
+        'file' => 'zabbix_bridge.admin.inc',
+        'weight' => 20,
+        'type' => MENU_LOCAL_TASK,
+        'access arguments' => array(PERM_ADMIN),
+    );
+
+    $items['admin/settings/zabbix_bridge/mobiles'] = array(
+        'title' => 'Mobiles',
+        'page callback' => 'zabbix_bridge_admin_mobiles',
+        'file' => 'zabbix_bridge.admin.inc',
+        'weight' => 20,
+        'type' => MENU_LOCAL_TASK,
+        'access arguments' => array(PERM_ADMIN),
+    );
+
+    $items['admin/settings/zabbix_bridge/jabbers'] = array(
+        'title' => 'Jabbers',
+        'page callback' => 'zabbix_bridge_admin_jabbers',
+        'file' => 'zabbix_bridge.admin.inc',
+        'weight' => 20,
+        'type' => MENU_LOCAL_TASK,
+        'access arguments' => array(PERM_ADMIN),
+    );
+
+    $items['admin/settings/zabbix_bridge/roles'] = array(
+        'title' => 'Roles',
+        'page callback' => 'zabbix_bridge_admin_roles_mapping',
+        'file' => 'zabbix_bridge.admin.inc',
+        'weight' => 20,
+        'type' => MENU_LOCAL_TASK,
+        'access arguments' => array(PERM_ADMIN),
+    );
+
+    $items['admin/settings/zabbix_bridge/users'] = array(
+        'title' => 'Users',
+        'page callback' => 'zabbix_bridge_admin_user_mappings',
+        'file' => 'zabbix_bridge.admin.inc',
+        'weight' => 20,
+        'type' => MENU_LOCAL_TASK,
+        'access arguments' => array(PERM_ADMIN),
     );
 
     $items['admin/settings/zabbix_bridge/settings'] = array(
-        'title' => 'Zabbix Bridge Settings',
+        'title' => 'Settings',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_settings_form'),
         'description' => 'Configure the Zabbix Bridge module.',
         'file' => 'zabbix_bridge.admin.inc',
         'type' => MENU_LOCAL_TASK,
         'weight' => 30,
-        'access arguments' => array('administer site configuration'),
+        'access arguments' => array(PERM_ADMIN),
     );
 
     // Hosts menu item (accessible to user)
     $items['hosts/overview'] = array(
         'title' => 'Monitored Hosts',
         'page callback' => 'zabbix_hosts_overview',
-        'access arguments' => array('access hosts'),
+        'access arguments' => array(PERM_HOSTS_SELECT),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.hosts.inc',
     );
@@ -62,7 +107,7 @@ function zabbix_bridge_menu() {
         'title' => 'Add Monitored Hosts',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_hosts_form', 1),
-        'access arguments' => array('access hosts', 'add hosts'),
+        'access arguments' => array(PERM_HOSTS_INSERT),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.hosts.inc',
     );
@@ -71,7 +116,7 @@ function zabbix_bridge_menu() {
         'title' => 'Add Monitored Hosts',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_hosts_form', 1, 2),
-        'access arguments' => array('access hosts', 'update hosts'),
+        'access arguments' => array(PERM_HOSTS_UPDATE),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.hosts.inc',
     );
@@ -81,7 +126,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('host_delete_confirm', 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('access hosts', 'delete hosts'),
+        'access arguments' => array(PERM_HOSTS_DELETE),
         'file' => 'zabbix_bridge.hosts.inc',
     );
 
@@ -90,7 +135,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('host_enable_disable_confirm', 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('access hosts', 'update hosts'),
+        'access arguments' => array(PERM_HOSTS_UPDATE),
         'file' => 'zabbix_bridge.hosts.inc',
     );
 
@@ -98,7 +143,7 @@ function zabbix_bridge_menu() {
         'title' => t('Import hosts from zabbix'),
         'page callback' => 'zabbix_bridge_import_hosts',
         'type' => MENU_CALLBACK,
-        'access arguments' => array('administer site configuration'),
+        'access arguments' => array(PERM_ADMIN),
         'file' => 'zabbix_bridge.hosts.inc',
     );
 
@@ -108,7 +153,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_user_mapping_form', 1, 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('administer site configuration'),
+        'access arguments' => array(PERM_ADMIN),
         'file' => 'zabbix_bridge.user_mapping.inc',
     );
 
@@ -117,7 +162,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_user_mapping_delete_confirm', 1, 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('administer site configuration'),
+        'access arguments' => array(PERM_ADMIN),
         'file' => 'zabbix_bridge.user_mapping.inc',
     );
 
@@ -126,7 +171,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_user_mapping_generate_confirm', 1, 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('administer site configuration'),
+        'access arguments' => array(PERM_ADMIN),
         'file' => 'zabbix_bridge.user_mapping.inc',
     );
 
@@ -135,7 +180,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_user_mapping_form', 1),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('administer site configuration'),
+        'access arguments' => array(PERM_ADMIN),
         'file' => 'zabbix_bridge.user_mapping.inc',
     );
 
@@ -145,7 +190,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_role_mapping_form', 1, 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('administer site configuration'),
+        'access arguments' => array(PERM_ADMIN),
         'file' => 'zabbix_bridge.role_mapping.inc',
     );
 
@@ -154,7 +199,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_role_mapping_delete_confirm', 1, 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('administer site configuration'),
+        'access arguments' => array(PERM_ADMIN),
         'file' => 'zabbix_bridge.role_mapping.inc',
     );
 
@@ -163,7 +208,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_role_mapping_form', 1),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('administer site configuration'),
+        'access arguments' => array(PERM_ADMIN),
         'file' => 'zabbix_bridge.role_mapping.inc',
     );
 
@@ -171,7 +216,7 @@ function zabbix_bridge_menu() {
         'title' => t('Import roles to the bridge'),
         'page callback' => 'zabbix_bridge_import_roles',
         'type' => MENU_CALLBACK,
-        'access arguments' => array('administer site configuration'),
+        'access arguments' => array(PERM_ADMIN),
         'file' => 'zabbix_bridge.role_mapping.inc',
     );
 
@@ -179,7 +224,7 @@ function zabbix_bridge_menu() {
     $items['emails/overview'] = array(
         'title' => 'Emails',
         'page callback' => 'zabbix_bridge_emails',
-        'access arguments' => array('access emails'),
+        'access arguments' => array(PERM_EMAIL_SELECT),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.emails.inc',
     );
@@ -189,7 +234,7 @@ function zabbix_bridge_menu() {
         'title' => 'Add Email',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_emails_form', 1),
-        'access arguments' => array('access emails', 'add emails'),
+        'access arguments' => array(PERM_EMAIL_INSERT),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.emails.inc',
     );
@@ -199,7 +244,7 @@ function zabbix_bridge_menu() {
         'title' => 'Update Emails',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_emails_form', 1, 2),
-        'access arguments' => array('access emails', 'update emails'),
+        'access arguments' => array(PERM_EMAIL_UPDATE),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.emails.inc',
     );
@@ -210,7 +255,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_emails_delete_confirm', 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('access emails', 'delete emails'),
+        'access arguments' => array(PERM_EMAIL_DELETE),
         'file' => 'zabbix_bridge.emails.inc',
     );
 
@@ -220,7 +265,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_emails_enable_disable_confirm', 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('access emails', 'update emails'),
+        'access arguments' => array(PERM_EMAIL_UPDATE),
         'file' => 'zabbix_bridge.emails.inc',
     );
 
@@ -228,7 +273,7 @@ function zabbix_bridge_menu() {
         'title' => t('Import email addresses to the bridge'),
         'page callback' => 'zabbix_bridge_import_emails',
         'type' => MENU_CALLBACK,
-        'access arguments' => array('administer site configuration'),
+        'access arguments' => array(PERM_ADMIN),
         'file' => 'zabbix_bridge.emails.inc',
     );
 
@@ -236,7 +281,7 @@ function zabbix_bridge_menu() {
     $items['mobiles/overview'] = array(
         'title' => 'Mobile',
         'page callback' => 'zabbix_bridge_mobiles',
-        'access arguments' => array('access mobiles'),
+        'access arguments' => array(PERM_MOBILES_SELECT),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.mobiles.inc',
     );
@@ -246,7 +291,7 @@ function zabbix_bridge_menu() {
         'title' => 'Add Mobile',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_mobiles_form', 1),
-        'access arguments' => array('access mobiles', 'add mobiles'),
+        'access arguments' => array(PERM_MOBILES_INSERT),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.mobiles.inc',
     );
@@ -256,7 +301,7 @@ function zabbix_bridge_menu() {
         'title' => 'Update Mobile',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_mobiles_form', 1, 2),
-        'access arguments' => array('access mobiles', 'update mobiles'),
+        'access arguments' => array(PERM_MOBILES_UPDATE),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.mobiles.inc',
     );
@@ -267,7 +312,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_mobiles_delete_confirm', 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('access mobiles', 'delete mobiles'),
+        'access arguments' => array(PERM_MOBILES_DELETE),
         'file' => 'zabbix_bridge.mobiles.inc',
     );
 
@@ -277,7 +322,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_mobiles_enable_disable_confirm', 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('access mobiles', 'update mobiles'),
+        'access arguments' => array(PERM_MOBILES_UPDATE),
         'file' => 'zabbix_bridge.mobiles.inc',
     );
 
@@ -285,7 +330,7 @@ function zabbix_bridge_menu() {
         'title' => t('Import mobile numbers to the bridge'),
         'page callback' => 'zabbix_bridge_import_mobiles',
         'type' => MENU_CALLBACK,
-        'access arguments' => array('administer site configuration'),
+        'access arguments' => array(PERM_ADMIN),
         'file' => 'zabbix_bridge.mobiles.inc',
     );
 
@@ -293,7 +338,7 @@ function zabbix_bridge_menu() {
     $items['jabbers/overview'] = array(
         'title' => 'Jabber',
         'page callback' => 'zabbix_bridge_jabbers',
-        'access arguments' => array('access jabbers'),
+        'access arguments' => array(PERM_JABBER_SELECT),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.jabbers.inc',
     );
@@ -303,7 +348,7 @@ function zabbix_bridge_menu() {
         'title' => 'Add Jabber',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_jabbers_form', 1),
-        'access arguments' => array('access jabbers', 'add jabbers'),
+        'access arguments' => array(PERM_JABBER_INSERT),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.jabbers.inc',
     );
@@ -313,7 +358,7 @@ function zabbix_bridge_menu() {
         'title' => 'Update Jabber',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_jabbers_form', 1, 2),
-        'access arguments' => array('access jabbers', 'update jabbers'),
+        'access arguments' => array(PERM_JABBER_UPDATE),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.mobiles.inc',
     );
@@ -324,7 +369,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_jabbers_delete_confirm', 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('access jabbers', 'delete jabbers'),
+        'access arguments' => array(PERM_JABBER_DELETE),
         'file' => 'zabbix_bridge.jabbers.inc',
     );
 
@@ -334,7 +379,7 @@ function zabbix_bridge_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_jabbers_enable_disable_confirm', 2),
         'type' => MENU_CALLBACK,
-        'access arguments' => array('access jabbers', 'update jabbers'),
+        'access arguments' => array(PERM_JABBER_UPDATE),
         'file' => 'zabbix_bridge.jabbers.inc',
     );
 
@@ -342,7 +387,7 @@ function zabbix_bridge_menu() {
         'title' => t('Import Jabber IDs to the bridge'),
         'page callback' => 'zabbix_bridge_import_jabbers',
         'type' => MENU_CALLBACK,
-        'access arguments' => array('administer site configuration'),
+        'access arguments' => array(PERM_ADMIN),
         'file' => 'zabbix_bridge.jabbers.inc',
     );
 
@@ -356,22 +401,22 @@ function zabbix_bridge_menu() {
 function zabbix_bridge_perm() {
 
   return array(
-    'access hosts',
-    'add hosts',
-    'delete hosts',
-    'update hosts',
-    'access emails',
-    'add emails',
-    'delete emails',
-    'update emails',
-    'access mobiles',
-    'add mobiles',
-    'delete mobiles',
-    'update mobiles',
-    'access jabbers',
-    'add jabbers',
-    'delete jabbers',
-    'update jabbers');
+      PERM_HOSTS_SELECT,
+      'add hosts',
+      'delete hosts',
+      'update hosts',
+      'access emails',
+      'add emails',
+      'delete emails',
+      'update emails',
+      'access mobiles',
+      'add mobiles',
+      'delete mobiles',
+      'update mobiles',
+      'access jabbers',
+      'add jabbers',
+      'delete jabbers',
+      'update jabbers');
 }
 
 /**
@@ -777,10 +822,12 @@ $name, $pass, $mail, $drupaluid, $zabbixuserid = NULL, $zabbixusergroupid = NULL
     }
 
     if ($createactions) {
-        zabbix_bridge_create_actions($name . '_INFO_WARN', TRIGGER_SEVERITY_WARNING, $zabbixusergroupid, $zabbixhostgroupid);
-        zabbix_bridge_create_actions($name . '_HIGH', TRIGGER_SEVERITY_HIGH, $zabbixusergroupid, $zabbixhostgroupid);
-        zabbix_bridge_create_actions($name . '_DISASTER', TRIGGER_SEVERITY_DISASTER, $zabbixusergroupid, $zabbixhostgroupid);
-        zabbix_bridge_create_actions($name . '_AVERAGE', TRIGGER_SEVERITY_AVERAGE, $zabbixusergroupid, $zabbixhostgroupid);
+        zabbix_bridge_create_basic_actions($name . '_INFO_WARN', TRIGGER_SEVERITY_WARNING, $zabbixusergroupid, $zabbixhostgroupid);
+        zabbix_bridge_create_basic_actions($name . '_HIGH', TRIGGER_SEVERITY_HIGH, $zabbixusergroupid, $zabbixhostgroupid);
+        zabbix_bridge_create_basic_actions($name . '_DISASTER', TRIGGER_SEVERITY_DISASTER, $zabbixusergroupid, $zabbixhostgroupid);
+        zabbix_bridge_create_basic_actions($name . '_AVERAGE', TRIGGER_SEVERITY_AVERAGE, $zabbixusergroupid, $zabbixhostgroupid);
+        zabbix_bridge_create_mobile_action($name . '_SMS', $zabbixusergroupid, $zabbixhostgroupid);
+        zabbix_bridge_create_jabber_action($name . '_JABBER', $zabbixusergroupid, $zabbixhostgroupid);
     }
 
     // associate the drupal uid to its relevant zabbix ids
@@ -881,13 +928,145 @@ function zabbix_bridge_update_user_rights($zabbixusergroupid, $zabbixhostgroupid
 }
 
 /**
+ * Creates an action in zabbix that will alert through text message
+ *
+ * @param string $actionname            name of the action to create
+ * @param integer $zabbixusergroupid    the usergroupid used in zabbix to which this action should alert
+ * @param integer $zabbixhostgroupid    the hostgroupid used in zabbix for which this action should be executed
+ */
+function zabbix_bridge_create_mobile_action($actionname, $zabbixusergroupid, $zabbixhostgroupid) {
+
+  $actionparams = array();
+
+  // still needs testing/completing
+  $actionparams[] = array('name' => $actionname,
+      'eventsource' => EVENT_SOURCE_TRIGGERS,
+      'evaltype' => ACTION_EVAL_TYPE_AND_OR,
+      'status' => ACTION_STATUS_ENABLED,
+      'esc_period' => 60,
+      'def_shortdata' => '{STATUS}',
+      'def_longdata' => "{TRIGGER.NAME}",
+      'r_shortdata' => '{STATUS}',
+      'r_longdata' => "{TRIGGER.NAME}",
+      'recovery_msg' => 1,
+      'conditions' => array(
+          array(
+              'conditiontype' => CONDITION_TYPE_TRIGGER_SEVERITY,
+              'value' => TRIGGER_SEVERITY_HIGH,
+              'operator' => CONDITION_OPERATOR_EQUAL,
+          ),
+          array(
+              'conditiontype' => CONDITION_TYPE_TRIGGER_SEVERITY,
+              'value' => TRIGGER_SEVERITY_DISASTER,
+              'operator' => CONDITION_OPERATOR_EQUAL,
+          ),
+          array(
+              'conditiontype' => CONDITION_TYPE_HOST_GROUP,
+              'value' => $zabbixhostgroupid,
+              'operator' => CONDITION_OPERATOR_EQUAL,
+          ),
+          array(
+              'conditiontype' => CONDITION_TYPE_MAINTENANCE,
+              'operator' => CONDITION_OPERATOR_NOT_IN,
+          ),
+          array(
+              'conditiontype' => CONDITION_TYPE_TRIGGER_VALUE,
+              'value' => TRIGGER_VALUE_TRUE,
+              'operator' => CONDITION_OPERATOR_EQUAL,
+          ),
+      ),
+      'operations' => array(
+          array(
+              'object' => OPERATION_OBJECT_GROUP,
+              'objectid' => $zabbixusergroupid,
+              'operationtype' => OPERATION_TYPE_MESSAGE,
+              'default_msg' => 1,
+              'esc_period' => 0,
+              'esc_step_from' => 1,
+              'esc_step_to' => 1,
+              'evaltype' => 0,
+              'mediatypeid' => 2,
+          ),
+      ),
+  );
+  $actionids = array();
+  $actionids = ZabbixAPI::fetch_array('action', 'create', $actionparams)
+          or drupal_set_message('Unable to create zabbix action: ' . serialize(ZabbixAPI::getLastError()), DRUPAL_MSG_TYPE_ERR);
+
+  zabbix_bridge_debug('Zabbix action created: ' . print_r($actionids, TRUE), print_r($actionparams, TRUE));
+
+}
+
+/**
+ * Creates an action in zabbix that will alert through jabber
+ *
+ * @param string $actionname            name of the action to create
+ * @param integer $zabbixusergroupid    the usergroupid used in zabbix to which this action should alert
+ * @param integer $zabbixhostgroupid    the hostgroupid used in zabbix for which this action should be executed
+ */
+function zabbix_bridge_create_jabber_action($actionname, $zabbixusergroupid, $zabbixhostgroupid) {
+
+  $actionparams = array();
+
+  // still needs testing/completing
+  $actionparams[] = array('name' => $actionname,
+      'eventsource' => EVENT_SOURCE_TRIGGERS,
+      'evaltype' => ACTION_EVAL_TYPE_AND_OR,
+      'status' => ACTION_STATUS_ENABLED,
+      'esc_period' => 60,
+      'def_shortdata' => '{STATUS}',
+      'def_longdata' => "Trigger: {TRIGGER.NAME}\nDate / Time: {EVENT.DATE} - {EVENT.TIME}\nHostname: {HOSTNAME}\nComment: {TRIGGER.COMMENT}",
+      'r_shortdata' => '{STATUS}',
+      'r_longdata' => "Trigger: {TRIGGER.NAME}\nDate / Time: {EVENT.DATE} - {EVENT.TIME}\nHostname: {HOSTNAME}\nComment: {TRIGGER.COMMENT}",
+      'recovery_msg' => 1,
+      'conditions' => array(
+          array(
+              'conditiontype' => CONDITION_TYPE_HOST_GROUP,
+              'value' => $zabbixhostgroupid,
+              'operator' => CONDITION_OPERATOR_EQUAL,
+          ),
+          array(
+              'conditiontype' => CONDITION_TYPE_MAINTENANCE,
+              'operator' => CONDITION_OPERATOR_NOT_IN,
+          ),
+          array(
+              'conditiontype' => CONDITION_TYPE_TRIGGER_VALUE,
+              'value' => TRIGGER_VALUE_TRUE,
+              'operator' => CONDITION_OPERATOR_EQUAL,
+          ),
+      ),
+      'operations' => array(
+          array(
+              'object' => OPERATION_OBJECT_GROUP,
+              'objectid' => $zabbixusergroupid,
+              'operationtype' => OPERATION_TYPE_MESSAGE,
+              'default_msg' => 1,
+              'esc_period' => 0,
+              'esc_step_from' => 1,
+              'esc_step_to' => 1,
+              'evaltype' => 0,
+              'mediatypeid' => 3,
+          ),
+      ),
+  );
+  $actionids = array();
+  $actionids = ZabbixAPI::fetch_array('action', 'create', $actionparams)
+          or drupal_set_message('Unable to create zabbix action: ' . serialize(ZabbixAPI::getLastError()), DRUPAL_MSG_TYPE_ERR);
+
+  zabbix_bridge_debug('Zabbix action created: ' . print_r($actionids, TRUE), print_r($actionparams, TRUE));
+
+}
+
+
+/**
+ * Creates the zabbix actions to respond to triggers and send email alerts
  *
  * @param string $actionname
  * @param int $severity
  * @param int $zabbixusergroupid
  * @param int $zabbixhostgroupid
  */
-function zabbix_bridge_create_actions($actionname, $severity, $zabbixusergroupid, $zabbixhostgroupid) {
+function zabbix_bridge_create_basic_actions($actionname, $severity, $zabbixusergroupid, $zabbixhostgroupid) {
 
   // only for severity level warning the operator needs that and lower, the other seveirties need equal
   switch ($severity) {
@@ -925,21 +1104,21 @@ function zabbix_bridge_create_actions($actionname, $severity, $zabbixusergroupid
       'recovery_msg' => 1,
       'conditions' => array(
           array(
-              'type' => CONDITION_TYPE_TRIGGER_SEVERITY,
+              'conditiontype' => CONDITION_TYPE_TRIGGER_SEVERITY,
               'value' => $severity,
               'operator' => $conditionoperator,
           ),
           array(
-              'type' => CONDITION_TYPE_HOST_GROUP,
+              'conditiontype' => CONDITION_TYPE_HOST_GROUP,
               'value' => $zabbixhostgroupid,
               'operator' => CONDITION_OPERATOR_EQUAL,
           ),
           array(
-              'type' => CONDITION_TYPE_MAINTENANCE,
+              'conditiontype' => CONDITION_TYPE_MAINTENANCE,
               'operator' => CONDITION_OPERATOR_NOT_IN,
           ),
           array(
-              'type' => CONDITION_TYPE_TRIGGER_VALUE,
+              'conditiontype' => CONDITION_TYPE_TRIGGER_VALUE,
               'value' => TRIGGER_VALUE_TRUE,
               'operator' => CONDITION_OPERATOR_EQUAL,
           ),

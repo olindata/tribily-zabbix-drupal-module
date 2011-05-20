@@ -20,7 +20,9 @@ function zabbix_bridge_mobiles() {
 
   drupal_set_title('Mobile Numbers');
 
-  $output = zabbix_mobiles_table($user->uid);
+  $output = "<div id=\"mobile-explain\"><p>Here you can add your mobile number. We will send a text message to the numbers defined here.</p>";
+  $output .= "<p><strong>Important Note:</strong> Mobile phone alerts happen only for the highest two alert levels. </p></div>\n";
+  $output .= zabbix_mobiles_table($user->uid);
   $output .= l('Add Mobile Number', 'mobiles/add');
 
   return $output;
@@ -70,9 +72,10 @@ function zabbix_bridge_mobiles_form(&$form_state, $operation, $mobileid = NULL) 
   // the mobile's number
   $form['mobiles']['number'] = array(
       '#type' => 'textfield',
-      '#title' => t('Number'),
+      '#title' => t('Mobile phone number'),
       '#maxlength' => MEDIA_NAME_MAXLENGTH,
       '#value' => isset($mobile->number) ? $mobile->number : '',
+      '#description' => t("Your mobile phone number in international notation. For example, the country code for Netherlands is +31, so a local phone number of 01-23456789 would be entered here as +31123456789 (omit the leading 0 and just concatenate international and national number)"),
       '#required' => TRUE
   );
 
