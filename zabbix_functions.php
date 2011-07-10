@@ -109,14 +109,29 @@ define('OPERATION_TYPE_TEMPLATE_REMOVE', 7);
 define('OPERATION_TYPE_HOST_ENABLE', 8);
 define('OPERATION_TYPE_HOST_DISABLE', 9);
 
+//refers to database field media_type.type
+//  NOTE: this is equal for every zabbix install
 define('MEDIA_TYPE_EMAIL', 0);
 define('MEDIA_TYPE_EXEC', 1);
 define('MEDIA_TYPE_SMS', 2);
 define('MEDIA_TYPE_JABBER', 3);
 
+//refers to database field media_type.mediatypeid
+// NOTE: this is/can be different for every zabbix install!!
+define('ALERT_TYPE_EMAIL', 1);
+define('ALERT_TYPE_JABBER', 2);
+define('ALERT_TYPE_SMS', 3);
+
 define('TRIGGER_VALUE_FALSE', 0);
 define('TRIGGER_VALUE_TRUE', 1);
 define('TRIGGER_VALUE_UNKNOWN', 2);
+
+define('API_OUTPUT_SHORTEN', 'shorten');
+define('API_OUTPUT_REFER', 'refer');
+define('API_OUTPUT_EXTEND', 'extend');
+define('API_OUTPUT_COUNT', 'count');
+define('API_OUTPUT_CUSTOM', 'custom');
+
 
 /**
  *
@@ -330,10 +345,15 @@ function zabbix_bridge_debug($msg, $verbosemsg = '') {
   }
 }
 
-function zabbix_bridge_get_all_hostgroupids_from_drupal() {
+function zabbix_bridge_get_all_hostgroupids_from_drupal($zabbixuserid = null) {
   $hostgroupids = array();
 
-  $sql = "select zabbix_hostgrp_id from {zabbix_drupal_account} where zabbix_hostgrp_id is not null";
+  if (isset($zabbixuserid)) {
+    $sqlwhere = 'zabbix_uid = '.$zabbixuserid;
+  } else {
+    $sqlwhere = 'zabbix_hostgrp_id is not null';
+  }
+  $sql = "select zabbix_hostgrp_id from {zabbix_drupal_account} where ".$sqlwhere;
   $result = db_query($sql);
 
   while ($node = db_fetch_object($result)) {
@@ -870,4 +890,71 @@ function zabbix_bridge_get_all_jabbers_from_zabbix($extended = false) {
 
     return $media;
 
+}
+
+
+function zabbix_bridge_get_all_users_from_zabbix() {
+
+  // This logs into Zabbix, and returns false if it fails
+  zabbix_api_login()
+      or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+
+  $userids = array();
+  $options = array();
+  
+  $userids = ZabbixAPI::fetch_array('user', 'get', $options)
+          or drupal_set_message('Unable to get zabbix users: ' . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+
+  return $userids;
+
+}
+
+function zabbix_bridge_get_all_actions_from_zabbix($hostgroupid) {
+
+  // This logs into Zabbix, and returns false if it fails
+  zabbix_api_login()
+      or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+
+  $actionids = array();
+  $options = array();
+  $actionids_result = array();
+
+  $options['groupids'] = array($hostgroupid);
+  $options['select_conditions'] = 'true';
+  $options['select_operations'] = 'true';
+  $options['output'] = API_OUTPUT_EXTEND;
+  $options['extendoutput'] = 'true';
+
+  $actionids = ZabbixAPI::fetch_array('action', 'get', $options)
+          or drupal_set_message('Unable to get zabbix users: ' . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+
+  return $actionids;
+  
+}
+
+function zabbix_bridge_set_action_texts($action, $alert_subject_recovery, $alert_body_recovery, $alert_subject, $alert_body) {
+
+  // This logs into Zabbix, and returns false if it fails
+  zabbix_api_login()
+      or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+
+  //$options = array();
+  $action['def_shortdata'] = $alert_subject;
+  $action['def_longdata'] = $alert_body;
+  $action['r_shortdata'] = $alert_subject_recovery;
+  $action['r_longdata'] = $alert_body_recovery;
+  
+  //manually set these optiosn because they somehow get lost
+  //TODO: figure out where they get lost
+//  $action['operations']['opmediatypes'][0]['mediatypeid']
+  zabbix_bridge_debug(print_r($action['operations'], TRUE));
+
+
+//  zabbix_bridge_debug(print_r($action['conditions'], TRUE));
+
+  if (ZabbixAPI::query('action', 'update', $action)) {
+    zabbix_bridge_debug("action ".$action['name']." updated succesfully");
+  } else {
+    zabbix_bridge_debug(print_r(ZabbixAPI::getLastError(), True));
+  }
 }

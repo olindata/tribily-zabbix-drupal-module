@@ -86,6 +86,7 @@ class ZabbixAPI {
       * Login, this will attempt to login to Zabbix with the specified username and password
       */
     public static function login($url, $username, $password) {
+        ZabbixAPI::debugEnabled(FALSE);
         // Initialize instance if it isn't already
         self::__init();
         // Set properties
