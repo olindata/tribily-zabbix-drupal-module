@@ -132,6 +132,15 @@ define('API_OUTPUT_EXTEND', 'extend');
 define('API_OUTPUT_COUNT', 'count');
 define('API_OUTPUT_CUSTOM', 'custom');
 
+define('STR_CUST_HOSTGROUP', 'Customer Hostgroup ');
+define('STR_CUST_USERGROUP', 'Customer Usergroup ');
+
+define('STR_DEFAULT_ACTION_SUBJECT', 'default {STATUS}: {TRIGGER.NAME}');
+define('STR_DEFAULT_ACTION_TEXT', 'default Alert: {TRIGGER.NAME}\nStatus: {STATUS}\nSeverity: {TRIGGER.SEVERITY}\nHost: {IPADDRESS}\nHost dns - {HOST.DNS1}\nURL: {TRIGGER.URL}\nLast Value: {ITEM.LASTVALUE}\nEvent age - {EVENT.AGE}\nEvent start date and time - {EVENT.DATE} , {EVENT.TIME}\nAcknowledgement status - {EVENT.ACK.STATUS}\nAcknowledgement history - {EVENT.ACK.HISTORY}');
+define('STR_DEFAULT_ACTION_SUBJECT_MOBILE', 'default {STATUS}');
+define('STR_DEFAULT_ACTION_TEXT_MOBILE', 'default {TRIGGER.NAME}');
+define('STR_DEFAULT_ACTION_SUBJECT_JABBER', 'default {STATUS}');
+define('STR_DEFAULT_ACTION_TEXT_JABBER', 'default Trigger: {TRIGGER.NAME}\nDate / Time: {EVENT.DATE} - {EVENT.TIME}\nHostname: {HOSTNAME}\nComment: {TRIGGER.COMMENT}');
 
 /**
  *
@@ -900,7 +909,7 @@ function zabbix_bridge_get_all_users_from_zabbix() {
       or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   $userids = array();
-  $options = array();
+  $options = array('select_usrgrps' => TRUE, 'extendoutput' => TRUE);
   
   $userids = ZabbixAPI::fetch_array('user', 'get', $options)
           or drupal_set_message('Unable to get zabbix users: ' . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
@@ -932,29 +941,280 @@ function zabbix_bridge_get_all_actions_from_zabbix($hostgroupid) {
   
 }
 
-function zabbix_bridge_set_action_texts($action, $alert_subject_recovery, $alert_body_recovery, $alert_subject, $alert_body) {
+//function zabbix_bridge_set_action_texts($action, $alert_subject_recovery, $alert_body_recovery, $alert_subject, $alert_body) {
+//
+//  // This logs into Zabbix, and returns false if it fails
+//  zabbix_api_login()
+//      or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+//
+//  //$options = array();
+//  $action['def_shortdata'] = $alert_subject;
+//  $action['def_longdata'] = $alert_body;
+//  $action['r_shortdata'] = $alert_subject_recovery;
+//  $action['r_longdata'] = $alert_body_recovery;
+//
+//  //manually set these optiosn because they somehow get lost
+//  //TODO: figure out where they get lost
+////  $action['operations']['opmediatypes'][0]['mediatypeid']
+//  zabbix_bridge_debug(print_r($action['operations'], TRUE));
+//
+////$action['operations'][0]['opmediatypes'][0]['mediatypeid'];
+//
+////  zabbix_bridge_debug(print_r($action['conditions'], TRUE));
+//
+//  if (ZabbixAPI::query('action', 'delete', $action)) {
+//    zabbix_bridge_debug("action ".$action['name']." deleted succesfully");
+//    if (ZabbixAPI::query('action', 'create', $action)) {
+//      zabbix_bridge_debug("action ".$action['name']." created succesfully");
+//    }
+//  } else {
+//    zabbix_bridge_debug(print_r(ZabbixAPI::getLastError(), True));
+//  }
+//}
 
-  // This logs into Zabbix, and returns false if it fails
-  zabbix_api_login()
-      or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
-  //$options = array();
-  $action['def_shortdata'] = $alert_subject;
-  $action['def_longdata'] = $alert_body;
-  $action['r_shortdata'] = $alert_subject_recovery;
-  $action['r_longdata'] = $alert_body_recovery;
-  
-  //manually set these optiosn because they somehow get lost
-  //TODO: figure out where they get lost
-//  $action['operations']['opmediatypes'][0]['mediatypeid']
-  zabbix_bridge_debug(print_r($action['operations'], TRUE));
+/**
+ * Creates an action in zabbix that will alert through text message
+ *
+ * @param string $actionname            name of the action to create
+ * @param integer $zabbixusergroupid    the usergroupid used in zabbix to which this action should alert
+ * @param integer $zabbixhostgroupid    the hostgroupid used in zabbix for which this action should be executed
+ */
+function zabbix_bridge_create_mobile_action($actionname, $zabbixusergroupid, $zabbixhostgroupid) {
+
+  $actionparams = array();
+
+  // still needs testing/completing
+  $actionparams[] = array('name' => $actionname,
+      'eventsource' => EVENT_SOURCE_TRIGGERS,
+      'evaltype' => ACTION_EVAL_TYPE_AND_OR,
+      'status' => ACTION_STATUS_ENABLED,
+      'esc_period' => 60,
+      'def_shortdata' => variable_get('zabbix_bridge_alert_sms_subject', STR_DEFAULT_ACTION_SUBJECT_MOBILE),
+      'def_longdata' => variable_get('zabbix_bridge_alert_sms', STR_DEFAULT_ACTION_TEXT_MOBILE),
+      'r_shortdata' => variable_get('zabbix_bridge_alert_sms_subject_recovery', STR_DEFAULT_ACTION_SUBJECT_MOBILE),
+      'r_longdata' => variable_get('zabbix_bridge_alert_sms_recovery', STR_DEFAULT_ACTION_TEXT_MOBILE),
+      'recovery_msg' => 1,
+      'conditions' => array(
+          array(
+              'conditiontype' => CONDITION_TYPE_TRIGGER_SEVERITY,
+              'value' => TRIGGER_SEVERITY_HIGH,
+              'operator' => CONDITION_OPERATOR_EQUAL,
+          ),
+          array(
+              'conditiontype' => CONDITION_TYPE_TRIGGER_SEVERITY,
+              'value' => TRIGGER_SEVERITY_DISASTER,
+              'operator' => CONDITION_OPERATOR_EQUAL,
+          ),
+          array(
+              'conditiontype' => CONDITION_TYPE_HOST_GROUP,
+              'value' => $zabbixhostgroupid,
+              'operator' => CONDITION_OPERATOR_EQUAL,
+          ),
+          array(
+              'conditiontype' => CONDITION_TYPE_MAINTENANCE,
+              'operator' => CONDITION_OPERATOR_NOT_IN,
+          ),
+          array(
+              'conditiontype' => CONDITION_TYPE_TRIGGER_VALUE,
+              'value' => TRIGGER_VALUE_TRUE,
+              'operator' => CONDITION_OPERATOR_EQUAL,
+          ),
+      ),
+      'operations' => array(
+          array(
+              'object' => OPERATION_OBJECT_GROUP,
+              'objectid' => $zabbixusergroupid,
+              'operationtype' => OPERATION_TYPE_MESSAGE,
+              'default_msg' => 1,
+              'esc_period' => 0,
+              'esc_step_from' => 1,
+              'esc_step_to' => 1,
+              'evaltype' => 0,
+              'mediatypeid' => ALERT_TYPE_SMS,
+          ),
+      ),
+  );
+  $actionids = array();
+  $actionids = ZabbixAPI::fetch_array('action', 'create', $actionparams)
+          or drupal_set_message('Unable to create zabbix action: ' . serialize(ZabbixAPI::getLastError()), DRUPAL_MSG_TYPE_ERR);
+
+  zabbix_bridge_debug('Zabbix action created: ' . print_r($actionids, TRUE), print_r($actionparams, TRUE));
+
+}
+
+/**
+ * Creates an action in zabbix that will alert through jabber
+ *
+ * @param string $actionname            name of the action to create
+ * @param integer $zabbixusergroupid    the usergroupid used in zabbix to which this action should alert
+ * @param integer $zabbixhostgroupid    the hostgroupid used in zabbix for which this action should be executed
+ */
+function zabbix_bridge_create_jabber_action($actionname, $zabbixusergroupid, $zabbixhostgroupid) {
+
+  $actionparams = array();
+
+  // still needs testing/completing
+  $actionparams[] = array('name' => $actionname,
+      'eventsource' => EVENT_SOURCE_TRIGGERS,
+      'evaltype' => ACTION_EVAL_TYPE_AND_OR,
+      'status' => ACTION_STATUS_ENABLED,
+      'esc_period' => 60,
+      'def_shortdata' => variable_get('zabbix_bridge_alert_jabber_subject', STR_DEFAULT_ACTION_SUBJECT_JABBER),
+      'def_longdata' => variable_get('zabbix_bridge_alert_jabber', STR_DEFAULT_ACTION_TEXT_JABBER),
+      'r_shortdata' => variable_get('zabbix_bridge_alert_jabber_subject_recovery', STR_DEFAULT_ACTION_SUBJECT_JABBER),
+      'r_longdata' => variable_get('zabbix_bridge_alert_jabber_recovery', STR_DEFAULT_ACTION_TEXT_JABBER),
+      'recovery_msg' => 1,
+      'conditions' => array(
+          array(
+              'conditiontype' => CONDITION_TYPE_HOST_GROUP,
+              'value' => $zabbixhostgroupid,
+              'operator' => CONDITION_OPERATOR_EQUAL,
+          ),
+          array(
+              'conditiontype' => CONDITION_TYPE_MAINTENANCE,
+              'operator' => CONDITION_OPERATOR_NOT_IN,
+          ),
+          array(
+              'conditiontype' => CONDITION_TYPE_TRIGGER_VALUE,
+              'value' => TRIGGER_VALUE_TRUE,
+              'operator' => CONDITION_OPERATOR_EQUAL,
+          ),
+      ),
+      'operations' => array(
+          array(
+              'object' => OPERATION_OBJECT_GROUP,
+              'objectid' => $zabbixusergroupid,
+              'operationtype' => OPERATION_TYPE_MESSAGE,
+              'default_msg' => 1,
+              'esc_period' => 0,
+              'esc_step_from' => 1,
+              'esc_step_to' => 1,
+              'evaltype' => 0,
+              'mediatypeid' => ALERT_TYPE_JABBER,
+          ),
+      ),
+  );
+  $actionids = array();
+  $actionids = ZabbixAPI::fetch_array('action', 'create', $actionparams)
+          or drupal_set_message('Unable to create zabbix action: ' . serialize(ZabbixAPI::getLastError()), DRUPAL_MSG_TYPE_ERR);
+
+  zabbix_bridge_debug('Zabbix action created: ' . print_r($actionids, TRUE), print_r($actionparams, TRUE));
+
+}
 
 
-//  zabbix_bridge_debug(print_r($action['conditions'], TRUE));
+/**
+ * Creates the zabbix actions to respond to triggers and send email alerts
+ *
+ * @param string $actionname
+ * @param int $severity
+ * @param int $zabbixusergroupid
+ * @param int $zabbixhostgroupid
+ */
+function zabbix_bridge_create_basic_actions($actionname, $severity, $zabbixusergroupid, $zabbixhostgroupid) {
 
-  if (ZabbixAPI::query('action', 'update', $action)) {
-    zabbix_bridge_debug("action ".$action['name']." updated succesfully");
-  } else {
-    zabbix_bridge_debug(print_r(ZabbixAPI::getLastError(), True));
+  // only for severity level warning the operator needs that and lower, the other seveirties need equal
+  switch ($severity) {
+    case TRIGGER_SEVERITY_WARNING:
+      $conditionoperator  = CONDITION_OPERATOR_LESS_EQUAL;
+      $escalationperiod   = 7200;
+      $subject            = variable_get('zabbix_bridge_alert_info_warn_subject', STR_DEFAULT_ACTION_SUBJECT);
+      $text               = variable_get('zabbix_bridge_alert_info_warn', STR_DEFAULT_ACTION_TEXT);
+      $recovery_subject   = variable_get('zabbix_bridge_alert_info_warn_subject_recovery', STR_DEFAULT_ACTION_SUBJECT);
+      $recovery_text      = variable_get('zabbix_bridge_alert_info_warn_recovery', STR_DEFAULT_ACTION_TEXT);
+      break;
+    case TRIGGER_SEVERITY_AVERAGE:
+      $conditionoperator = CONDITION_OPERATOR_EQUAL;
+      $escalationperiod = 1800;
+      $subject            = variable_get('zabbix_bridge_alert_average_subject', STR_DEFAULT_ACTION_SUBJECT);
+      $text               = variable_get('zabbix_bridge_alert_average', STR_DEFAULT_ACTION_TEXT);
+      $recovery_subject   = variable_get('zabbix_bridge_alert_average_subject_recovery', STR_DEFAULT_ACTION_SUBJECT);
+      $recovery_text      = variable_get('zabbix_bridge_alert_average_recovery', STR_DEFAULT_ACTION_TEXT);
+      break;
+    case TRIGGER_SEVERITY_HIGH:
+      $conditionoperator = CONDITION_OPERATOR_EQUAL;
+      $escalationperiod = 600;
+      $subject            = variable_get('zabbix_bridge_alert_high_subject', STR_DEFAULT_ACTION_SUBJECT);
+      $text               = variable_get('zabbix_bridge_alert_high', STR_DEFAULT_ACTION_TEXT);
+      $recovery_subject   = variable_get('zabbix_bridge_alert_high_subject_recovery', STR_DEFAULT_ACTION_SUBJECT);
+      $recovery_text      = variable_get('zabbix_bridge_alert_high_recovery', STR_DEFAULT_ACTION_TEXT);
+      break;
+    case TRIGGER_SEVERITY_DISASTER:
+      $conditionoperator = CONDITION_OPERATOR_EQUAL;
+      $escalationperiod = 60;
+      $subject            = variable_get('zabbix_bridge_alert_disaster_subject', STR_DEFAULT_ACTION_SUBJECT);
+      $text               = variable_get('zabbix_bridge_alert_disaster', STR_DEFAULT_ACTION_TEXT);
+      $recovery_subject   = variable_get('zabbix_bridge_alert_disaster_subject_recovery', STR_DEFAULT_ACTION_SUBJECT);
+      $recovery_text      = variable_get('zabbix_bridge_alert_disaster_recovery', STR_DEFAULT_ACTION_TEXT);
+      break;
   }
+
+
+
+
+  // create the action
+  $actionparams = array();
+
+  // still needs testing/completing
+  $actionparams[] = array('name' => $actionname,
+      'eventsource' => EVENT_SOURCE_TRIGGERS,
+      'evaltype' => ACTION_EVAL_TYPE_AND_OR,
+      'status' => ACTION_STATUS_ENABLED,
+      'esc_period' => $escalationperiod,
+      'def_shortdata' => $subject,
+      'def_longdata' => $text,
+      'r_shortdata' => $recovery_subject,
+      'r_longdata' => $recovery_text,
+      'recovery_msg' => 1,
+      'conditions' => array(
+          array(
+              'conditiontype' => CONDITION_TYPE_TRIGGER_SEVERITY,
+              'value' => $severity,
+              'operator' => $conditionoperator,
+          ),
+          array(
+              'conditiontype' => CONDITION_TYPE_HOST_GROUP,
+              'value' => $zabbixhostgroupid,
+              'operator' => CONDITION_OPERATOR_EQUAL,
+          ),
+          array(
+              'conditiontype' => CONDITION_TYPE_MAINTENANCE,
+              'operator' => CONDITION_OPERATOR_NOT_IN,
+          ),
+          array(
+              'conditiontype' => CONDITION_TYPE_TRIGGER_VALUE,
+              'value' => TRIGGER_VALUE_TRUE,
+              'operator' => CONDITION_OPERATOR_EQUAL,
+          ),
+      ),
+      'operations' => array(
+          array(
+              'object' => OPERATION_OBJECT_GROUP,
+              'objectid' => $zabbixusergroupid,
+              'operationtype' => OPERATION_TYPE_MESSAGE,
+              'default_msg' => 1,
+              'esc_period' => 0,
+              'esc_step_from' => 1,
+              'esc_step_to' => 0,
+              'evaltype' => 0,
+              'mediatypeid' => ALERT_TYPE_EMAIL,
+//Note: 1 Means email, yet it is NOT MEDIA_TYPE_EMAIL. This is because there are
+//      several media_type records with type MEDIA_TYPE_EMAIL. This is done so
+//      you can have multiple email gateways for instance. Naming is very confusing!
+//
+//
+//                'opconditions' => array(
+//                                            'conditiontype' => CONDITION_TYPE_EVENT_ACKNOWLEDGED,
+//                                            'operator' => CONDITION_OPERATOR_EQUAL,
+//                                            'value' => EVENT_ACK_DISABLED,
+//                ),
+          ),
+      ),
+  );
+  $actionids = array();
+  $actionids = ZabbixAPI::fetch_array('action', 'create', $actionparams)
+          or drupal_set_message('Unable to create zabbix action: ' . serialize(ZabbixAPI::getLastError()), DRUPAL_MSG_TYPE_ERR);
+
+  zabbix_bridge_debug('Zabbix action created: ' . print_r($actionids, TRUE), print_r($actionparams, TRUE));
 }

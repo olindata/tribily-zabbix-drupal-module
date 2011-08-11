@@ -412,75 +412,6 @@ function zabbix_bridge_alert_notifications_form_submit($form, &$form_state){
   $alert_sms_subject_recovery          = $form['zabbix_bridge_notifications']['#post']['zabbix_bridge_alert_sms_subject_recovery'];
   $alert_jabber_subject_recovery       = $form['zabbix_bridge_notifications']['#post']['zabbix_bridge_alert_jabber_subject_recovery'];
 
-  // get a list of all zabbix users from zabbix
-  $userids = zabbix_bridge_get_all_users_from_zabbix();
-  
-  // loop through list
-  foreach ($userids as $user => $userid) {
-    // for every userid, get the connected hostgroupid (a businessrule for
-    // tribily is that 1 user is in 1 usergroup that has rights to just 1 hostgroup)
-    $hostgroupid = zabbix_bridge_get_all_hostgroupids_from_drupal($userid['userid']);
-
-    if (!empty($hostgroupid)) {
-
-      // if we did indeed find a hostgroup, get all actions including the operations and conditions
-      $actionids = array();
-      $actionids = zabbix_bridge_get_all_actions_from_zabbix($hostgroupid[0]);
-
-      foreach ($actionids as $action) {
-
-        // currently we have 6 types of actions:
-        // * 4 for email for each severity level
-        //    -> recognisable by mediatypeid 1
-        // * 1 for sms for just high and disaster level
-        //    -> recognisable by mediatypeid 2
-        // * 1 for jabber
-        //    -> recognisable by mediatypeid 3
-
-        // check the mediatypeid, blindly assuming that there is just one operationmediatype
-        foreach ($action['operations'] as $operation) {
-          switch($operation['opmediatypes'][0]['mediatypeid']) {
-            case ALERT_TYPE_JABBER:
-              zabbix_bridge_set_action_texts($action, $alert_jabber_subject_recovery, $alert_jabber_recovery, $alert_jabber_subject, $alert_jabber);
-              break;
-            case ALERT_TYPE_SMS:
-              zabbix_bridge_set_action_texts($action, $alert_sms_subject_recovery, $alert_sms_recovery, $alert_sms_subject, $alert_sms);
-              break;
-            case ALERT_TYPE_EMAIL:
-              // determine which type of action we have by looking at the severity
-              foreach ($action['conditions'] as $condition) {
-                if ($condition['conditiontype'] == CONDITION_TYPE_TRIGGER_SEVERITY) {
-                  switch ($condition['value']) {
-                    case TRIGGER_SEVERITY_WARNING:
-                      zabbix_bridge_set_action_texts($action, $alert_info_subject_recovery, $alert_info_recovery, $alert_info_subject, $alert_info);
-                      break;
-                    case TRIGGER_SEVERITY_AVERAGE:
-                      zabbix_bridge_set_action_texts($action, $alert_avg_subject_recovery, $alert_avg_recovery, $alert_avg_subject, $alert_avg);
-                      break;
-                    case TRIGGER_SEVERITY_HIGH:
-                      zabbix_bridge_set_action_texts($action, $alert_high_subject_recovery, $alert_high_recovery, $alert_high_subject, $alert_high);
-                      break;
-                    case TRIGGER_SEVERITY_DISASTER:
-                      zabbix_bridge_set_action_texts($action, $alert_disaster_subject_recovery, $alert_disaster_recovery, $alert_disaster_subject, $alert_disaster);
-                      break;
-                  }
-
-                }
-
-              }
-
-              break;
-          }
-        }
-
-      }
-
-
-    }
-
-  }
-  
-  
   //store the varaiables in drupal
   variable_set('zabbix_bridge_alert_average', $alert_avg);
   variable_set('zabbix_bridge_alert_high', $alert_high);
@@ -510,5 +441,54 @@ function zabbix_bridge_alert_notifications_form_submit($form, &$form_state){
   variable_set('zabbix_bridge_alert_sms_subject_recovery', $alert_sms_subject_recovery);
   variable_set('zabbix_bridge_alert_jabber_subject_recovery', $alert_jabber_subject_recovery);
 
+
+  // get a list of all zabbix users from zabbix
+  $userids = zabbix_bridge_get_all_users_from_zabbix();
+  
+  // loop through list
+  foreach ($userids as $user => $userid) {
+    $name = $userid['alias'];
+
+    if (strlen($name) < 1)
+      drupal_set_message("Notification update failed. Error tr-1b.");
+
+    // search in all of the usergroups for this user for a usergroup that has our
+    // name structure. if it does, this customer needs to be processed.
+    $zabbixusergroupid = 0;
+    foreach ($userid['usrgrps'] as $usrgrp) {
+      if (!(strpos($usrgrp['name'], STR_CUST_USERGROUP) === FALSE)) {
+        $zabbixusergroupid = $usrgrp['usrgrpid'];
+      }
+    }
+
+    if ($zabbixusergroupid) {
+      // for every userid, get the connected hostgroupid (a businessrule for
+      // tribily is that 1 user is in 1 usergroup that has rights to just 1 hostgroup)
+      $hostgroupid = zabbix_bridge_get_all_hostgroupids_from_drupal($userid['userid']);
+
+      if (!empty($hostgroupid)) {
+
+        // if we did indeed find a hostgroup, get all actions including the operations and conditions
+        $actions = array();
+        $actions = zabbix_bridge_get_all_actions_from_zabbix($hostgroupid[0]);
+
+
+        // due to a bug in 1.8.3 API, the media stuff gets messed up if we just try
+        // to update an action, so as a workaround we delete and recreate the action
+        foreach ($actions as $action) {
+          if (!ZabbixAPI::query('action', 'delete', array($action['actionid']))) {
+            drupal_set_message("Notification update failed. Error tr-1a.");
+          }
+        }
+
+        zabbix_bridge_create_basic_actions($name . '_INFO_WARN', TRIGGER_SEVERITY_WARNING, $zabbixusergroupid, $hostgroupid[0]);
+        zabbix_bridge_create_basic_actions($name . '_HIGH', TRIGGER_SEVERITY_HIGH, $zabbixusergroupid, $hostgroupid[0]);
+        zabbix_bridge_create_basic_actions($name . '_DISASTER', TRIGGER_SEVERITY_DISASTER, $zabbixusergroupid, $hostgroupid[0]);
+        zabbix_bridge_create_basic_actions($name . '_AVERAGE', TRIGGER_SEVERITY_AVERAGE, $zabbixusergroupid, $hostgroupid[0]);
+        zabbix_bridge_create_mobile_action($name . '_SMS', $zabbixusergroupid, $hostgroupid[0]);
+        zabbix_bridge_create_jabber_action($name . '_JABBER', $zabbixusergroupid, $hostgroupid[0]);
+      }
+    }
+  }
 }
 
