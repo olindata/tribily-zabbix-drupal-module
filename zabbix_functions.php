@@ -135,12 +135,12 @@ define('API_OUTPUT_CUSTOM', 'custom');
 define('STR_CUST_HOSTGROUP', 'Customer Hostgroup ');
 define('STR_CUST_USERGROUP', 'Customer Usergroup ');
 
-define('STR_DEFAULT_ACTION_SUBJECT', 'default {STATUS}: {TRIGGER.NAME}');
-define('STR_DEFAULT_ACTION_TEXT', 'default Alert: {TRIGGER.NAME}\nStatus: {STATUS}\nSeverity: {TRIGGER.SEVERITY}\nHost: {IPADDRESS}\nHost dns - {HOST.DNS1}\nURL: {TRIGGER.URL}\nLast Value: {ITEM.LASTVALUE}\nEvent age - {EVENT.AGE}\nEvent start date and time - {EVENT.DATE} , {EVENT.TIME}\nAcknowledgement status - {EVENT.ACK.STATUS}\nAcknowledgement history - {EVENT.ACK.HISTORY}');
-define('STR_DEFAULT_ACTION_SUBJECT_MOBILE', 'default {STATUS}');
-define('STR_DEFAULT_ACTION_TEXT_MOBILE', 'default {TRIGGER.NAME}');
-define('STR_DEFAULT_ACTION_SUBJECT_JABBER', 'default {STATUS}');
-define('STR_DEFAULT_ACTION_TEXT_JABBER', 'default Trigger: {TRIGGER.NAME}\nDate / Time: {EVENT.DATE} - {EVENT.TIME}\nHostname: {HOSTNAME}\nComment: {TRIGGER.COMMENT}');
+define('STR_DEFAULT_ACTION_SUBJECT', '{STATUS}: {TRIGGER.NAME}');
+define('STR_DEFAULT_ACTION_TEXT', 'Alert: {TRIGGER.NAME}\nStatus: {STATUS}\nSeverity: {TRIGGER.SEVERITY}\nHost: {IPADDRESS}\nHost dns - {HOST.DNS1}\nURL: {TRIGGER.URL}\nLast Value: {ITEM.LASTVALUE}\nEvent age - {EVENT.AGE}\nEvent start date and time - {EVENT.DATE} , {EVENT.TIME}\nAcknowledgement status - {EVENT.ACK.STATUS}\nAcknowledgement history - {EVENT.ACK.HISTORY}');
+define('STR_DEFAULT_ACTION_SUBJECT_MOBILE', '{STATUS}');
+define('STR_DEFAULT_ACTION_TEXT_MOBILE', '{TRIGGER.NAME}');
+define('STR_DEFAULT_ACTION_SUBJECT_JABBER', '{STATUS}');
+define('STR_DEFAULT_ACTION_TEXT_JABBER', 'Trigger: {TRIGGER.NAME}\nDate / Time: {EVENT.DATE} - {EVENT.TIME}\nHostname: {HOSTNAME}\nComment: {TRIGGER.COMMENT}');
 
 /**
  *
