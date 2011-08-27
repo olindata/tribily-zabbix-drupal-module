@@ -11,8 +11,10 @@
 include_once 'zabbix_functions.php';
 
 /**
+ * This function returns a table with a h2 header with all zabbix hosts and 
+ * their roles. Visible for admins only
  *
- * @return <type>
+ * @return $output - a string with the html code for the table
  */
 function zabbix_bridge_hosts_form() {
 
@@ -27,8 +29,10 @@ function zabbix_bridge_hosts_form() {
 }
 
 /**
+ * This function returns a table with a h2 header with all alert emails for
+ * notification. Visible for admins only
  *
- * @return <type>
+ * @return $output - a string with the html code for the table
  */
 function zabbix_bridge_admin_emails() {
 
@@ -43,8 +47,10 @@ function zabbix_bridge_admin_emails() {
 }
 
 /**
+ * This function returns a table with a h2 header with all jabber alert addresses
+ * for notifications. Visible for admins only.
  *
- * @return <type>
+ * @return $output - the html code for the table
  */
 function zabbix_bridge_admin_jabbers() {
 
@@ -59,8 +65,10 @@ function zabbix_bridge_admin_jabbers() {
 }
 
 /**
+ * This function returns a table with a h2 header with all mobile phone number
+ * for notifications. Visible for admins only.
  *
- * @return <type>
+ * @return $output - the html code for the table
  */
 function zabbix_bridge_admin_mobiles() {
 
@@ -100,7 +108,8 @@ function zabbix_bridge_admin_roles_mapping() {
 
   $output .= '<h2>' . t('Roles and their corresponding Zabbix Templates') . '</h2>';
   $output .= t('These are all the roles with their corresponding zabbix templateids.');
-  $output .= zabbix_roles_table();
+
+  $output .= zabbix_roletype_tables();
   $output .= l('Add mapping', 'zabbix-role-mapping/add') . ' | ' . l('Import from zabbix', 'zabbix-role-mapping/import');
 
   return $output;

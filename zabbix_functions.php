@@ -234,24 +234,52 @@ function zabbix_hosts_table($userid = NULL) {
 }
 
 /**
- * 
+ * thsi function outputs all the tables for the role mappings, one for each roletype
+ */
+function zabbix_roletype_tables() {
+
+  $output = '';
+
+  // get all role types from the db
+  $sql = "select typeid, typename from {zabbix_role_type} order by sortorder";
+  $result = db_query($sql);
+
+  while ($record = db_fetch_object($result)) {
+    
+    $output .= "<h3>$record->typename</h3>";
+
+    $output .= zabbix_roles_table($record->typeid);
+  }
+
+  return $output;
+
+}
+
+/**
+ * returns the table with all roles for the sepcified roletypeid
+ * @param <type> $typeid
  * @return string
  */
-function zabbix_roles_table() {
+function zabbix_roles_table($typeid) {
 
-  $header = array('Roleid', 'Name', 'Description', 'Zabbix Templateid', 'Actions');
+  $header = array('Roleid', 'Name', 'Description', 'Image', 'Zabbix Templateid', 'Actions');
   $rows = array();
   $count = PAGER_COUNT;
   $id = TABLE_ID_USER_MAPPING;
 
-  $results = pager_query("select zr.*, zrt.templateid from {zabbix_role} zr left join {zabbix_roles_templates} zrt on zrt.roleid = zr.roleid", $count, $id);
+  $results = pager_query("select zr.*, zrt.templateid from {zabbix_role} zr left join {zabbix_roles_templates} zrt on zrt.roleid = zr.roleid where zr.typeid = $typeid order by zr.sortorder", $count, $id);
 
 
   while ($node = db_fetch_object($results)) {
+
+    // TODO: this shouldn't be static!
+    $imagesrc = $node->imagesrc == NULL ? url('/sites/default/files/zabbix-roles/none.png') : url($node->imagesrc);
+
     $rows[] = array(
         $node->roleid,
         $node->name,
         $node->description,
+        '<img src="'. $imagesrc ."\" alt=\"$imagesrc\" />",
         $node->templateid,
         l('Update', 'zabbix-role-mapping/update/' . $node->roleid) . ' | ' .
         l('Delete', 'zabbix-role-mapping/delete/' . $node->roleid),
