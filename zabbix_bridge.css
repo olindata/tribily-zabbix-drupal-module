@@ -37,7 +37,7 @@
     float: left;
 }
 
-#zabbix-bridge-hosts-form div {
+#zabbix-bridge-hosts-form .form-checkboxes div {
     text-align: center;
 
 }
