@@ -1,0 +1,26 @@
+/* 
+    Document   : zabbix_bridge
+    Created on : Aug 28, 2011, 7:19:41 PM
+    Author     : olindata
+    Description:
+        Module wide style sheet
+*/
+
+div .form-item {
+    display: block;
+    float: left;
+}
+
+#edit-status-wrapper {
+    float: none;
+}
+
+.form-checkboxes .form-item {
+    float: left;
+    width: 200px;
+    height: 200px;
+}
+
+#edit-submit {
+    float: left;
+}

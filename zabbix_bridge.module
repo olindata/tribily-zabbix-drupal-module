@@ -16,6 +16,13 @@ function zabbix_bridge_help($path, $arg) {
 }
 
 /**
+ * Implementation fo hook_init()
+ */
+function zabbix_bridge_init() {
+  drupal_add_css(drupal_get_path('module', 'zabbix_bridge') . '/zabbix_bridge.css');
+}
+
+/**
  * Implementation of hook_menu().
  */
 function zabbix_bridge_menu() {

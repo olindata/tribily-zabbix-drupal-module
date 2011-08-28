@@ -251,36 +251,53 @@ function zabbix_bridge_hosts_form(&$form_state, $operation, $hostid = NULL) {
       '#required' => TRUE
   );
 
-  // make the template SELECT options
-  $result = db_query('SELECT roleid, name, description FROM {zabbix_role}')
-          or drupal_set_message('Unable to retrieve zabbix roles', DRUPAL_MSG_TYPE_ERR);
+  $roletypes = db_query('SELECT typeid, typename, sortorder FROM {zabbix_role_type} order by sortorder')
+          or drupal_set_message('Unable to retrieve zabbix role types', DRUPAL_MSG_TYPE_ERR);
 
   $template_options = array();
-
-  while ($data = db_fetch_array($result)) {
-    $template_options[$data['roleid']] = $data['name']."<div class='description'>".$data['description']."</div>";
-  }
-
   $default_value = array();
 
-  // get the assigned roles for this host
-  if (isset($host->enabled)) {
+  while ($roletype = db_fetch_array($roletypes)) {
 
-    $sql = "select roleid from {zabbix_hosts_roles} where hostid = '%s'";
-    $result = db_query($sql, $hostid);
+    // make the template SELECT options
+    $result = db_query("SELECT roleid, name, description, imagesrc FROM {zabbix_role} where typeid = ".$roletype['typeid']." order by sortorder")
+            or drupal_set_message('Unable to retrieve zabbix roles', DRUPAL_MSG_TYPE_ERR);
+
+    foreach ($template_options as $i => $value) {
+        unset($template_options[$i]);
+    }
+    foreach ($default_value as $i => $value) {
+        unset($default_value[$i]);
+    }
 
     while ($data = db_fetch_array($result)) {
-      $default_value[] = $data['roleid'];
+
+      $imagesrc = $data['imagesrc']  == NULL ? url('/sites/default/files/zabbix-roles/none.png') : url($data['imagesrc']);
+  
+      $template_options[$data['roleid']] = "<img src=\"$imagesrc\"/>".
+                                           "<div class=\"rolename\">".$data['name']."</div>".
+                                           "<div class='description'>".$data['description']."</div>";
     }
+
+    // get the assigned roles for this host
+    if (isset($host->enabled)) {
+
+      $sql = "select roleid from {zabbix_hosts_roles} where hostid = '%s'";
+      $result = db_query($sql, $hostid);
+
+      while ($data = db_fetch_array($result)) {
+        $default_value[] = $data['roleid'];
+      }
+    }
+
+    $form['hosts']["roles-".$roletype['typename']] = array(
+        '#type' => 'checkboxes',
+        '#title' => t($roletype['typename'].' Roles'),
+        '#default_value' => $default_value,
+        '#options' => $template_options,
+    );
+
   }
-
-
-  $form['hosts']['roles'] = array(
-      '#type' => 'checkboxes',
-      '#title' => t('Roles'),
-      '#default_value' => $default_value,
-      '#options' => $template_options,
-  );
 
   $form['hosts']['submit'] = array('#type' => 'submit', '#value' => t($submit), '#weight' => 30);
 
