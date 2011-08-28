@@ -6,21 +6,22 @@
         Module wide style sheet
 */
 
-div .form-item {
+#zabbix-bridge-hosts-form div .form-item {
     display: block;
     float: left;
 }
 
-#edit-status-wrapper {
+#zabbix-bridge-hosts-form #edit-status-wrapper {
     float: none;
+    display: inline;
 }
 
-.form-checkboxes .form-item {
+#zabbix-bridge-hosts-form .form-checkboxes .form-item {
     float: left;
     width: 200px;
     height: 200px;
 }
 
-#edit-submit {
+#zabbix-bridge-hosts-form #edit-submit {
     float: left;
 }
