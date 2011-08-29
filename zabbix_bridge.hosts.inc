@@ -381,7 +381,18 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
     }
   }
 
-  $roles = $form_state['clicked_button']['#post']['roles'];
+  // get all role types from the db
+  $sqlroletypes = "select typename from {zabbix_role_type} order by sortorder";
+  $roletypes = db_query($sqlroletypes);
+
+  $roles = array();
+
+  while ($record = db_fetch_object($roletypes)) {
+    foreach ($form_state['clicked_button']['#post']["roles-".str_replace(' ', '_', $record->typename)] as $rolekey => $roleval )
+      $roles[] = $roleval;
+  }
+
+  zabbix_bridge_debug('#post: ' . print_r($form_state['clicked_button']['#post'], TRUE));
   zabbix_bridge_debug('$roles: ' . print_r($roles, TRUE));
 
   $role_ids = array();

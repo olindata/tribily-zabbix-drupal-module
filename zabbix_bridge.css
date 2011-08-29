@@ -6,6 +6,18 @@
         Module wide style sheet
 */
 
+#edit-submit {
+    width: 100px;
+    height: 50px;
+    color: green;
+    border-style: solid;
+    border-color: darkGreen;
+    border-width: 1px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 25px;
+    background-color: lightGreen;
+}
+
 #zabbix-bridge-hosts-form div .form-item {
     display: block;
     float: left;
