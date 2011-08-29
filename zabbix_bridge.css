@@ -28,6 +28,11 @@
     text-align: center;
 }
 
+#zabbix-bridge-hosts-form .form-checkboxes .form-item:hover{
+
+    border-color: darkorange;
+}
+
 #zabbix-bridge-hosts-form #edit-submit {
     float: left;
 }
