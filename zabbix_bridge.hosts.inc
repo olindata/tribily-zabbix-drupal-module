@@ -398,6 +398,8 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
   $role_ids = array();
   $rolesadded = 0;
 
+  reset($roles);
+  
   // get the role ids
   if (count($roles) > 0) {
 
@@ -405,7 +407,7 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
       if (0 === $value) {
         continue;
       }
-      $role_ids[] = $key;
+      $role_ids[] = $value;
       $rolesadded += 1;
     }
   }
