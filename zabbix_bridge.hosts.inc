@@ -388,8 +388,10 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
   $roles = array();
 
   while ($record = db_fetch_object($roletypes)) {
-    foreach ($form_state['clicked_button']['#post']["roles-".str_replace(' ', '_', $record->typename)] as $rolekey => $roleval )
-      $roles[] = $roleval;
+    if ($form_state['clicked_button']['#post']["roles-".str_replace(' ', '_', $record->typename)]) {
+      foreach ($form_state['clicked_button']['#post']["roles-".str_replace(' ', '_', $record->typename)] as $rolekey => $roleval )
+        $roles[] = $roleval;
+    }
   }
 
   zabbix_bridge_debug('#post: ' . print_r($form_state['clicked_button']['#post'], TRUE));
@@ -449,6 +451,7 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
   } else {
     zabbix_bridge_debug("hostid unknown: $hostid");
   }
+
 
   $result = db_query($sql, $user->uid, $hostid, $zabbixhostid, $host['host'], $host['status'], $host['host'], $host['status']);
 

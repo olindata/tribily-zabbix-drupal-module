@@ -197,7 +197,8 @@ function zabbix_hosts_table($userid = NULL) {
           $lastzabbixhostid == $node->zabbixhostid ? '' : (
                   l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
                   l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
-                  l('Update', 'hosts/update/' . $node->hostid)
+                  l('Update', 'hosts/update/' . $node->hostid) . ' | ' .
+                  l('Triggers', 'hosts/' . $node->hostid . '/triggers')
                   ),
       );
     }
@@ -211,7 +212,8 @@ function zabbix_hosts_table($userid = NULL) {
           $lastzabbixhostid == $node->zabbixhostid ? '' : (
                   l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
                   l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
-                  l('Update', 'hosts/update/' . $node->hostid)
+                  l('Update', 'hosts/update/' . $node->hostid) . ' | ' .
+                  l('Triggers', 'hosts/' . $node->hostid . '/triggers')
                   ),
       );
     }

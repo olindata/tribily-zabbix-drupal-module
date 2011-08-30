@@ -139,6 +139,14 @@ function zabbix_bridge_menu() {
         'file' => 'zabbix_bridge.hosts.inc',
     );
 
+    $items['hosts/%/triggers'] = array(
+        'title' => 'Triggers',
+        'page callback' => 'zabbix_bridge_triggers_overview',
+        'access arguments' => array(PERM_HOSTS_SELECT),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.triggers.inc',
+    );
+
     $items['hosts/delete/%'] = array(
         'title' => t('Delete Host'),
         'page callback' => 'drupal_get_form',
