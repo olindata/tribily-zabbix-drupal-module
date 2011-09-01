@@ -149,7 +149,7 @@ define('STR_DEFAULT_ACTION_TEXT_JABBER', 'Trigger: {TRIGGER.NAME}\nDate / Time: 
  */
 function zabbix_bridge_drupal_to_zabbix_hostid($hostid) {
 
-  $sql = "select zabbixhostid from {zabbix_hosts} where hostid = '%s'";
+  $sql = "select zabbixhostid from {zabbix_hosts} where hostid = '%d'";
   $result = db_query($sql, $hostid);
 
   $host = db_fetch_object($result);
@@ -948,6 +948,37 @@ function zabbix_bridge_get_all_users_from_zabbix() {
 
 }
 
+/**
+ *
+ * @param integer $hostid the zabbix hostid for the host we want the triggers for
+ * @return object the object with all triggers for this host
+ */
+function zabbix_bridge_get_all_triggers_from_zabbix($hostid) {
+
+  // This logs into Zabbix, and returns false if it fails
+  zabbix_api_login()
+      or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+
+  $triggerids = array();
+  $options = array();
+
+  $options['hostids'] = array($hostid);
+  $options['sortfield'] = 'templateid';
+  $options['output'] = API_OUTPUT_EXTEND;
+  $options['extendoutput'] = 'true';
+
+  $triggerids = ZabbixAPI::fetch_array('trigger', 'get', $options)
+          or drupal_set_message('Unable to get zabbix triggers: ' . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+
+  return $triggerids;
+}
+
+/**
+ * returns an array with all zabbix actions for the specified hostgroup
+ *
+ * @param $hostgroupid integer The zabbix id of the hostgrop we want all actions for
+ * @return array The array of actions
+ */
 function zabbix_bridge_get_all_actions_from_zabbix($hostgroupid) {
 
   // This logs into Zabbix, and returns false if it fails
@@ -965,43 +996,11 @@ function zabbix_bridge_get_all_actions_from_zabbix($hostgroupid) {
   $options['extendoutput'] = 'true';
 
   $actionids = ZabbixAPI::fetch_array('action', 'get', $options)
-          or drupal_set_message('Unable to get zabbix users: ' . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message('Unable to get zabbix actions: ' . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   return $actionids;
   
 }
-
-//function zabbix_bridge_set_action_texts($action, $alert_subject_recovery, $alert_body_recovery, $alert_subject, $alert_body) {
-//
-//  // This logs into Zabbix, and returns false if it fails
-//  zabbix_api_login()
-//      or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
-//
-//  //$options = array();
-//  $action['def_shortdata'] = $alert_subject;
-//  $action['def_longdata'] = $alert_body;
-//  $action['r_shortdata'] = $alert_subject_recovery;
-//  $action['r_longdata'] = $alert_body_recovery;
-//
-//  //manually set these optiosn because they somehow get lost
-//  //TODO: figure out where they get lost
-////  $action['operations']['opmediatypes'][0]['mediatypeid']
-//  zabbix_bridge_debug(print_r($action['operations'], TRUE));
-//
-////$action['operations'][0]['opmediatypes'][0]['mediatypeid'];
-//
-////  zabbix_bridge_debug(print_r($action['conditions'], TRUE));
-//
-//  if (ZabbixAPI::query('action', 'delete', $action)) {
-//    zabbix_bridge_debug("action ".$action['name']." deleted succesfully");
-//    if (ZabbixAPI::query('action', 'create', $action)) {
-//      zabbix_bridge_debug("action ".$action['name']." created succesfully");
-//    }
-//  } else {
-//    zabbix_bridge_debug(print_r(ZabbixAPI::getLastError(), True));
-//  }
-//}
-
 
 /**
  * Creates an action in zabbix that will alert through text message

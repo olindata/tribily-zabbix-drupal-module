@@ -142,6 +142,7 @@ function zabbix_bridge_menu() {
     $items['hosts/%/triggers'] = array(
         'title' => 'Triggers',
         'page callback' => 'zabbix_bridge_triggers_overview',
+        'page arguments' => array( 1),
         'access arguments' => array(PERM_HOSTS_SELECT),
         'type' => MENU_CALLBACK,
         'file' => 'zabbix_bridge.triggers.inc',
