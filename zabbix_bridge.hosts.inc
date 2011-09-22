@@ -34,7 +34,7 @@ function zabbix_hosts_overview() {
  * @return object
  */
 function host_user_load($hostid) {
-  $query = "SELECT * FROM {zabbix_hosts} WHERE hostid = '%d'";
+  $query = "SELECT * FROM {zabbix_hosts} WHERE hostid = %d";
   $rs = db_query($query, $hostid);
 
   if ($rs) {
