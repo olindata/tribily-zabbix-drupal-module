@@ -80,7 +80,7 @@ function host_enable_disable_confirm(&$form_state, $host) {
       '#value' => $host,
   );
 
-  $sql = "select enabled from {zabbix_hosts} where hostid = '%s'";
+  $sql = "select enabled from {zabbix_hosts} where hostid = %d";
   $enabled = db_result(db_query($sql, $host));
 
   $form['_current_state'] = array(
