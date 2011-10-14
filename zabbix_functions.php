@@ -150,12 +150,12 @@ define('STR_DEFAULT_ACTION_TEXT_JABBER', 'Trigger: {TRIGGER.NAME}\nDate / Time: 
  */
 function zabbix_bridge_drupal_to_zabbix_hostid($hostid) {
 
-  $sql = "select zabbixhostid from {zabbix_hosts} where hostid = '%s'";
+  $sql = "select zabbixhostid from {zabbix_hosts} where hostid = %d";
   $result = db_query($sql, $hostid);
 
   $host = db_fetch_object($result);
 
-  zabbix_bridge_debug(print_r($host, TRUE));
+  //zabbix_bridge_debug(print_r($host, TRUE));
 
   return $host->zabbixhostid;
 }
@@ -198,7 +198,8 @@ function zabbix_hosts_table($userid = NULL) {
           $lastzabbixhostid == $node->zabbixhostid ? '' : (
                   l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
                   l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
-                  l('Update', 'hosts/update/' . $node->hostid)
+                  l('Update', 'hosts/update/' . $node->hostid) . ' | ' .
+                  l('Triggers', 'hosts/' . $node->hostid . '/triggers')
                   ),
       );
     }
@@ -212,7 +213,8 @@ function zabbix_hosts_table($userid = NULL) {
           $lastzabbixhostid == $node->zabbixhostid ? '' : (
                   l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
                   l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
-                  l('Update', 'hosts/update/' . $node->hostid)
+                  l('Update', 'hosts/update/' . $node->hostid) . ' | ' .
+                  l('Triggers', 'hosts/' . $node->hostid . '/triggers')
                   ),
       );
     }
@@ -486,8 +488,69 @@ function zabbix_bridge_get_all_hosts($withtemplates = TRUE) {
   return $hosts;
 }
 
+/**
+ * gets the pretty drupal rolename for display, retrieved by a zabbix templateid
+ * 
+ * @param integer $templateid the zabbix templateid 
+ */
+function zabbix_bridge_get_rolename_by_templateid($templateid) {
+
+  $sql = "select zr.name from {zabbix_role} zr inner join {zabbix_roles_templates} zrt on zrt.roleid = zr.roleid where zrt.templateid = %d";
+  $result = db_query($sql, $templateid);
+
+  $role = db_fetch_object($result);
+
+  return $role->name;
+
+}
+
+/**
+ *  Get a template by a triggerid. okay, the way this works: we only have
+ * triggers on template level, which means that any trigger can only have
+ * items in it from that trigger. Therefore, getting the template a host-level
+ * trigger comes from is jut a matter of getting the trigger.templateid, which
+ * points to the triggerid at template level. For that trigger, we get all
+ * functions. Those give us the itemids involved in this trigger, so we get the
+ * hostid from the first itemid in the first function and look up it's hostid.
+ * That is teh template this trigger belongs to.
+ *
+ * @param integer $triggerid the id of the trigger we want to use to fetch it's
+ * template
+ */
+function zabbix_bridge_get_template_by_triggerid($triggerid) {
+
+    // This logs into Zabbix, and returns false if it fails
+    zabbix_api_login()
+            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+
+  $trigger = array();
+  $options = array();
+
+  $options['triggerids'] = array($triggerid);
+  $options['output'] = API_OUTPUT_EXTEND;
+//  $options['select_functions'] = API_OUTPUT_EXTEND;
+  $options['select_hosts'] = API_OUTPUT_EXTEND;
+//  $options['select_items'] = API_OUTPUT_EXTEND;
+
+  $options['extendoutput'] = 'true';
+
+  $trigger = ZabbixAPI::fetch_array('trigger', 'get', $options)
+          or drupal_set_message('Unable to get zabbix triggers: ' . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+
+  return $trigger[0]['hosts'][0];
+
+  
+}
+
+/**
+ * Get a drupal userid by a zabbix hostgroupid. The reason this is even possible
+ * is because one user owns a hostgroup, making this a 1:1 relation
+ *
+ * @param integer $hostgroupid
+ * @return integer the drupal userid for this hostgroup
+ */
 function zabbix_bridge_get_userid_by_hostgroupid($hostgroupid) {
-  $sql = "select drupal_uid from {zabbix_drupal_account} where zabbix_hostgrp_id = '%s'";
+  $sql = "select drupal_uid from {zabbix_drupal_account} where zabbix_hostgrp_id = %d";
   $result = db_query($sql, $hostgroupid);
 
   $user = db_fetch_object($result);
@@ -506,18 +569,18 @@ function zabbix_bridge_get_userid_by_hostgroupid($hostgroupid) {
 function zabbix_bridge_add_host_to_zabbix_userid(
 $zabbixuserid, $zabbixhostid, $zabbixhostname, $zabbixhostenabled, $zabbixhosttemplateids) {
 
-  $sql = "insert into {zabbix_hosts} (userid, zabbixhostid, hostname, enabled) values ('%s', '%s', '%s', '%s')";
+  $sql = "insert into {zabbix_hosts} (userid, zabbixhostid, hostname, enabled) values (%d, %d, '%s', '%s')";
   $result = db_query($sql, $zabbixuserid, $zabbixhostid, $zabbixhostname, $zabbixhostenabled);
   if ($result)
     $hostid = db_last_insert_id('zabbix_hosts', 'hostid');
 
   foreach ($zabbixhosttemplateids as $value) {
 
-    $sql = "select roleid from {zabbix_roles_templates} where templateid = '%s'";
+    $sql = "select roleid from {zabbix_roles_templates} where templateid = %d";
     $result = db_query($sql, $value);
     $role = db_fetch_object($result);
 
-    $sql = "insert into {zabbix_hosts_roles} (hostid, roleid) values ('%s', '%s')";
+    $sql = "insert into {zabbix_hosts_roles} (hostid, roleid) values (%d, %d)";
     $result = db_query($sql, $hostid, $role->roleid);
   }
 }
@@ -529,7 +592,7 @@ $zabbixuserid, $zabbixhostid, $zabbixhostname, $zabbixhostenabled, $zabbixhostte
  */
 function zabbix_bridge_drupal_to_zabbix_emailid($emailid) {
 
-  $sql = "select zabbixmediaid from {zabbix_emails} where emailid = '%s'";
+  $sql = "select zabbixmediaid from {zabbix_emails} where emailid = %d";
   $result = db_query($sql, $emailid);
 
   $email = db_fetch_object($result);
@@ -554,7 +617,7 @@ function zabbix_emails_table($userid = NULL) {
 
   if (isset($userid)) {
     $header = array('Email', 'Severity', 'Enabled');
-    $results = pager_query("select e.emailid, e.email, e.zabbixmediaid, zs.name severity, e.enabled from {zabbix_emails} e left join {zabbix_emails_severities} zes on e.emailid = zes.emailid left join {zabbix_severities} zs on zes.severityid = zs.severityid where e.userid = '%s'", $count, $id, null, $user->uid);
+    $results = pager_query("select e.emailid, e.email, e.zabbixmediaid, zs.name severity, e.enabled from {zabbix_emails} e left join {zabbix_emails_severities} zes on e.emailid = zes.emailid left join {zabbix_severities} zs on zes.severityid = zs.severityid where e.userid = %d", $count, $id, null, $user->uid);
   }
   else {
     $header = array('Username', 'Email Id', 'Email', 'Zabbix Media Id', 'Severity', 'Enabled');
@@ -695,6 +758,38 @@ function zabbix_bridge_drupal_to_zabbix_mobileid($mobileid) {
 
 /**
  *
+ * @param integer $triggerid
+ *    the zabbix id of the trigger to disable/enable
+ * @param string $action
+ *    the action to take 'enable' or 'disable'
+ */
+function zabbix_bridge_trigger_toggle($triggerid, $action) {
+
+  zabbix_api_login()
+          or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+
+  $update = array();
+  $update[] = array('triggerid' => $triggerid, 'status' => (($action == 'enable') ? 0 : 1));
+  $result = ZabbixAPI::fetch_string('trigger', 'update', $update);
+
+  zabbix_bridge_debug(print_r($triggerid, TRUE));
+  zabbix_bridge_debug(print_r($action, TRUE));
+
+  if (!$result) {
+    drupal_set_message('Unable to enable/disable trigger. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+  }
+  else {
+    drupal_set_message('Trigger succesfully updated. ', DRUPAL_MSG_TYPE_STATUS);
+  }
+
+  return $result;
+
+
+
+}
+
+/**
+ *
  * @global <type> $user
  * @param <type> $userid
  * @return string
@@ -802,6 +897,21 @@ function zabbix_bridge_get_all_mobiles_from_zabbix($extended = false) {
     return $media;
 
 }
+
+function zabbix_bridge_get_trigger_by_triggerid($triggerid) {
+
+    $trigger = array();
+
+    // This logs into Zabbix, and returns false if it fails
+    zabbix_api_login()
+            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+
+    $trigger = ZabbixAPI::fetch_array('trigger', 'get', array( 'triggerid' => $triggerid));
+
+    return $trigger;
+
+}
+
 
 /**
  *
@@ -947,6 +1057,40 @@ function zabbix_bridge_get_all_users_from_zabbix() {
 
 }
 
+/**
+ *
+ * @param integer $hostid the zabbix hostid for the host we want the triggers for
+ * @return object the object with all triggers for this host
+ */
+function zabbix_bridge_get_all_triggers_from_zabbix($hostid) {
+
+  // This logs into Zabbix, and returns false if it fails
+  zabbix_api_login()
+      or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+
+  $triggerids = array();
+  $options = array();
+
+  $options['hostids'] = array($hostid);
+  $options['sortfield'] = 'templateid';
+  $options['output'] = API_OUTPUT_EXTEND;
+//  $options['select_functions'] = API_OUTPUT_EXTEND;
+  $options['select_hosts'] = API_OUTPUT_EXTEND;
+//  $options['select_items'] = API_OUTPUT_EXTEND;
+  $options['extendoutput'] = 'true';
+
+  $triggerids = ZabbixAPI::fetch_array('trigger', 'get', $options)
+          or drupal_set_message('Unable to get zabbix triggers: ' . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+
+  return $triggerids;
+}
+
+/**
+ * returns an array with all zabbix actions for the specified hostgroup
+ *
+ * @param $hostgroupid integer The zabbix id of the hostgrop we want all actions for
+ * @return array The array of actions
+ */
 function zabbix_bridge_get_all_actions_from_zabbix($hostgroupid) {
 
   // This logs into Zabbix, and returns false if it fails
@@ -964,43 +1108,11 @@ function zabbix_bridge_get_all_actions_from_zabbix($hostgroupid) {
   $options['extendoutput'] = 'true';
 
   $actionids = ZabbixAPI::fetch_array('action', 'get', $options)
-          or drupal_set_message('Unable to get zabbix users: ' . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message('Unable to get zabbix actions: ' . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   return $actionids;
   
 }
-
-//function zabbix_bridge_set_action_texts($action, $alert_subject_recovery, $alert_body_recovery, $alert_subject, $alert_body) {
-//
-//  // This logs into Zabbix, and returns false if it fails
-//  zabbix_api_login()
-//      or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
-//
-//  //$options = array();
-//  $action['def_shortdata'] = $alert_subject;
-//  $action['def_longdata'] = $alert_body;
-//  $action['r_shortdata'] = $alert_subject_recovery;
-//  $action['r_longdata'] = $alert_body_recovery;
-//
-//  //manually set these optiosn because they somehow get lost
-//  //TODO: figure out where they get lost
-////  $action['operations']['opmediatypes'][0]['mediatypeid']
-//  zabbix_bridge_debug(print_r($action['operations'], TRUE));
-//
-////$action['operations'][0]['opmediatypes'][0]['mediatypeid'];
-//
-////  zabbix_bridge_debug(print_r($action['conditions'], TRUE));
-//
-//  if (ZabbixAPI::query('action', 'delete', $action)) {
-//    zabbix_bridge_debug("action ".$action['name']." deleted succesfully");
-//    if (ZabbixAPI::query('action', 'create', $action)) {
-//      zabbix_bridge_debug("action ".$action['name']." created succesfully");
-//    }
-//  } else {
-//    zabbix_bridge_debug(print_r(ZabbixAPI::getLastError(), True));
-//  }
-//}
-
 
 /**
  * Creates an action in zabbix that will alert through text message

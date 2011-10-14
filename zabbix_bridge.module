@@ -148,6 +148,23 @@ function zabbix_bridge_menu() {
         'file' => 'zabbix_bridge.hosts.inc',
     );
 
+    $items['hosts/%/triggers'] = array(
+        'title' => 'Triggers',
+        'page callback' => 'zabbix_bridge_triggers_overview',
+        'page arguments' => array( 1),
+        'access arguments' => array(PERM_HOSTS_SELECT),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.triggers.inc',
+    );
+    $items['hosts/%/triggers/%/%'] = array(
+        'title' => 'Enable/Disable triggers',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_triggers_toggle_confirm', 1,3,4),
+        'access arguments' => array(PERM_HOSTS_UPDATE),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.triggers.inc',
+    );
+
     $items['hosts/delete/%'] = array(
         'title' => t('Delete Host'),
         'page callback' => 'drupal_get_form',
