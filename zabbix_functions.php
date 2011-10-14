@@ -32,6 +32,7 @@ define('PERM_EMAIL_SELECT', 'access emails');
 define('PERM_EMAIL_INSERT', 'add emails');
 define('PERM_EMAIL_DELETE', 'delete emails');
 define('PERM_EMAIL_UPDATE', 'update emails');
+define('PERM_DASHBOARD', 'access dashboard');
 
 // from zabbix/include/defines.inc.php
 define('PERM_READ_WRITE', 3);

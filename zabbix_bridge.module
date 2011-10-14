@@ -111,6 +111,15 @@ function zabbix_bridge_menu() {
         'access arguments' => array(PERM_ADMIN),
     );
 
+    // Redirect to the dashboard
+    $items['dashboard'] = array(
+        'title' => 'Dashboard',
+        'page callback' => 'zabbix_dashboard_dashboard',
+        'access arguments' => array(PERM_DASHBOARD),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.dashboard.inc',
+    );
+
     // Hosts menu item (accessible to user)
     $items['hosts/overview'] = array(
         'title' => 'Monitored Hosts',
@@ -434,7 +443,8 @@ function zabbix_bridge_perm() {
       'access jabbers',
       'add jabbers',
       'delete jabbers',
-      'update jabbers');
+      'update jabbers',
+      'access dashboard');
 }
 
 /**
