@@ -21,9 +21,17 @@ function zabbix_dashboard_dashboard()
 	curl_setopt($ch,CURLOPT_HTTPHEADER,array("Content-Type: application/json-rpc"));
 	$ret = curl_exec($ch);
 	$ret = json_decode($ret);
+
+	if(isset($ret->error))
+	{
+		drupal_set_message('Unable to login. It seems that something is wrong here. Please contact the Site Administrator.', DRUPAL_MSG_TYPE_ERR);
+		return "Oh noes!";
+	}
+
 	$sid = $ret->result;
 
 	header("Location: ".$url."index.php?setCookie=1&sid=".$sid);
 	exit();
+
 }
 
