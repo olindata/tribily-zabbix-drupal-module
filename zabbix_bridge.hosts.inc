@@ -201,11 +201,19 @@ function zabbix_host_delete($hostid) {
  * @see zabbix_hosts_form_submit()
  */
 function zabbix_bridge_hosts_form(&$form_state, $operation, $hostid = NULL) {
+  global $user;
 
   if (($operation == 'update') && isset($hostid)) {
     $sql = "select userid, hostid, zabbixhostid, hostname, enabled from {zabbix_hosts} where hostid = '%s'";
     $result = db_query($sql, $hostid);
     $host = db_fetch_object($result);
+
+    // Access Denied
+    if($host->userid != $user->uid)
+    {
+	drupal_set_message("Access Denied - You have not the permissions to update this object", DRUPAL_MSG_TYPE_ERR);
+	return;
+    }
   }
 
   if ('add' == $operation) {
@@ -352,10 +360,17 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
     }
   }
   else {
-    $sql = "select zabbixhostid from {zabbix_hosts} where hostid = '%s'";
+    $sql = "select userid, zabbixhostid from {zabbix_hosts} where hostid = '%s'";
     $result = db_query($sql, $hostid);
     $data = db_fetch_array($result);
     $zabbixhostid = $data['zabbixhostid'];
+
+    // Before performing this action we should check, if the user is the real owner of this
+    if($data['userid']!=$user->uid)
+    {
+        drupal_set_message("Access Denied - You have not the permissions to update this object", DRUPAL_MSG_TYPE_ERR);
+        return;
+    }
 
     //update the hostname and enabled status
     ZabbixAPI::fetch_string('host', 'update', array('hostid' => $zabbixhostid, 'host' => $host['host'], 'status' => $host['status']))

@@ -144,7 +144,7 @@ function zabbix_bridge_schema() {
 	    'description' => 'Zabbix role role types',
 	    'fields' => array(
 	        'typeid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
-	        'typename' => array('type' => 'varchar', 'unsigned' => TRUE, 'not null' => TRUE, 'length' => 255),
+	        'typename' => array('type' => 'varchar', 'unsigned' => FALSE, 'not null' => TRUE, 'length' => 255),
 	        'sortorder' => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE)
 	    ),
 	    'primary key' => array('typeid'),

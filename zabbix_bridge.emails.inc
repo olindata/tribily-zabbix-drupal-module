@@ -34,6 +34,7 @@ function zabbix_bridge_emails() {
  * @see zabbix_bridge_emails_form_submit()
  */
 function zabbix_bridge_emails_form(&$form_state, $operation, $emailid = NULL) {
+  global $user;
 
   // Get details of email if we're updating
   if (($operation == 'update') && isset($emailid)) {
@@ -41,6 +42,13 @@ function zabbix_bridge_emails_form(&$form_state, $operation, $emailid = NULL) {
     $sql = "select userid, emailid, email, zabbixmediaid, enabled from {zabbix_emails} where emailid = '%s'";
     $result = db_query($sql, $emailid);
     $email = db_fetch_object($result);
+
+    // Access Denied
+    if($email->userid != $user->uid)
+    {
+        drupal_set_message("Access Denied - You have not the permissions to update this object", DRUPAL_MSG_TYPE_ERR);
+        return;
+    }
   }
 
   // Set display fo form to reflect operation
@@ -148,10 +156,17 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
 
   if ($emailid <> '') {
     // Get the zabbix userid belonging to the emailid we got from the submitted form
-    $result = db_query("SELECT zda.zabbix_uid FROM {zabbix_drupal_account} zda inner join {zabbix_emails} ze on ze.userid = zda.drupal_uid where ze.emailid = '%s'", $emailid)
+    $result = db_query("SELECT zda.zabbix_uid, zda.drupal_uid FROM {zabbix_drupal_account} zda inner join {zabbix_emails} ze on ze.userid = zda.drupal_uid where ze.emailid = '%s'", $emailid)
             or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
     $data = db_fetch_array($result);
     $zabbix_uid = $data['zabbix_uid'];
+
+    // Access Denied
+    if($data['drupal_uid'] != $user->uid)
+    {
+        drupal_set_message("Access Denied - You have not the permissions to update this object", DRUPAL_MSG_TYPE_ERR);
+        return;
+    }
   }
   else {
     // Get the zabbix userid belonging to the logged in drupal user

@@ -37,6 +37,7 @@ function zabbix_bridge_jabbers() {
  * @see zabbix_bridge_jabbers_form_submit()
  */
 function zabbix_bridge_jabbers_form(&$form_state, $operation, $jabberid = NULL) {
+  global $user;
 
   // Get details of jabber if we're updating
   if (($operation == 'update') && isset($jabberid)) {
@@ -44,6 +45,12 @@ function zabbix_bridge_jabbers_form(&$form_state, $operation, $jabberid = NULL) 
     $sql = "select userid, jabberid, jabber, zabbixmediaid, enabled from {zabbix_jabbers} where jabberid = '%s'";
     $result = db_query($sql, $jabberid);
     $jabber = db_fetch_object($result);
+
+    if($jabber->userid != $user->uid)
+    {
+        drupal_set_message("Access Denied - You have not the permissions to update this object", DRUPAL_MSG_TYPE_ERR);
+        return;
+    }
   }
 
   // Set display fo form to reflect operation

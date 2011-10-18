@@ -36,6 +36,7 @@ function zabbix_bridge_mobiles() {
  * @see zabbix_bridge_mobiles_form_submit()
  */
 function zabbix_bridge_mobiles_form(&$form_state, $operation, $mobileid = NULL) {
+  global $user;
 
   // Get details of mobile if we're updating
   if (($operation == 'update') && isset($mobileid)) {
@@ -43,6 +44,13 @@ function zabbix_bridge_mobiles_form(&$form_state, $operation, $mobileid = NULL) 
     $sql = "select userid, mobileid, number, zabbixmediaid, enabled from {zabbix_mobiles} where mobileid = '%s'";
     $result = db_query($sql, $mobileid);
     $mobile = db_fetch_object($result);
+
+    // Access Denied
+    if($mobile->userid != $user->uid)
+    {
+        drupal_set_message("Access Denied - You have not the permissions to update this object", DRUPAL_MSG_TYPE_ERR);
+        return;
+    }
   }
 
   // Set display fo form to reflect operation
@@ -151,10 +159,16 @@ function zabbix_bridge_mobiles_form_submit($form, &$form_state) {
 
   if ($mobileid <> '') {
     // Get the zabbix userid belonging to the mobileid we got from the submitted form
-    $result = db_query("SELECT zda.zabbix_uid FROM {zabbix_drupal_account} zda inner join {zabbix_mobiles} zm on zm.userid = zda.drupal_uid where zm.mobileid = '%s'", $mobileid)
+    $result = db_query("SELECT zda.zabbix_uid, zda.drupal_uid FROM {zabbix_drupal_account} zda inner join {zabbix_mobiles} zm on zm.userid = zda.drupal_uid where zm.mobileid = '%s'", $mobileid)
             or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
     $data = db_fetch_array($result);
     $zabbix_uid = $data['zabbix_uid'];
+
+    if($data['drupal_uid'] != $user->uid)
+    {
+        drupal_set_message("Access Denied - You have not the permissions to update this object", DRUPAL_MSG_TYPE_ERR);
+        return;
+    }
   }
   else {
     // Get the zabbix userid belonging to the logged in drupal user
