@@ -160,6 +160,34 @@ function zabbix_bridge_drupal_to_zabbix_hostid($hostid) {
   return $host->zabbixhostid;
 }
 
+function zabbix_hosts($userid = NULL) {
+  global $user;
+
+  $rows = array();
+  $count = PAGER_COUNT;
+  $id = TABLE_ID_HOSTS_MAPPING;
+
+  if (isset($userid)) {
+    $header = array('Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
+    $results = pager_query("select h.hostid, h.hostname, h.zabbixhostid, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid where h.userid = '%s' order by h.hostname, r.name", $count, $id, null, $user->uid);
+  }
+  else {
+    $header = array('Username', 'Email', 'Zabbix Hostid', 'Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
+    $results = pager_query("select u.name, u.mail, h.hostid, h.zabbixhostid, h.hostname, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid left join {users} u on u.uid = h.userid order by u.name, h.hostname, r.name", $count, $id);
+  }
+
+  $output = array();
+
+  while ($node = db_fetch_object($results)) {
+    $output[] = $node;
+  }
+
+
+  return $output;
+}
+
+
+
 /**
  *
  * @global <type> $user

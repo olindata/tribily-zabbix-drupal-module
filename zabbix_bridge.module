@@ -981,3 +981,39 @@ function zabbix_bridge_update_user_rights($zabbixusergroupid, $zabbixhostgroupid
   }
 }
 
+/**
+ * Setup the actions
+ *
+ * We setup the action for disable all hosts of the desired user
+ *
+ * @author Daniel Werner <daniel@tribily.com>
+ */
+function zabbix_bridge_action_info()
+{
+  return array(
+    'zabbix_bridge_action_disable_host' => array(
+      'description' => t('Disable all Hosts of the desired user'),
+      'type' => 'user',
+      'configurable' => FALSE,
+      'triggers' => array('any'),
+      'file' => 'zabbix_bridge.action.inc'
+    )
+  );
+}
+
+
+function zabbix_bridge_action_disable_host(&$entity, $content = array())
+{
+	zabbix_api_login();
+
+	$uid = $entity->uid;
+	$hosts = zabbix_hosts($uid);
+	foreach($hosts as $host)
+	{
+		$hostid = $host->zabbixhostid;
+		$res = ZabbixAPI::fetch_string('host', 'update', array('hostid' => $hostid, 'status' => 1));
+
+		$sql = "update {zabbix_hosts} set enabled = '%s' where zabbixhostid = %s";
+		$result = db_query($sql, 1, $hostid);
+	}
+}
