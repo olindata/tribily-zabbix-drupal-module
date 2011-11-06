@@ -404,7 +404,7 @@ function zabbix_bridge_menu() {
         'page arguments' => array('zabbix_bridge_jabbers_form', 1, 2),
         'access arguments' => array(PERM_JABBER_UPDATE),
         'type' => MENU_CALLBACK,
-        'file' => 'zabbix_bridge.mobiles.inc',
+        'file' => 'zabbix_bridge.jabbers.inc',
     );
 
     // delete jabber
