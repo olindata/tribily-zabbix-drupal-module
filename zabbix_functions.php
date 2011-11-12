@@ -1038,6 +1038,79 @@ function zabbix_jabbers_table($userid = NULL) {
     return $output;
 }
 
+
+/**
+ *
+ * @global <type> $user
+ * @param <type> $userid
+ * @return string
+ */
+function zabbix_webpages_table($userid = NULL) {
+    global $user;
+
+    $rows = array();
+    $count = PAGER_COUNT;
+    $id = TABLE_ID_EMAILS_MAPPING;
+
+    if (isset($userid)) {
+        $header = array('Webpage', 'Description', 'Enabled');
+        $results = pager_query("select w.webpageid, w.webpage, w.description, w.enabled from {zabbix_webpages} w where w.userid = '%s'", $count, $id, null, $user->uid);
+    }
+    else {
+        $header = array('Username', 'Webpage Id', 'Webpage', 'Description', 'Enabled');
+        $results = pager_query("select u.name, w.webpageid, w.webpage, w.description, w.enabled from {zabbix_webpages} w left join {users} u on u.uid = w.userid", $count, $id);
+    }
+
+	$query_has_results = FALSE;
+	
+    while ($node = db_fetch_object($results)) {
+		$query_has_results = TRUE;
+
+        if (!isset($userid)) {
+
+            $rows[] = array(
+                    $node->name,
+                    $node->webpageid,
+                    $node->webpage,
+					$node->description,
+                    $node->enabled == 0 ? 'enabled' : 'disabled',
+                    l($node->enabled == 0 ? 'Disable' : 'Enable', 'webpages/enable-disable/' . $node->webpageid) . ' | ' .
+                        l('Delete', 'webpages/delete/' . $node->webpageid) . ' | ' .
+                        l('Update', 'webpages/update/' . $node->webpageid)
+                    );
+        }
+        else {
+
+            $rows[] = array(
+                    $node->webpage,
+                    $node->description,
+                    $node->enabled == 0 ? 'enabled' : 'disabled',
+                    l($node->enabled == 0 ? 'Disable' : 'Enable', 'webpages/enable-disable/' . $node->webpageid) . ' | ' .
+                        l('Delete', 'webpages/delete/' . $node->webpageid) . ' | ' .
+                        l('Update', 'webpages/update/' . $node->webpageid)
+                    );
+        }
+    }
+
+    if ($query_has_results) {
+
+        if (!isset($userid)) {
+
+            $rows[] = array(t('No webpages have been defined yet.'), '', '', '', '', '');
+        }
+        else {
+
+            $rows[] = array(t('No webpages have been added. Click "Add Webpage" below to get started!'), '', '', '');
+        }
+    }
+
+    $table_attributes = array('id' => 'webpages-table', 'align' => 'center');
+    $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
+
+    return $output;
+}
+
+
 function zabbix_bridge_get_all_jabbers_from_zabbix($extended = false) {
 
     $zabbixmedia = array();

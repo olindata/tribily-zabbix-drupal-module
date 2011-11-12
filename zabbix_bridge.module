@@ -71,6 +71,15 @@ function zabbix_bridge_menu() {
         'access arguments' => array(PERM_ADMIN),
     );
 
+    $items['admin/settings/zabbix_bridge/webpages'] = array(
+        'title' => 'Webpages',
+        'page callback' => 'zabbix_bridge_admin_webpages',
+        'file' => 'zabbix_bridge.admin.inc',
+        'weight' => 20,
+        'type' => MENU_LOCAL_TASK,
+        'access arguments' => array(PERM_ADMIN),
+    );
+
     $items['admin/settings/zabbix_bridge/roles'] = array(
         'title' => 'Roles',
         'page callback' => 'zabbix_bridge_admin_roles_mapping',
@@ -435,6 +444,65 @@ function zabbix_bridge_menu() {
         'file' => 'zabbix_bridge.jabbers.inc',
     );
 
+    // webpage overview (accessible to user)
+    $items['webpages/overview'] = array(
+        'title' => 'Webpage',
+        'page callback' => 'zabbix_bridge_webpages',
+        'access arguments' => array(PERM_JABBER_SELECT),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.webpage.inc',
+    );
+
+    // add webpage
+    $items['webpages/add'] = array(
+        'title' => 'Add Webpage',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_webpages_form', 1),
+        'access arguments' => array(PERM_JABBER_INSERT),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.webpage.inc',
+    );
+
+    // update webpage
+    $items['webpages/update/%'] = array(
+        'title' => 'Update Webpage',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_webpages_form', 1, 2),
+        'access arguments' => array(PERM_JABBER_UPDATE),
+        'type' => MENU_CALLBACK,
+        'file' => 'zabbix_bridge.webpage.inc',
+    );
+
+    // delete webpage
+    $items['webpages/delete/%'] = array(
+        'title' => t('Delete Webpage'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_webpages_delete_confirm', 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array(PERM_JABBER_DELETE),
+        'file' => 'zabbix_bridge.webpage.inc',
+    );
+
+    // enable-disable webpage
+    $items['webpages/enable-disable/%'] = array(
+        'title' => t('Enable/Disable Webpage'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('zabbix_bridge_webpages_enable_disable_confirm', 2),
+        'type' => MENU_CALLBACK,
+        'access arguments' => array(PERM_JABBER_UPDATE),
+        'file' => 'zabbix_bridge.webpage.inc',
+    );
+
+    $items['webpages/import'] = array(
+        'title' => t('Import Webpage IDs to the bridge'),
+        'page callback' => 'zabbix_bridge_import_webpages',
+        'type' => MENU_CALLBACK,
+        'access arguments' => array(PERM_ADMIN),
+        'file' => 'zabbix_bridge.webpage.inc',
+    );
+
+    
+    
     return $items;
 }
 
@@ -461,6 +529,10 @@ function zabbix_bridge_perm() {
       'add jabbers',
       'delete jabbers',
       'update jabbers',
+      'access webpages',
+      'add webpages',
+      'delete webpages',
+      'update webpages',
       'access dashboard');
 }
 

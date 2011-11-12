@@ -171,7 +171,27 @@ function zabbix_bridge_schema() {
 	    ),
 	    'primary key' => array('severityid')
 	);
+    
+//    CREATE TABLE  `drupal`.`zabbix_webpage` (
+//      `webpageid` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+//      `userid` INT UNSIGNED NOT NULL ,
+//      `url` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ,
+//      `enabled` TINYINT UNSIGNED NOT NULL ,
+//      `description` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL ,
+//      INDEX (  `userid` ,  `enabled` )
+//    ) ENGINE = INNODB CHARACTER SET utf8 COLLATE utf8_general_ci;
 
+	$schema['zabbix_webpages'] = array(
+	    'description' => 'Webpages monitored by users',
+	    'fields' => array(
+	        'webpageid' => array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE),
+	        'userid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+	        'url' => array('type' => 'varchar', 'not null' => TRUE, 'length' => 255),
+	        'enabled' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE),
+	        'description' => array('type' => 'varchar', 'not null' => FALSE, 'length' => 255),
+	    ),
+	    'primary key' => array('webpageid')
+	);
 
   return $schema;
 }

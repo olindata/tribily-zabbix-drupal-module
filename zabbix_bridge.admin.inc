@@ -65,6 +65,24 @@ function zabbix_bridge_admin_jabbers() {
 }
 
 /**
+ * This function returns a table with a h2 header with all webpages monitored by users
+ * Visible for admins only.
+ *
+ * @return $output - the html code for the table
+ */
+function zabbix_bridge_admin_webpages() {
+
+  drupal_set_title('Webpages of zabbix_bridge');
+
+  $output = '<h2>' . t('User defined webpages') . '</h2>';
+  $output .= t('These are all the webpages defined by users.');
+  $output .= zabbix_webpages_table();
+  $output .= l('Add webpage', 'webpages/add') . ' | ' . l('Import from zabbix', 'webpages/import');
+
+  return $output;
+}
+
+/**
  * This function returns a table with a h2 header with all mobile phone number
  * for notifications. Visible for admins only.
  *
