@@ -8,11 +8,9 @@ include_once 'zabbix_functions.php';
  * Implementation of hook_help().
  */
 function zabbix_bridge_help($path, $arg) {
-  if ($path == 'admin/help#zabbix_bridge') {
     return '<p>' .
     t('This module provides integration between drupal and Zabbix.') .
     '</p>';
-  }
 }
 
 /**
