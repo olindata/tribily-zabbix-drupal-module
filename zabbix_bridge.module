@@ -541,7 +541,9 @@ function zabbix_bridge_update_zabbix_user($edit, $account, $category) {
   zabbix_bridge_debug(print_r($category, true));
 
   // retrieve drupal-zabbix associations
-  $result = db_query("SELECT * FROM {zabbix_drupal_account} WHERE drupal_uid='%s'", $account->uid)
+  $result = db_query("SELECT * FROM {zabbix_drupal_account} WHERE drupal_uid = :drupal_uid", array(
+		':drupal_uid' => $account->uid
+		))
           or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
 
   $data = db_fetch_array($result);
@@ -696,7 +698,9 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
     zabbix_bridge_debug('Delete zabbix trace set to yes, deleting zabbix traces as well ...' . "\n");
 
     // retrieve drupal-zabbix associations - CONSIDER REVISING AND USING ZABBIX API INSTEAD!
-    $result = db_query("SELECT * FROM {zabbix_drupal_account} WHERE drupal_uid='%s'", $account->uid)
+    $result = db_query("SELECT * FROM {zabbix_drupal_account} WHERE drupal_uid = :drupal_uid", array(
+		':drupal_uid' => $account->uid
+		))
             or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
 
     $data = db_fetch_array($result);

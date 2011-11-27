@@ -156,7 +156,9 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
 
   if ($emailid <> '') {
     // Get the zabbix userid belonging to the emailid we got from the submitted form
-    $result = db_query("SELECT zda.zabbix_uid, zda.drupal_uid FROM {zabbix_drupal_account} zda inner join {zabbix_emails} ze on ze.userid = zda.drupal_uid where ze.emailid = '%s'", $emailid)
+    $result = db_query("SELECT zda.zabbix_uid, zda.drupal_uid FROM {zabbix_drupal_account} zda inner join {zabbix_emails} ze on ze.userid = zda.drupal_uid where ze.emailid = :emailid", array(
+		':emailid' => $emailid)
+		)
             or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
     $data = db_fetch_array($result);
     $zabbix_uid = $data['zabbix_uid'];
@@ -170,7 +172,9 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
   }
   else {
     // Get the zabbix userid belonging to the logged in drupal user
-    $result = db_query("SELECT zda.zabbix_uid FROM {zabbix_drupal_account} zda where zda.drupal_uid = '%s'", $user->uid)
+    $result = db_query("SELECT zda.zabbix_uid FROM {zabbix_drupal_account} zda where zda.drupal_uid = :drupal_uid", array(
+		':drupal_uid' => $user->uid
+		))
             or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
     $data = db_fetch_array($result);
     $zabbix_uid = $data['zabbix_uid'];
@@ -461,7 +465,9 @@ function zabbix_bridge_emails_enable_disable($zabbixmediaid, $enabled) {
 
   global $user;
 
-  $result = db_query("SELECT zabbix_uid FROM {zabbix_drupal_account} WHERE drupal_uid = '%s'", $user->uid)
+  $result = db_query("SELECT zabbix_uid FROM {zabbix_drupal_account} WHERE drupal_uid = :drupal_uid", array(
+		':drupal_uid' => $user->uid
+		))
           or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
 
   $data = db_fetch_array($result);

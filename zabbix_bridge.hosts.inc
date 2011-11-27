@@ -323,7 +323,9 @@ function zabbix_bridge_hosts_form(&$form_state, $operation, $hostid = NULL) {
 function zabbix_bridge_hosts_form_submit($form, &$form_state) {
   global $user;
 
-  $result = db_query("SELECT zabbix_hostgrp_id FROM {zabbix_drupal_account} WHERE drupal_uid='%s'", $user->uid)
+  $result = db_query("SELECT zabbix_hostgrp_id FROM {zabbix_drupal_account} WHERE drupal_uid = :drupal_uid", array(
+		':drupal_uid' => $user->uid
+		))
           or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
 
   $data = db_fetch_array($result);
@@ -402,7 +404,7 @@ function zabbix_bridge_hosts_form_submit($form, &$form_state) {
 
   $roles = array();
 
-  while ($record = db_fetch_object($roletypes)) {
+  foreach ($role_types as $record) {
     if ($form_state['clicked_button']['#post']["roles-".str_replace(' ', '_', $record->typename)]) {
       foreach ($form_state['clicked_button']['#post']["roles-".str_replace(' ', '_', $record->typename)] as $rolekey => $roleval )
         $roles[] = $roleval;
