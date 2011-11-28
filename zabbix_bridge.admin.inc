@@ -18,7 +18,7 @@ include_once 'zabbix_functions.php';
  */
 function zabbix_bridge_hosts_form() {
 
-  drupal_set_title('Hosts of zabbix_bridge');
+  drupal_set_title(t('Hosts of zabbix_bridge'));
 
   $output = '<h2>' . t('User defined hosts') . '</h2>';
   $output .= t('These are all the hosts with their roles created by all users.');
@@ -36,7 +36,7 @@ function zabbix_bridge_hosts_form() {
  */
 function zabbix_bridge_admin_emails() {
 
-  drupal_set_title('Emails of zabbix_bridge');
+  drupal_set_title(t('Emails of zabbix_bridge'));
 
   $output = '<h2>' . t('User defined emails') . '</h2>';
   $output .= t('These are all the emails defined by users for notification.');
@@ -54,7 +54,7 @@ function zabbix_bridge_admin_emails() {
  */
 function zabbix_bridge_admin_jabbers() {
 
-  drupal_set_title('Jabbers of zabbix_bridge');
+  drupal_set_title(t('Jabbers of zabbix_bridge'));
 
   $output = '<h2>' . t('User defined jabbers') . '</h2>';
   $output .= t('These are all the jabber accounts defined by users for notification.');
@@ -72,7 +72,7 @@ function zabbix_bridge_admin_jabbers() {
  */
 function zabbix_bridge_admin_mobiles() {
 
-  drupal_set_title('Mobiles of zabbix_bridge');
+  drupal_set_title(t('Mobiles of zabbix_bridge'));
 
   $output = '<h2>' . t('User defined mobiles') . '</h2>';
   $output .= t('These are all the jabber accounts defined by users for notification.');
@@ -88,7 +88,7 @@ function zabbix_bridge_admin_mobiles() {
  */
 function zabbix_bridge_admin_user_mappings() {
 
-  drupal_set_title('User mappings of zabbix_bridge');
+  drupal_set_title(t('User mappings of zabbix_bridge'));
 
   $output .= '<h2>' . t('Mapping of Drupal vs Zabbix objects') . '</h2>';
   $output .= t('This is teh list of currently configured mappings for drupal users to their corresponding zabbix object id\s');
@@ -104,7 +104,7 @@ function zabbix_bridge_admin_user_mappings() {
  */
 function zabbix_bridge_admin_roles_mapping() {
 
-  drupal_set_title('Mapping of roles of zabbix_bridge');
+  drupal_set_title(t('Mapping of roles of zabbix_bridge'));
 
   $output .= '<h2>' . t('Roles and their corresponding Zabbix Templates') . '</h2>';
   $output .= t('These are all the roles with their corresponding zabbix templateids.');

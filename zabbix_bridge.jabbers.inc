@@ -18,7 +18,7 @@ function zabbix_bridge_jabbers() {
 
   global $user;
 
-  drupal_set_title('Jabber ids');
+  drupal_set_title(t('Jabber ids'));
 
   $output = "<div id=\"jabber-explain\"><p>Here you can add your jabber/xmpp id. We will notify you on your jabber account for alerts of the selected severities.</p>";
   $output .= "<p>Among many other services, <strong>Google Talk (GTalk)</strong> also supports the jabber protocol, so add your GTalk address here and give it a try!</p>";

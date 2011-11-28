@@ -18,7 +18,7 @@ include_once 'zabbix_functions.php';
 function zabbix_hosts_overview() {
   global $user;
 
-  drupal_set_title('Hosts to monitor');
+  drupal_set_title(t('Hosts to monitor'));
 
 
   $output = "<div id=\"hosts-explain\"><p>Here you can add the hosts you would like to monitor. After you add hosts here, make sure to also add notification settings for one or more of emails, mobile phone or jabber.</p></div>";

@@ -18,7 +18,7 @@ function zabbix_bridge_mobiles() {
 
   global $user;
 
-  drupal_set_title('Mobile Numbers');
+  drupal_set_title(t('Mobile Numbers'));
 
   $output = "<div id=\"mobile-explain\"><p>Here you can add your mobile number. We will send a text message to the numbers defined here.</p>";
   $output .= "<p><strong>Important Note:</strong> Mobile phone alerts happen only for the highest two alert levels. </p></div>\n";

@@ -84,7 +84,7 @@ function zabbix_bridge_trigger_tables($hostid){
  */
 function zabbix_bridge_triggers_overview($hostid) {
 
-  drupal_set_title('Triggers');
+  drupal_set_title(t('Triggers'));
 
   $output = "<div id=\"triggers-explain\"><p>Here you can enable/disable the triggers you would like to monitor. </p></div>";
   $output .= zabbix_bridge_trigger_tables($hostid);
@@ -142,6 +142,3 @@ function zabbix_bridge_triggers_toggle_confirm_submit($form, &$form_state) {
 
   drupal_goto("hosts/$hostid/triggers");
 }
-
-
-?>

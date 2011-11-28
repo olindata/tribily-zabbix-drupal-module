@@ -18,7 +18,7 @@ function zabbix_bridge_emails() {
 
   global $user;
 
-  drupal_set_title('Emails');
+  drupal_set_title(t('Emails'));
 
   $output = zabbix_emails_table($user->uid);
   $output .= l('Add Email', 'emails/add');
