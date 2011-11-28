@@ -169,7 +169,7 @@ function zabbix_hosts($userid = NULL) {
 
   if (isset($userid)) {
     $header = array('Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
-    $results = pager_query("select h.hostid, h.hostname, h.zabbixhostid, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid where h.userid = '%s' order by h.hostname, r.name", $count, $id, null, $user->uid);
+    $results = pager_query("select h.hostid, h.hostname, h.zabbixhostid, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid where h.userid = :userid order by h.hostname, r.name", $count, $id, null, array(':userid' => $user->uid));
   }
   else {
     $header = array('Username', 'Email', 'Zabbix Hostid', 'Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
@@ -203,7 +203,7 @@ function zabbix_hosts_table($userid = NULL) {
 
   if (isset($userid)) {
     $header = array('Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
-    $results = pager_query("select h.hostid, h.hostname, h.zabbixhostid, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid where h.userid = '%s' order by h.hostname, r.name", $count, $id, null, $user->uid);
+    $results = pager_query("select h.hostid, h.hostname, h.zabbixhostid, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid where h.userid = :userid order by h.hostname, r.name", $count, $id, null, array(':userid' => $user->uid));
   }
   else {
     $header = array('Username', 'Email', 'Zabbix Hostid', 'Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
@@ -774,8 +774,8 @@ function zabbix_bridge_get_all_emails_from_zabbix($extended = false) {
  */
 function zabbix_bridge_drupal_to_zabbix_mobileid($mobileid) {
 
-  $sql = "select zabbixmediaid from {zabbix_mobiles} where mobileid = '%s'";
-  $result = db_query($sql, $mobileid);
+  $sql = "select zabbixmediaid from {zabbix_mobiles} where mobileid = :mobileid";
+  $result = db_query($sql, array(':mobileid' => $mobileid));
 
   $mobile = db_fetch_object($result);
 
@@ -831,7 +831,7 @@ function zabbix_mobiles_table($userid = NULL) {
 
   if (isset($userid)) {
     $header = array('Mobile', 'Severity', 'Enabled');
-    $results = pager_query("select m.mobileid, m.number, m.zabbixmediaid, zs.name severity, m.enabled from {zabbix_mobiles} m left join {zabbix_mobiles_severities} zms on m.mobileid = zms.mobileid left join {zabbix_severities} zs on zms.severityid = zs.severityid where m.userid = '%s'", $count, $id, null, $user->uid);
+    $results = pager_query("select m.mobileid, m.number, m.zabbixmediaid, zs.name severity, m.enabled from {zabbix_mobiles} m left join {zabbix_mobiles_severities} zms on m.mobileid = zms.mobileid left join {zabbix_severities} zs on zms.severityid = zs.severityid where m.userid = :userid", $count, $id, null, array(':userid' => $user->uid));
   }
   else {
     $header = array('Username', 'Mobile Id', 'Mobile Number', 'Zabbix Media Id', 'Severity', 'Enabled');
@@ -948,8 +948,8 @@ function zabbix_bridge_get_trigger_by_triggerid($triggerid) {
  */
 function zabbix_bridge_drupal_to_zabbix_jabberid($jabberid) {
 
-    $sql = "select zabbixmediaid from {zabbix_jabbers} where jabberid = '%s'";
-    $result = db_query($sql, $jabberid);
+    $sql = "select zabbixmediaid from {zabbix_jabbers} where jabberid = :jabberid";
+    $result = db_query($sql, array(':jabberid' => $jabberid));
 
     $jabber = db_fetch_object($result);
 
@@ -973,7 +973,7 @@ function zabbix_jabbers_table($userid = NULL) {
 
     if (isset($userid)) {
         $header = array('Jabber', 'Severity', 'Enabled');
-        $results = pager_query("select j.jabberid, j.jabber, j.zabbixmediaid, zs.name severity, j.enabled from {zabbix_jabbers} j left join {zabbix_jabbers_severities} zjs on j.jabberid = zjs.jabberid left join {zabbix_severities} zs on zjs.severityid = zs.severityid where j.userid = '%s'", $count, $id, null, $user->uid);
+        $results = pager_query("select j.jabberid, j.jabber, j.zabbixmediaid, zs.name severity, j.enabled from {zabbix_jabbers} j left join {zabbix_jabbers_severities} zjs on j.jabberid = zjs.jabberid left join {zabbix_severities} zs on zjs.severityid = zs.severityid where j.userid = :userid", $count, $id, null, array(':userid' => $user->uid));
     }
     else {
         $header = array('Username', 'Jabber Id', 'Jabber', 'Zabbix Media Id', 'Severity', 'Enabled');

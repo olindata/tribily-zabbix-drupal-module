@@ -39,8 +39,8 @@ function zabbix_bridge_emails_form(&$form_state, $operation, $emailid = NULL) {
   // Get details of email if we're updating
   if (($operation == 'update') && isset($emailid)) {
 
-    $sql = "select userid, emailid, email, zabbixmediaid, enabled from {zabbix_emails} where emailid = '%s'";
-    $result = db_query($sql, $emailid);
+    $sql = "select userid, emailid, email, zabbixmediaid, enabled from {zabbix_emails} where emailid = :emailid";
+    $result = db_query($sql, array(':emailid' => $emailid));
     $email = db_fetch_object($result);
 
     // Access Denied
@@ -114,8 +114,8 @@ function zabbix_bridge_emails_form(&$form_state, $operation, $emailid = NULL) {
   // get the assigned severities for this email
   if (isset($email->enabled)) {
 
-    $sql = "select severityid from {zabbix_emails_severities} where emailid = '%s'";
-    $result = db_query($sql, $emailid);
+    $sql = "select severityid from {zabbix_emails_severities} where emailid = :emailid";
+    $result = db_query($sql, array(':emailid' => $emailid));
 
     while ($data = db_fetch_array($result)) {
 
@@ -225,8 +225,8 @@ function zabbix_bridge_emails_form_submit($form, &$form_state) {
     $usermedia = ZabbixAPI::fetch_array('user', 'getMedia', $media)
             or drupal_set_message('Problem retrieving existing media properties: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
-    $sql = "select zabbixmediaid from {zabbix_emails} where emailid = '%s'";
-    $result = db_query($sql, $emailid);
+    $sql = "select zabbixmediaid from {zabbix_emails} where emailid = :emailid";
+    $result = db_query($sql, array(':emailid' => $emailid));
 
     $data = db_fetch_array($result);
     $zabbixmediaid = $data['zabbixmediaid'];
@@ -380,8 +380,8 @@ function zabbix_bridge_emails_delete_confirm_submit($form, &$form_state) {
  */
 function zabbix_bridge_emails_delete($emailid) {
 
-  $sql = "select zabbixmediaid from {zabbix_emails} where emailid = '%s'";
-  $zabbixmediaid = db_result(db_query($sql, $emailid));
+  $sql = "select zabbixmediaid from {zabbix_emails} where emailid = :emailid";
+  $zabbixmediaid = db_result(db_query($sql, array(':emailid' => $emailid)));
 
   zabbix_api_login()
           or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
@@ -410,8 +410,8 @@ function zabbix_bridge_emails_enable_disable_confirm(&$form_state, $email) {
       '#value' => $email,
   );
 
-  $sql = "select enabled from {zabbix_emails} where emailid = '%s'";
-  $enabled = db_result(db_query($sql, $email));
+  $sql = "select enabled from {zabbix_emails} where emailid = :emailid";
+  $enabled = db_result(db_query($sql, array(':emailid' => $email)));
 
   $form['_current_state'] = array(
       '#type' => 'hidden',

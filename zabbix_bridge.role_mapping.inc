@@ -26,8 +26,8 @@ function zabbix_bridge_role_mapping_form(&$form_state, $action, $roleid = NULL) 
 
   // if this is update mode, get the existing data for the role we're updating
   if ($action == 'update') {
-    $sql = "select zr.roleid, zr.name, zr.description, zr.typeid, zr.sortorder, zr.imagesrc, zrt.templateid from {zabbix_role} zr left join {zabbix_roles_templates} zrt on zr.roleid = zrt.roleid where zr.roleid = '%s'";
-    $result = db_query($sql, $roleid);
+    $sql = "select zr.roleid, zr.name, zr.description, zr.typeid, zr.sortorder, zr.imagesrc, zrt.templateid from {zabbix_role} zr left join {zabbix_roles_templates} zrt on zr.roleid = zrt.roleid where zr.roleid = :roleid";
+    $result = db_query($sql, array(':roleid' => $roleid));
     $zabbix_role = db_fetch_object($result);
   }
 
@@ -230,8 +230,8 @@ function zabbix_bridge_import_roles() {
 
   // go through them and create the drupal mappings. Skip the ones that already exist
   foreach ($templates as $template) {
-    $sql = "select * from {zabbix_roles_templates} where templateid = '%s'";
-    $results = db_query($sql, $template['templateid']);
+    $sql = "select * from {zabbix_roles_templates} where templateid = :templateid";
+    $results = db_query($sql, array(':templateid' => $template['templateid']));
 
     $roleid = db_fetch_object($results);
 

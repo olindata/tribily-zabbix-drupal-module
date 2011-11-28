@@ -21,8 +21,8 @@ include_once 'zabbix_functions.php';
 function zabbix_bridge_user_mapping_form(&$form_state, $action, $id = NULL) {
 
   if ($action == 'update') {
-    $sql = "select id, drupal_uid, zabbix_uid, zabbix_usrgrp_id, zabbix_hostgrp_id from {zabbix_drupal_account} where id = '%s'";
-    $result = db_query($sql, $id);
+    $sql = "select id, drupal_uid, zabbix_uid, zabbix_usrgrp_id, zabbix_hostgrp_id from {zabbix_drupal_account} where id = :id";
+    $result = db_query($sql, array(':id' => $id));
     $zabbix_drupal_account = db_fetch_object($result);
   }
 
@@ -156,8 +156,8 @@ function zabbix_bridge_user_mapping_generate_confirm_submit($form, &$form_state)
   $id = $form_state['values']['_mapping'];
 
   //Get the current mapping
-  $sql = "select drupal_uid, zabbix_uid, zabbix_usrgrp_id, zabbix_hostgrp_id from {zabbix_drupal_account} where id = '%s'";
-  $result = db_query($sql, $id);
+  $sql = "select drupal_uid, zabbix_uid, zabbix_usrgrp_id, zabbix_hostgrp_id from {zabbix_drupal_account} where id = :id";
+  $result = db_query($sql, array(':id' => $id));
 
   $mapping = db_fetch_object($result);
 
