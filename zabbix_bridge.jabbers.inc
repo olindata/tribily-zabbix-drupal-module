@@ -68,7 +68,7 @@ function zabbix_bridge_jabbers_form(&$form_state, $operation, $jabberid = NULL) 
   // Put it in the form
   $form['jabbers'] = array(
       '#type' => 'fieldset',
-      '#title' => t($title),
+      '#title' => t(check_plain($title)),
       '#weight' => -10
   );
 

@@ -164,7 +164,7 @@ function zabbix_bridge_menu() {
     );
 
     $items['hosts/delete/%'] = array(
-        'title' => t('Delete Host'),
+        'title' => 'Delete Host',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('host_delete_confirm', 2),
         'type' => MENU_CALLBACK,
@@ -173,7 +173,7 @@ function zabbix_bridge_menu() {
     );
 
     $items['hosts/enable-disable/%'] = array(
-        'title' => t('Enable/Disable Host'),
+        'title' => 'Enable/Disable Host',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('host_enable_disable_confirm', 2),
         'type' => MENU_CALLBACK,
@@ -182,7 +182,7 @@ function zabbix_bridge_menu() {
     );
 
     $items['hosts/import'] = array(
-        'title' => t('Import hosts from zabbix'),
+        'title' => 'Import hosts from zabbix',
         'page callback' => 'zabbix_bridge_import_hosts',
         'type' => MENU_CALLBACK,
         'access arguments' => array(PERM_ADMIN),
@@ -191,7 +191,7 @@ function zabbix_bridge_menu() {
 
     // Drupal to zabbix mapping actions (Only accessible to admins)
     $items['zabbix-user-mapping/update/%'] = array(
-        'title' => t('Update Drupal-to-Zabbix user mapping'),
+        'title' => 'Update Drupal-to-Zabbix user mapping',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_user_mapping_form', 1, 2),
         'type' => MENU_CALLBACK,
@@ -200,7 +200,7 @@ function zabbix_bridge_menu() {
     );
 
     $items['zabbix-user-mapping/delete/%'] = array(
-        'title' => t('Delete Drupal-to-Zabbix user mapping'),
+        'title' => 'Delete Drupal-to-Zabbix user mapping',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_user_mapping_delete_confirm', 1, 2),
         'type' => MENU_CALLBACK,
@@ -209,7 +209,7 @@ function zabbix_bridge_menu() {
     );
 
     $items['zabbix-user-mapping/generate/%'] = array(
-        'title' => t('Generate missing zabbix object for this Drupal-to-Zabbix user mapping'),
+        'title' => 'Generate missing zabbix object for this Drupal-to-Zabbix user mapping',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_user_mapping_generate_confirm', 1, 2),
         'type' => MENU_CALLBACK,
@@ -218,7 +218,7 @@ function zabbix_bridge_menu() {
     );
 
     $items['zabbix-user-mapping/add'] = array(
-        'title' => t('Add a new mapping to the bridge'),
+        'title' => 'Add a new mapping to the bridge',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_user_mapping_form', 1),
         'type' => MENU_CALLBACK,
@@ -228,7 +228,7 @@ function zabbix_bridge_menu() {
 
     // Host role to Zabbix template mapping actions (Only accessible to admins)
     $items['zabbix-role-mapping/update/%'] = array(
-        'title' => t('Update Drupal-to-Zabbix role mapping'),
+        'title' => 'Update Drupal-to-Zabbix role mapping',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_role_mapping_form', 1, 2),
         'type' => MENU_CALLBACK,
@@ -237,7 +237,7 @@ function zabbix_bridge_menu() {
     );
 
     $items['zabbix-role-mapping/delete/%'] = array(
-        'title' => t('Delete Drupal-to-Zabbix role mapping'),
+        'title' => 'Delete Drupal-to-Zabbix role mapping',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_role_mapping_delete_confirm', 1, 2),
         'type' => MENU_CALLBACK,
@@ -246,7 +246,7 @@ function zabbix_bridge_menu() {
     );
 
     $items['zabbix-role-mapping/add'] = array(
-        'title' => t('Add a new mapping to the bridge'),
+        'title' => 'Add a new mapping to the bridge',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_role_mapping_form', 1),
         'type' => MENU_CALLBACK,
@@ -255,7 +255,7 @@ function zabbix_bridge_menu() {
     );
 
     $items['zabbix-role-mapping/import'] = array(
-        'title' => t('Import roles to the bridge'),
+        'title' => 'Import roles to the bridge',
         'page callback' => 'zabbix_bridge_import_roles',
         'type' => MENU_CALLBACK,
         'access arguments' => array(PERM_ADMIN),
@@ -293,7 +293,7 @@ function zabbix_bridge_menu() {
 
     // delete emails
     $items['emails/delete/%'] = array(
-        'title' => t('Delete Email'),
+        'title' => 'Delete Email',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_emails_delete_confirm', 2),
         'type' => MENU_CALLBACK,
@@ -303,7 +303,7 @@ function zabbix_bridge_menu() {
 
     // enable-disable emails
     $items['emails/enable-disable/%'] = array(
-        'title' => t('Enable/Disable Email'),
+        'title' => 'Enable/Disable Email',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_emails_enable_disable_confirm', 2),
         'type' => MENU_CALLBACK,
@@ -312,7 +312,7 @@ function zabbix_bridge_menu() {
     );
 
     $items['emails/import'] = array(
-        'title' => t('Import email addresses to the bridge'),
+        'title' => 'Import email addresses to the bridge',
         'page callback' => 'zabbix_bridge_import_emails',
         'type' => MENU_CALLBACK,
         'access arguments' => array(PERM_ADMIN),
@@ -350,7 +350,7 @@ function zabbix_bridge_menu() {
 
     // delete mobile numbers
     $items['mobiles/delete/%'] = array(
-        'title' => t('Delete Mobile'),
+        'title' => 'Delete Mobile',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_mobiles_delete_confirm', 2),
         'type' => MENU_CALLBACK,
@@ -360,7 +360,7 @@ function zabbix_bridge_menu() {
 
     // enable-disable mobile numbers
     $items['mobiles/enable-disable/%'] = array(
-        'title' => t('Enable/Disable Mobile'),
+        'title' => 'Enable/Disable Mobile',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_mobiles_enable_disable_confirm', 2),
         'type' => MENU_CALLBACK,
@@ -369,7 +369,7 @@ function zabbix_bridge_menu() {
     );
 
     $items['mobiles/import'] = array(
-        'title' => t('Import mobile numbers to the bridge'),
+        'title' => 'Import mobile numbers to the bridge',
         'page callback' => 'zabbix_bridge_import_mobiles',
         'type' => MENU_CALLBACK,
         'access arguments' => array(PERM_ADMIN),
@@ -407,7 +407,7 @@ function zabbix_bridge_menu() {
 
     // delete jabber
     $items['jabbers/delete/%'] = array(
-        'title' => t('Delete Jabber'),
+        'title' => 'Delete Jabber',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_jabbers_delete_confirm', 2),
         'type' => MENU_CALLBACK,
@@ -417,7 +417,7 @@ function zabbix_bridge_menu() {
 
     // enable-disable jabber
     $items['jabbers/enable-disable/%'] = array(
-        'title' => t('Enable/Disable Jabber'),
+        'title' => 'Enable/Disable Jabber',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('zabbix_bridge_jabbers_enable_disable_confirm', 2),
         'type' => MENU_CALLBACK,
@@ -426,7 +426,7 @@ function zabbix_bridge_menu() {
     );
 
     $items['jabbers/import'] = array(
-        'title' => t('Import Jabber IDs to the bridge'),
+        'title' => 'Import Jabber IDs to the bridge',
         'page callback' => 'zabbix_bridge_import_jabbers',
         'type' => MENU_CALLBACK,
         'access arguments' => array(PERM_ADMIN),
@@ -488,14 +488,14 @@ function zabbix_bridge_user_insert(&$edit, &$account, $category = NULL) {
 
 function zabbix_bridge_user_delete(&$edit, &$account, $category = NULL) {
     
-      zabbix_bridge_delete_zabbix_user($edit, $account, $category);
+  zabbix_bridge_delete_zabbix_user($edit, $account, $category);
       
 }
 
 function zabbix_bridge_user_update(&$edit, &$account, $category = NULL) {
 
-	//TODO: make updates flow correctly
-    zabbix_bridge_update_zabbix_user($edit, $account, $category);
+  //TODO: make updates flow correctly
+  zabbix_bridge_update_zabbix_user($edit, $account, $category);
 }
 
 /**
@@ -505,8 +505,7 @@ function zabbix_bridge_user_update(&$edit, &$account, $category = NULL) {
  *
  * @author Daniel Werner <daniel@tribily.com>
  */
-function zabbix_bridge_action_info()
-{
+function zabbix_bridge_action_info() {
   return array(
     'zabbix_bridge_action_disable_host' => array(
       'label' => t('Disable all Hosts of the desired user'),
