@@ -377,7 +377,7 @@ function zabbix_api_login() {
   $API_pass = variable_get('zabbix_bridge_API_pass', NULL);
 
   if (!isset($API_url, $API_user, $API_pass)) {
-    drupal_set_message('Unable to login. API credentials must be set in module setting before using this module!', DRUPAL_MSG_TYPE_ERR);
+    drupal_set_message(t('Unable to login. API credentials must be set in module setting before using this module!'), DRUPAL_MSG_TYPE_ERR);
   }
 
   // This logs into Zabbix, and returns FALSE if it fails
@@ -438,7 +438,7 @@ function zabbix_bridge_get_all_templateids_from_zabbix($extended = FALSE) {
 
   // This logs into Zabbix, and returns FALSE if it fails
   zabbix_api_login()
-          or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to login: ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   if ($extended) {
     $zabbixtemplateids = ZabbixAPI::fetch_array('template', 'get', array('output' => array('host')));
@@ -469,7 +469,7 @@ function zabbix_bridge_get_all_hosts($withtemplates = TRUE) {
 
   // This logs into Zabbix, and returns FALSE if it fails
   zabbix_api_login()
-          or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to login: ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   $hostgroupids = array();
   $hostgroupids = zabbix_bridge_get_all_hostgroupids_from_drupal();
@@ -549,7 +549,7 @@ function zabbix_bridge_get_template_by_triggerid($triggerid) {
 
     // This logs into Zabbix, and returns false if it fails
     zabbix_api_login()
-            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message(t('Unable to login: ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   $trigger = array();
   $options = array();
@@ -563,7 +563,7 @@ function zabbix_bridge_get_template_by_triggerid($triggerid) {
   $options['extendoutput'] = 'true';
 
   $trigger = ZabbixAPI::fetch_array('trigger', 'get', $options)
-          or drupal_set_message('Unable to get zabbix triggers: ' . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to get zabbix triggers: ') . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   return $trigger[0]['hosts'][0];
 
@@ -744,7 +744,7 @@ function zabbix_bridge_get_all_emails_from_zabbix($extended = false) {
 
     // This logs into Zabbix, and returns false if it fails
     zabbix_api_login()
-            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message(t('Unable to login: ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     $zabbixmedia = ZabbixAPI::fetch_array('user', 'getMedia', array( 'extendoutput' => $extended, 'mediatypeid' => 1 ));
 
@@ -794,7 +794,7 @@ function zabbix_bridge_drupal_to_zabbix_mobileid($mobileid) {
 function zabbix_bridge_trigger_toggle($triggerid, $action) {
 
   zabbix_api_login()
-          or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to login. ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   $update = array();
   $update[] = array('triggerid' => $triggerid, 'status' => (($action == 'enable') ? 0 : 1));
@@ -804,10 +804,10 @@ function zabbix_bridge_trigger_toggle($triggerid, $action) {
   zabbix_bridge_debug(print_r($action, TRUE));
 
   if (!$result) {
-    drupal_set_message('Unable to enable/disable trigger. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+    drupal_set_message(t('Unable to enable/disable trigger. ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
   }
   else {
-    drupal_set_message('Trigger succesfully updated. ', DRUPAL_MSG_TYPE_STATUS);
+    drupal_set_message(t('Trigger succesfully updated. '), DRUPAL_MSG_TYPE_STATUS);
   }
 
   return $result;
@@ -903,7 +903,7 @@ function zabbix_bridge_get_all_mobiles_from_zabbix($extended = false) {
 
     // This logs into Zabbix, and returns false if it fails
     zabbix_api_login()
-            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message(t('Unable to login: ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     $zabbixmedia = ZabbixAPI::fetch_array('user', 'getMedia', array( 'extendoutput' => $extended, 'mediatypeid' => 3 ));
 
@@ -932,7 +932,7 @@ function zabbix_bridge_get_trigger_by_triggerid($triggerid) {
 
     // This logs into Zabbix, and returns false if it fails
     zabbix_api_login()
-            or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message(t('Unable to login: ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     $trigger = ZabbixAPI::fetch_array('trigger', 'get', array( 'triggerid' => $triggerid));
 
@@ -1045,7 +1045,7 @@ function zabbix_bridge_get_all_jabbers_from_zabbix($extended = false) {
 
     // This logs into Zabbix, and returns false if it fails
     zabbix_api_login()
-        or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+        or drupal_set_message(t('Unable to login: ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     $zabbixmedia = ZabbixAPI::fetch_array('user', 'getMedia', array( 'extendoutput' => $extended, 'mediatypeid' => 2 ));
 
@@ -1073,13 +1073,13 @@ function zabbix_bridge_get_all_users_from_zabbix() {
 
   // This logs into Zabbix, and returns false if it fails
   zabbix_api_login()
-      or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+      or drupal_set_message(t('Unable to login: ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   $userids = array();
   $options = array('select_usrgrps' => TRUE, 'extendoutput' => TRUE);
   
   $userids = ZabbixAPI::fetch_array('user', 'get', $options)
-          or drupal_set_message('Unable to get zabbix users: ' . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to get zabbix users: ') . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   return $userids;
 
@@ -1094,7 +1094,7 @@ function zabbix_bridge_get_all_triggers_from_zabbix($hostid) {
 
   // This logs into Zabbix, and returns false if it fails
   zabbix_api_login()
-      or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+      or drupal_set_message(t('Unable to login: ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   $triggerids = array();
   $options = array();
@@ -1108,7 +1108,7 @@ function zabbix_bridge_get_all_triggers_from_zabbix($hostid) {
   $options['extendoutput'] = 'true';
 
   $triggerids = ZabbixAPI::fetch_array('trigger', 'get', $options)
-          or drupal_set_message('Unable to get zabbix triggers: ' . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to get zabbix triggers: ') . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   return $triggerids;
 }
@@ -1123,7 +1123,7 @@ function zabbix_bridge_get_all_actions_from_zabbix($hostgroupid) {
 
   // This logs into Zabbix, and returns false if it fails
   zabbix_api_login()
-      or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+      or drupal_set_message(t('Unable to login: ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   $actionids = array();
   $options = array();
@@ -1136,7 +1136,7 @@ function zabbix_bridge_get_all_actions_from_zabbix($hostgroupid) {
   $options['extendoutput'] = 'true';
 
   $actionids = ZabbixAPI::fetch_array('action', 'get', $options)
-          or drupal_set_message('Unable to get zabbix actions: ' . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to get zabbix actions: ') . serialize(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   return $actionids;
   
@@ -1206,7 +1206,7 @@ function zabbix_bridge_create_mobile_action($actionname, $zabbixusergroupid, $za
   );
   $actionids = array();
   $actionids = ZabbixAPI::fetch_array('action', 'create', $actionparams)
-          or drupal_set_message('Unable to create zabbix action: ' . serialize(ZabbixAPI::getLastError()), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to create zabbix action: ') . serialize(ZabbixAPI::getLastError()), DRUPAL_MSG_TYPE_ERR);
 
   zabbix_bridge_debug('Zabbix action created: ' . print_r($actionids, TRUE), print_r($actionparams, TRUE));
 
@@ -1266,7 +1266,7 @@ function zabbix_bridge_create_jabber_action($actionname, $zabbixusergroupid, $za
   );
   $actionids = array();
   $actionids = ZabbixAPI::fetch_array('action', 'create', $actionparams)
-          or drupal_set_message('Unable to create zabbix action: ' . serialize(ZabbixAPI::getLastError()), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to create zabbix action: ') . serialize(ZabbixAPI::getLastError()), DRUPAL_MSG_TYPE_ERR);
 
   zabbix_bridge_debug('Zabbix action created: ' . print_r($actionids, TRUE), print_r($actionparams, TRUE));
 
@@ -1383,7 +1383,7 @@ function zabbix_bridge_create_basic_actions($actionname, $severity, $zabbixuserg
   );
   $actionids = array();
   $actionids = ZabbixAPI::fetch_array('action', 'create', $actionparams)
-          or drupal_set_message('Unable to create zabbix action: ' . serialize(ZabbixAPI::getLastError()), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to create zabbix action: ') . serialize(ZabbixAPI::getLastError()), DRUPAL_MSG_TYPE_ERR);
 
   zabbix_bridge_debug('Zabbix action created: ' . print_r($actionids, TRUE), print_r($actionparams, TRUE));
 }

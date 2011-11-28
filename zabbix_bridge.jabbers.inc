@@ -104,7 +104,7 @@ function zabbix_bridge_jabbers_form(&$form_state, $operation, $jabberid = NULL) 
 
   // make the severity SELECT options
   $result = db_query("SELECT severityid, name FROM {zabbix_severities}")
-          or drupal_set_message('Unable to retrieve zabbix severities', DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to retrieve zabbix severities'), DRUPAL_MSG_TYPE_ERR);
 
   $template_options = array();
 
@@ -163,7 +163,7 @@ function zabbix_bridge_jabbers_form_submit($form, &$form_state) {
     $result = db_query("SELECT zda.zabbix_uid FROM {zabbix_drupal_account} zda inner join {zabbix_jabbers} zj on zj.userid = zda.drupal_uid where zj.jabberid = :jabberid", array(
 		':jabberid' => $jabberid
 		))
-            or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message(t('Unable to retrieve drupal-zabbix associations'), DRUPAL_MSG_TYPE_ERR);
     $data = db_fetch_array($result);
     $zabbix_uid = $data['zabbix_uid'];
   }
@@ -172,7 +172,7 @@ function zabbix_bridge_jabbers_form_submit($form, &$form_state) {
     $result = db_query("SELECT zda.zabbix_uid FROM {zabbix_drupal_account} zda where zda.drupal_uid = :drupal_uid", array(
 		':drupal_uid' => $user->uid
 		))
-            or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message(t('Unable to retrieve drupal-zabbix associations'), DRUPAL_MSG_TYPE_ERR);
     $data = db_fetch_array($result);
     $zabbix_uid = $data['zabbix_uid'];
   }
@@ -197,7 +197,7 @@ function zabbix_bridge_jabbers_form_submit($form, &$form_state) {
 
   // This logs into Zabbix, and returns FALSE if it fails
   zabbix_api_login()
-          or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to login: ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   //create the jabber if it's not already existing
   if ($jabberid == '') {
@@ -206,10 +206,10 @@ function zabbix_bridge_jabbers_form_submit($form, &$form_state) {
     $addedmedia = ZabbixAPI::fetch_string('user', 'addMedia', $jabber);
 
     if ($addedmedia) {
-      drupal_set_message('Jabber successfully added.');
+      drupal_set_message(t('Jabber successfully added.'));
     }
     else {
-      drupal_set_message('Failed to add jabber: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+      drupal_set_message(t('Failed to add jabber: ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
     }
   }
   else {
@@ -220,7 +220,7 @@ function zabbix_bridge_jabbers_form_submit($form, &$form_state) {
         'extendoutput' => TRUE
     );
     $usermedia = ZabbixAPI::fetch_array('user', 'getMedia', $media)
-            or drupal_set_message('Problem retrieving existing media properties: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message(t('Problem retrieving existing media properties: ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     $sql = "select zabbixmediaid from {zabbix_jabbers} where jabberid = '%s'";
     $result = db_query($sql, $jabberid);
@@ -251,7 +251,7 @@ function zabbix_bridge_jabbers_form_submit($form, &$form_state) {
 
     //update the jabber and enabled status
     $usermedia = ZabbixAPI::fetch_string('user', 'updateMedia', $usermedia)
-            or drupal_set_message('Problem updating existing jabber properties', DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message(t('Problem updating existing jabber properties'), DRUPAL_MSG_TYPE_ERR);
 
     zabbix_bridge_debug('update: ' . print_r($usermedia, TRUE));
   }
@@ -283,7 +283,7 @@ function zabbix_bridge_jabbers_form_submit($form, &$form_state) {
 
     if (!$result) {
 
-      drupal_set_message('Problem adding jabber-mapping to database', DRUPAL_MSG_TYPE_ERR);
+      drupal_set_message(t('Problem adding jabber-mapping to database'), DRUPAL_MSG_TYPE_ERR);
     }
   }
 
@@ -296,7 +296,7 @@ function zabbix_bridge_jabbers_form_submit($form, &$form_state) {
   // Delete all previous jabber mappings, so we can add the new ones in a sec
   $sql = "DELETE FROM {zabbix_jabbers_severities} WHERE jabberid = '%s'";
   db_query($sql, $jabberid) or
-          drupal_set_message('Error updating severities in drupal database.');
+          drupal_set_message(t('Error updating severities in drupal database.'));
 
   // addd the jabber-severity mapping to the drupal db so we can use it for display without contacting zabbix
   $sql = 'INSERT INTO {zabbix_jabbers_severities} (jabberid, severityid)';
@@ -310,7 +310,7 @@ function zabbix_bridge_jabbers_form_submit($form, &$form_state) {
 
       if (!$result) {
 
-        drupal_set_message('Problem adding jabber-severity-mapping to database', DRUPAL_MSG_TYPE_ERR);
+        drupal_set_message(t('Problem adding jabber-severity-mapping to database'), DRUPAL_MSG_TYPE_ERR);
       }
     }
   }
@@ -381,10 +381,10 @@ function zabbix_bridge_jabbers_delete($jabberid) {
   $zabbixmediaid = db_result(db_query($sql, $jabberid));
 
   zabbix_api_login()
-          or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to login. ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   ZabbixAPI::fetch_string('user', 'deleteMedia', array($zabbixmediaid))
-          or drupal_set_message('Unable to delete media. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to delete media. ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   $sql = "delete from {zabbix_jabbers_severities} where jabberid = '%s'";
   $result = db_query($sql, $jabberid);
@@ -465,13 +465,13 @@ function zabbix_bridge_jabbers_enable_disable($zabbixmediaid, $enabled) {
   $result = db_query("SELECT zabbix_uid FROM {zabbix_drupal_account} WHERE drupal_uid = :drupal_uid", array(
 		':drupal_uid' => $user->uid
 		))
-          or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to retrieve drupal-zabbix associations'), DRUPAL_MSG_TYPE_ERR);
 
   $data = db_fetch_array($result);
 
   if (!$data) {
 
-    drupal_set_message('No drupal-zabbix association exists for this user!', DRUPAL_MSG_TYPE_ERR);
+    drupal_set_message(t('No drupal-zabbix association exists for this user!'), DRUPAL_MSG_TYPE_ERR);
 
     return;
   }
@@ -479,7 +479,7 @@ function zabbix_bridge_jabbers_enable_disable($zabbixmediaid, $enabled) {
   zabbix_bridge_debug(print_r($data, TRUE));
 
   zabbix_api_login()
-          or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to login. ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   // get user media
   $media = ZabbixAPI::fetch_array('user', 'getMedia', array(
@@ -488,7 +488,7 @@ function zabbix_bridge_jabbers_enable_disable($zabbixmediaid, $enabled) {
           ));
 
   $result = ZabbixAPI::fetch_string('user', 'getMedia', $media)
-          or drupal_set_message('Unable to retrieve user media. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to retrieve user media. ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   foreach ($media as $key => $item) {
 
@@ -511,7 +511,7 @@ function zabbix_bridge_jabbers_enable_disable($zabbixmediaid, $enabled) {
 
   if (!$result) {
 
-    drupal_set_message('Unable to enable/disable jabber. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+    drupal_set_message(t('Unable to enable/disable jabber. ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
   }
   else {
 
@@ -542,7 +542,7 @@ function zabbix_bridge_import_jabbers() {
 
     if ($mediaid) {
 
-      drupal_set_message('Skipped jabber ' . $jabber['mediaid'] . ' (' . $jabber['sendto'] . '), as it already exists.');
+      drupal_set_message(t('Skipped jabber ' . $jabber['mediaid'] . ' (' . $jabber['sendto'] . '), as it already exists.'));
     }
     else {
 

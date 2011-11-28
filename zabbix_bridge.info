@@ -2,7 +2,7 @@
 name = "Zabbix Bridge"
 description = "Provides integration with Zabbix"
 version = "7.x-1.00"
-core = "7.x"
+core=7.x
 project = "zabbix_bridge"
-datestamp = "1246506964"
 configure = "admin/config/zabbix_bridge"
+files[]=lib/ZabbixAPI.class.php

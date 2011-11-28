@@ -24,7 +24,7 @@ function zabbix_dashboard_dashboard()
 
 	if(isset($ret->error))
 	{
-		drupal_set_message('Unable to login. It seems that something is wrong here. Please contact the Site Administrator.', DRUPAL_MSG_TYPE_ERR);
+		drupal_set_message(t('Unable to login. It seems that something is wrong here. Please contact the Site Administrator.'), DRUPAL_MSG_TYPE_ERR);
 		return "Oh noes!";
 	}
 

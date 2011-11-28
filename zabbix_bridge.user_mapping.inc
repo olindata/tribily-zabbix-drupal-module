@@ -166,7 +166,7 @@ function zabbix_bridge_user_mapping_generate_confirm_submit($form, &$form_state)
           !isset($mapping->zabbix_usrgrp_id) &&
           !isset($mapping->zabbix_hostgrp_id)) {
     //all fields are empty, invalid situation
-    drupal_set_message('Completely empty mapping, cannot proceed!', DRUPAL_MSG_TYPE_ERR);
+    drupal_set_message(t('Completely empty mapping, cannot proceed!'), DRUPAL_MSG_TYPE_ERR);
   }
   elseif (isset($mapping->drupal_uid) &&
           !isset($mapping->zabbix_uid) &&
@@ -194,7 +194,7 @@ function zabbix_bridge_user_mapping_generate_confirm_submit($form, &$form_state)
   }
   else {
     // other situations not yet supported
-    drupal_set_message('Not yet implemented, please create the mapping manually.', DRUPAL_MSG_TYPE_ERR);
+    drupal_set_message(t('Not yet implemented, please create the mapping manually.'), DRUPAL_MSG_TYPE_ERR);
   }
   drupal_goto('admin/settings/zabbix_bridge');
 }

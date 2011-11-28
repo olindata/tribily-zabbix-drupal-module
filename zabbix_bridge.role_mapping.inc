@@ -236,7 +236,7 @@ function zabbix_bridge_import_roles() {
     $roleid = db_fetch_object($results);
 
     if ($roleid) {
-      drupal_set_message('Skipped template ' . $template['templateid'] . ' (' . $template['name'] . '), as it already exists.');
+      drupal_set_message(t('Skipped template ' . $template['templateid'] . ' (' . $template['name'] . '), as it already exists.'));
     }
     else {
 

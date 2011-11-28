@@ -103,7 +103,7 @@ function zabbix_bridge_mobiles_form(&$form_state, $operation, $mobileid = NULL) 
 
   // make the severity SELECT options
   $result = db_query("SELECT severityid, name FROM {zabbix_severities} WHERE name IN ('High', 'Disaster')")
-          or drupal_set_message('Unable to retrieve zabbix severities', DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to retrieve zabbix severities'), DRUPAL_MSG_TYPE_ERR);
 
   $template_options = array();
 
@@ -162,7 +162,7 @@ function zabbix_bridge_mobiles_form_submit($form, &$form_state) {
     $result = db_query("SELECT zda.zabbix_uid, zda.drupal_uid FROM {zabbix_drupal_account} zda inner join {zabbix_mobiles} zm on zm.userid = zda.drupal_uid where zm.mobileid = :mobileid", array(
 		':mobileid' => $mobileid
 		))
-            or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message(t('Unable to retrieve drupal-zabbix associations'), DRUPAL_MSG_TYPE_ERR);
     $data = db_fetch_array($result);
     $zabbix_uid = $data['zabbix_uid'];
 
@@ -177,7 +177,7 @@ function zabbix_bridge_mobiles_form_submit($form, &$form_state) {
     $result = db_query("SELECT zda.zabbix_uid FROM {zabbix_drupal_account} zda where zda.drupal_uid = :drupal_uid", array(
 		':drupal_uid' => $user->uid
 		))
-            or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message(t('Unable to retrieve drupal-zabbix associations'), DRUPAL_MSG_TYPE_ERR);
     $data = db_fetch_array($result);
     $zabbix_uid = $data['zabbix_uid'];
   }
@@ -202,7 +202,7 @@ function zabbix_bridge_mobiles_form_submit($form, &$form_state) {
 
   // This logs into Zabbix, and returns FALSE if it fails
   zabbix_api_login()
-          or drupal_set_message('Unable to login: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to login: ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   //create the mobile if it's not already existing
   if ($mobileid == '') {
@@ -211,10 +211,10 @@ function zabbix_bridge_mobiles_form_submit($form, &$form_state) {
     $addedmedia = ZabbixAPI::fetch_string('user', 'addMedia', $mobile);
 
     if ($addedmedia) {
-      drupal_set_message('Mobile number successfully added.');
+      drupal_set_message(t('Mobile number successfully added.'));
     }
     else {
-      drupal_set_message('Failed to add mobile number: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+      drupal_set_message(t('Failed to add mobile number: ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
     }
   }
   else {
@@ -225,7 +225,7 @@ function zabbix_bridge_mobiles_form_submit($form, &$form_state) {
         'extendoutput' => TRUE
     );
     $usermedia = ZabbixAPI::fetch_array('user', 'getMedia', $media)
-            or drupal_set_message('Problem retrieving existing media properties: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message(t('Problem retrieving existing media properties: ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
     $sql = "select zabbixmediaid from {zabbix_mobiles} where mobileid = '%s'";
     $result = db_query($sql, $mobileid);
@@ -256,7 +256,7 @@ function zabbix_bridge_mobiles_form_submit($form, &$form_state) {
 
     //update the mobile and enabled status
     $usermedia = ZabbixAPI::fetch_string('user', 'updateMedia', $usermedia)
-            or drupal_set_message('Problem updating existing mobile properties', DRUPAL_MSG_TYPE_ERR);
+            or drupal_set_message(t('Problem updating existing mobile properties'), DRUPAL_MSG_TYPE_ERR);
 
     zabbix_bridge_debug('update: ' . print_r($usermedia, TRUE));
   }
@@ -288,7 +288,7 @@ function zabbix_bridge_mobiles_form_submit($form, &$form_state) {
 
     if (!$result) {
 
-      drupal_set_message('Problem adding mobile-mapping to database', DRUPAL_MSG_TYPE_ERR);
+      drupal_set_message(t('Problem adding mobile-mapping to database'), DRUPAL_MSG_TYPE_ERR);
     }
   }
 
@@ -301,7 +301,7 @@ function zabbix_bridge_mobiles_form_submit($form, &$form_state) {
   // Delete all previous mobile mappings, so we can add the new ones in a sec
   $sql = "DELETE FROM {zabbix_mobiles_severities} WHERE mobileid = '%s'";
   db_query($sql, $mobileid) or
-          drupal_set_message('Error updating severities in drupal database.');
+          drupal_set_message(t('Error updating severities in drupal database.'));
 
   // addd the mobile-severity mapping to the drupal db so we can use it for display without contacting zabbix
   $sql = 'INSERT INTO {zabbix_mobiles_severities} (mobileid, severityid)';
@@ -315,7 +315,7 @@ function zabbix_bridge_mobiles_form_submit($form, &$form_state) {
 
       if (!$result) {
 
-        drupal_set_message('Problem adding mobile-severity-mapping to database', DRUPAL_MSG_TYPE_ERR);
+        drupal_set_message(t('Problem adding mobile-severity-mapping to database'), DRUPAL_MSG_TYPE_ERR);
       }
     }
   }
@@ -386,10 +386,10 @@ function zabbix_bridge_mobiles_delete($mobileid) {
   $zabbixmediaid = db_result(db_query($sql, $mobileid));
 
   zabbix_api_login()
-          or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to login. ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   ZabbixAPI::fetch_string('user', 'deleteMedia', array($zabbixmediaid))
-          or drupal_set_message('Unable to delete media. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to delete media. ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   $sql = "delete from {zabbix_mobiles_severities} where mobileid = '%s'";
   $result = db_query($sql, $mobileid);
@@ -470,13 +470,13 @@ function zabbix_bridge_mobiles_enable_disable($zabbixmediaid, $enabled) {
   $result = db_query("SELECT zabbix_uid FROM {zabbix_drupal_account} WHERE drupal_uid = :drupal_uid", array(
 		':drupal_uid' => $user->uid
 		))
-          or drupal_set_message('Unable to retrieve drupal-zabbix associations', DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to retrieve drupal-zabbix associations'), DRUPAL_MSG_TYPE_ERR);
 
   $data = db_fetch_array($result);
 
   if (!$data) {
 
-    drupal_set_message('No drupal-zabbix association exists for this user!', DRUPAL_MSG_TYPE_ERR);
+    drupal_set_message(t('No drupal-zabbix association exists for this user!'), DRUPAL_MSG_TYPE_ERR);
 
     return;
   }
@@ -484,7 +484,7 @@ function zabbix_bridge_mobiles_enable_disable($zabbixmediaid, $enabled) {
   zabbix_bridge_debug(print_r($data, TRUE));
 
   zabbix_api_login()
-          or drupal_set_message('Unable to login. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to login. ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   // get user media
   $media = ZabbixAPI::fetch_array('user', 'getMedia', array(
@@ -493,7 +493,7 @@ function zabbix_bridge_mobiles_enable_disable($zabbixmediaid, $enabled) {
           ));
 
   $result = ZabbixAPI::fetch_string('user', 'getMedia', $media)
-          or drupal_set_message('Unable to retrieve user media. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+          or drupal_set_message(t('Unable to retrieve user media. ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
   foreach ($media as $key => $item) {
 
@@ -516,7 +516,7 @@ function zabbix_bridge_mobiles_enable_disable($zabbixmediaid, $enabled) {
 
   if (!$result) {
 
-    drupal_set_message('Unable to enable/disable mobile. ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
+    drupal_set_message(t('Unable to enable/disable mobile. ') . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
   }
   else {
 
@@ -547,7 +547,7 @@ function zabbix_bridge_import_mobiles() {
 
     if ($mediaid) {
 
-      drupal_set_message('Skipped mobile ' . $mobile['mediaid'] . ' (' . $mobile['sendto'] . '), as it already exists.');
+      drupal_set_message(t('Skipped mobile ' . $mobile['mediaid'] . ' (' . $mobile['sendto'] . '), as it already exists.'));
     }
     else {
 
