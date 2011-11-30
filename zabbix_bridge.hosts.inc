@@ -28,23 +28,23 @@ function zabbix_hosts_overview() {
   return $output;
 }
 
-/**
- *
- * @param int $hostid
- * @return object
- */
-function host_user_load($hostid) {
-  $query = "SELECT * FROM {zabbix_hosts} WHERE hostid = %d";
-  $rs = db_query($query, $hostid);
+// /**
+//  *
+//  * @param int $hostid
+//  * @return object
+//  */
+// function host_user_load($hostid) {
+//   $query = "SELECT * FROM {zabbix_hosts} WHERE hostid = %d";
+//   $rs = db_query($query, $hostid);
 
-  if ($rs) {
-    while ($data = db_fetch_object($rs)) {
-      return $data;
-    }
-  }
+//   if ($rs) {
+//     while ($data = db_fetch_object($rs)) {
+//       return $data;
+//     }
+//   }
 
-  return FALSE;
-}
+//   return FALSE;
+// }
 
 /**
  *

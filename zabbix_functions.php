@@ -232,7 +232,7 @@ function zabbix_hosts_table($userid = NULL) {
 
   $lastzabbixhostid = -1;
 
-  while ($node = db_fetch_object($results)) {
+  foreach ($results as $node) {
     if (!isset($userid)) {
       $rows[] = array(
       $node->name,
