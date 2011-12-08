@@ -30,7 +30,7 @@ function zabbix_dashboard_dashboard()
 
 	$sid = $ret->result;
 
-	header("Location: ".$url."index.php?setCookie=1&sid=".$sid);
+	header("Location: ".$url."index.php?setCookie=1&setSid=".$sid);
 	exit();
 
 }
