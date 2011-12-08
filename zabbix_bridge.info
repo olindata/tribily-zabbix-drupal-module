@@ -1,8 +1,8 @@
 ; $Id$
 name = "Zabbix Bridge"
 description = "Provides integration with Zabbix"
-version = "7.x-1.00"
-core = "7.x"
+version = "6.x-1.00"
+core = "6.x"
 project = "zabbix_bridge"
 datestamp = "1246506964"
-configure = "admin/settings/zabbix_bridge"
+
