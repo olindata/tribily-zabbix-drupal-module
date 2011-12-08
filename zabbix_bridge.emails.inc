@@ -65,7 +65,7 @@ function zabbix_bridge_emails_form(&$form_state, $operation, $emailid = NULL) {
 
   // Put it in the form
   $form['emails'] = array('#type' => 'fieldset',
-      '#title' => t($title),
+      '#title' => t(check_plain($title)),
       '#weight' => -10
   );
 

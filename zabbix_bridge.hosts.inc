@@ -226,7 +226,7 @@ function zabbix_bridge_hosts_form(&$form_state, $operation, $hostid = NULL) {
   }
 
   $form['hosts'] = array('#type' => 'fieldset',
-      '#title' => t($title),
+      '#title' => t(check_plain($title)),
       '#weight' => -10
   );
 
@@ -300,7 +300,7 @@ function zabbix_bridge_hosts_form(&$form_state, $operation, $hostid = NULL) {
 
     $form['hosts']["roles-".$roletype['typename']] = array(
         '#type' => 'checkboxes',
-        '#title' => t($roletype['typename'].' Roles'),
+        '#title' => t(check_plain($roletype['typename'].' Roles')),
         '#default_value' => $default_value,
         '#options' => $template_options,
     );
