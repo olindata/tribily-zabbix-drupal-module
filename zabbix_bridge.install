@@ -11,8 +11,6 @@
  */
 function zabbix_bridge_install() {
 
-  drupal_install_schema('zabbix_bridge');
-
   db_query("INSERT INTO {zabbix_drupal_account} (drupal_uid) SELECT uid FROM {users} u where u.uid > 0");
 
   db_query("INSERT INTO {zabbix_severities} (`name`, `value`, `description`) VALUES ('Not classified', 0, 'This is an unclassified severity')");
@@ -61,7 +59,7 @@ function zabbix_bridge_schema() {
 	        'emailid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
 	        'severityid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE)
 	    ),
-	    'primary key' => array('emailid, severityid')
+	    'primary key' => array('emailid', 'severityid')
 	);
 
 	$schema['zabbix_hosts'] = array(
@@ -82,7 +80,7 @@ function zabbix_bridge_schema() {
 	        'hostid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
 	        'roleid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
 	    ),
-	    'primary key' => array('hostid, roleid')
+	    'primary key' => array('hostid', 'roleid')
 	);
 
 	$schema['zabbix_jabbers'] = array(
@@ -103,7 +101,7 @@ function zabbix_bridge_schema() {
 	        'jabberid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
 	        'severityid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE)
 	    ),
-	    'primary key' => array('jabberid, severityid')
+	    'primary key' => array('jabberid', 'severityid')
 	);
 
 	$schema['zabbix_mobiles'] = array(
@@ -124,7 +122,7 @@ function zabbix_bridge_schema() {
 	        'mobileid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
 	        'severityid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE)
 	    ),
-	    'primary key' => array('mobileid, severityid')
+	    'primary key' => array('mobileid', 'severityid')
 	);
 
 	$schema['zabbix_role'] = array(
@@ -174,13 +172,4 @@ function zabbix_bridge_schema() {
 
 
   return $schema;
-}
-
-/**
- * Implementation of hook_uninstall().
- */
-function zabbix_bridge_uninstall() {
-
-  drupal_uninstall_schema('zabbix_bridge');
-  
 }

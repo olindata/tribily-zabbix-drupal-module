@@ -735,7 +735,7 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
                 or drupal_set_message('Unable to delete hosts: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
 
         zabbix_bridge_debug('Zabbix hosts deleted: ', print_r($deletedhosts, TRUE));
-        
+
         // delete the user's hostgroup
         $deletedhostgroups = ZabbixAPI::fetch_array('hostgroup', 'delete', array(array('groupid' => $hostgroupid)))
                 or drupal_set_message('Unable to delete hostgroup: ' . print_r(ZabbixAPI::getLastError(), TRUE), DRUPAL_MSG_TYPE_ERR);
@@ -777,7 +777,7 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
  * - Media
  * - Alerts
  * - Fill the zabbix_drupal_account table on the drupal side
- * 
+ *
  * @param string $name The desired account name
  * @param string $pass The plaintext password
  * @param string $mail The email address for this user
@@ -787,7 +787,7 @@ function zabbix_bridge_delete_zabbix_user($edit, $account, $category) {
  * @param int $zabbixhostgroupid
  * @param boolean $updatemembership
  * @param boolean $updateuserrights
- * @param boolean $createactions 
+ * @param boolean $createactions
  */
 function zabbix_bridge_create_zabbix_user(
 $name, $pass, $mail, $drupaluid, $zabbixuserid = NULL, $zabbixusergroupid = NULL, $zabbixhostgroupid = NULL, $updatemembership = TRUE, $updateuserrights = TRUE, $createactions = TRUE, $mappingid = NULL
@@ -845,13 +845,13 @@ $name, $pass, $mail, $drupaluid, $zabbixuserid = NULL, $zabbixusergroupid = NULL
             }
 
             if (strlen($sql)) {
-                
+
                 db_query($sql, $drupaluid, $value['mediaid'], $value['sendto'], $value['active']);
 
             }
 
         }
-        
+
     }
 
     if ($updatemembership) {
@@ -991,11 +991,10 @@ function zabbix_bridge_update_user_rights($zabbixusergroupid, $zabbixhostgroupid
 function zabbix_bridge_action_info() {
   return array(
     'zabbix_bridge_action_disable_host' => array(
-      'description' => t('Disable all Hosts of the desired user'),
+      'label' => t('Disable all Hosts of the desired user'),
       'type' => 'user',
       'configurable' => FALSE,
       'triggers' => array('any'),
-      'file' => 'zabbix_bridge.action.inc'
     )
   );
 }
