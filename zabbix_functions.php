@@ -217,16 +217,51 @@ function zabbix_hosts_table($userid = NULL) {
   global $user;
 
   $rows = array();
-  $count = PAGER_COUNT;
   $id = TABLE_ID_HOSTS_MAPPING;
 
   if (isset($userid)) {
     $header = array('Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
-//     $results = pager_query("select h.hostid, h.hostname, h.zabbixhostid, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid where h.userid = :userid order by h.hostname, r.name", $count, $id, null, array(':userid' => $user->uid));
+//     $results = pager_query("select h.hostid, h.hostname, h.zabbixhostid, h.enabled, r.name as role_name, r.description as role_desc
+// from {zabbix_hosts} h
+// left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid
+// left join {zabbix_role} r on r.roleid = hr.roleid
+// where h.userid = :userid
+// order by h.hostname, r.name", $count, $id, null, array(':userid' => $user->uid));
+    $query = db_select('zabbix_hosts', 'h');
+    $query->join('zabbix_hosts_roles', 'hr', 'hr.hostid = h.hostid');
+    $query->join('zabbix_role', 'r', 'r.roleid = hr.roleid');
+    $query->condition('h.userid', $user->uid);
+    $query->add_field('r', 'name', 'role_name');
+    $query->add_field('r', 'description', 'role_desc');
+    $results = $query
+      ->fields('h', array('hostid', 'hostname', 'zabbixhostid', 'enabled'))
+      ->orderBy('h.hostname, r.name')
+      ->extend('PagerDefault')
+      ->limit(PAGER_COUNT)
+      ->execute();
+
   }
   else {
     $header = array('Username', 'Email', 'Zabbix Hostid', 'Hostname', 'Enabled', 'Role name', 'Role Description', 'Actions');
-//     $results = pager_query("select u.name, u.mail, h.hostid, h.zabbixhostid, h.hostname, h.enabled, r.name as role_name, r.description as role_desc from {zabbix_hosts} h left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid left join {zabbix_role} r on r.roleid = hr.roleid left join {users} u on u.uid = h.userid order by u.name, h.hostname, r.name", $count, $id);
+//     $results = pager_query("select u.name, u.mail, h.hostid, h.zabbixhostid, h.hostname, h.enabled, r.name as role_name, r.description as role_desc
+// from {zabbix_hosts} h
+// left join {zabbix_hosts_roles} hr on hr.hostid = h.hostid
+// left join {zabbix_role} r on r.roleid = hr.roleid
+// left join {users} u on u.uid = h.userid
+// order by u.name, h.hostname, r.name", $count, $id);
+    $query = db_select('zabbix_hosts', 'h');
+    $query->join('zabbix_hosts_roles', 'hr', 'hr.hostid = h.hostid');
+    $query->join('zabbix_role', 'r', 'r.roleid = hr.roleid');
+    $query->join('user', 'u', 'u.uid = h.userid');
+    $query->add_field('r', 'name', 'role_name');
+    $query->add_field('r', 'description', 'role_desc');
+    $results = $query
+      ->fields('h', array('hostid', 'hostname', 'zabbixhostid', 'enabled'))
+      ->fields('u', array('name', 'mail'))
+      ->orderBy('h.hostname, r.name')
+      ->extend('PagerDefault')
+      ->limit(PAGER_COUNT)
+      ->execute();
   }
 
 
@@ -235,34 +270,34 @@ function zabbix_hosts_table($userid = NULL) {
   foreach ($results as $node) {
     if (!isset($userid)) {
       $rows[] = array(
-      $node->name,
-      $node->mail,
-      $lastzabbixhostid == $node->zabbixhostid ? '' : $node->zabbixhostid,
-      $lastzabbixhostid == $node->zabbixhostid ? '' : $node->hostname,
-      $lastzabbixhostid == $node->zabbixhostid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
-      $node->role_name,
-      $node->role_desc,
-      $lastzabbixhostid == $node->zabbixhostid ? '' : (
-      l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
-      l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
-      l('Update', 'hosts/update/' . $node->hostid) . ' | ' .
-      l('Triggers', 'hosts/' . $node->hostid . '/triggers')
-      ),
+        $node->name,
+        $node->mail,
+        $lastzabbixhostid == $node->zabbixhostid ? '' : $node->zabbixhostid,
+        $lastzabbixhostid == $node->zabbixhostid ? '' : $node->hostname,
+        $lastzabbixhostid == $node->zabbixhostid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
+        $node->role_name,
+        $node->role_desc,
+        $lastzabbixhostid == $node->zabbixhostid ? '' : (
+          l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
+          l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
+          l('Update', 'hosts/update/' . $node->hostid) . ' | ' .
+          l('Triggers', 'hosts/' . $node->hostid . '/triggers')
+        ),
       );
     }
     else {
 
       $rows[] = array(
-      $lastzabbixhostid == $node->zabbixhostid ? '' : $node->hostname,
-      $lastzabbixhostid == $node->zabbixhostid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
-      $node->role_name,
-      $node->role_desc,
-      $lastzabbixhostid == $node->zabbixhostid ? '' : (
-      l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
-      l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
-      l('Update', 'hosts/update/' . $node->hostid) . ' | ' .
-      l('Triggers', 'hosts/' . $node->hostid . '/triggers')
-      ),
+        $lastzabbixhostid == $node->zabbixhostid ? '' : $node->hostname,
+        $lastzabbixhostid == $node->zabbixhostid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
+        $node->role_name,
+        $node->role_desc,
+        $lastzabbixhostid == $node->zabbixhostid ? '' : (
+          l($node->enabled == 0 ? 'Disable' : 'Enable', 'hosts/enable-disable/' . $node->hostid) . ' | ' .
+          l('Delete', 'hosts/delete/' . $node->hostid) . ' | ' .
+          l('Update', 'hosts/update/' . $node->hostid) . ' | ' .
+          l('Triggers', 'hosts/' . $node->hostid . '/triggers')
+        ),
       );
     }
     $lastzabbixhostid = $node->zabbixhostid;
@@ -314,25 +349,38 @@ function zabbix_roles_table($typeid) {
 
   $header = array('Roleid', 'Name', 'Description', 'Image', 'Zabbix Templateid', 'Actions');
   $rows = array();
-  $count = PAGER_COUNT;
   $id = TABLE_ID_USER_MAPPING;
 
-//   $results = pager_query("select zr.*, zrt.templateid from {zabbix_role} zr left join {zabbix_roles_templates} zrt on zrt.roleid = zr.roleid where zr.typeid = $typeid order by zr.sortorder", $count, $id);
+// $results = pager_query("select zr.*, zrt.templateid
+// from {zabbix_role} zr
+// left join {zabbix_roles_templates} zrt on zrt.roleid = zr.roleid
+// where zr.typeid = $typeid
+// order by zr.sortorder", $count, $id);
+  $query = db_select('zabbix_role', 'zr');
+  $query->join('zabbix_roles_templates', 'zrt', 'zrt.roleid = zr.roleid');
+  $query->condition('zr.typeid', $typeid);
+  $results = $query
+    ->fields('zr')
+    ->fields('zrt', array('templateid'))
+    ->orderBy('zr.sortorder')
+    ->extend('PagerDefault')
+    ->limit(PAGER_COUNT)
+    ->execute();
 
 
-  while ($node = db_fetch_object($results)) {
+  foreach ($results as $node) {
 
     // TODO: this shouldn't be static!
     $imagesrc = $node->imagesrc == NULL ? url('/sites/default/files/zabbix-roles/none.png') : url($node->imagesrc);
 
     $rows[] = array(
-    $node->roleid,
-    $node->name,
-    $node->description,
-        '<img src="'. $imagesrc ."\" alt=\"$imagesrc\" />",
-    $node->templateid,
-    l('Update', 'zabbix-role-mapping/update/' . $node->roleid) . ' | ' .
-    l('Delete', 'zabbix-role-mapping/delete/' . $node->roleid),
+      $node->roleid,
+      $node->name,
+      $node->description,
+          '<img src="'. $imagesrc ."\" alt=\"$imagesrc\" />",
+      $node->templateid,
+      l('Update', 'zabbix-role-mapping/update/' . $node->roleid) . ' | ' .
+      l('Delete', 'zabbix-role-mapping/delete/' . $node->roleid),
     );
   }
 
@@ -354,22 +402,33 @@ function zabbix_roles_table($typeid) {
 function zabbix_user_mapping_table() {
   $header = array('Username', 'Email', 'Zabbix Userid', 'Zabbix Usergroupid', 'Zabbix Hostgroupid', 'Actions');
   $rows = array();
-  $count = PAGER_COUNT;
   $id = TABLE_ID_USER_MAPPING;
 
-//   $results = pager_query("select zda.id, du.uid, du.name, du.mail, zda.zabbix_uid, zda.zabbix_usrgrp_id, zda.zabbix_hostgrp_id from {zabbix_drupal_account} zda left join {users} du on du.uid = zda.drupal_uid order by du.name", $count, $id);
+//   $results = pager_query("select zda.id, du.uid, du.name, du.mail, zda.zabbix_uid, zda.zabbix_usrgrp_id, zda.zabbix_hostgrp_id
+// from {zabbix_drupal_account} zda
+// left join {users} du on du.uid = zda.drupal_uid
+// order by du.name", $count, $id);
+  $query = db_select('zabbix_drupal_account', 'zda');
+  $query->join('user', 'du', 'du.uid = zda.drupal_uid');
+  $results = $query
+  ->fields('zda', array('id', 'zabbix_uid', 'zabbix_usrgrp_id', 'zabbix_hostgrp_id'))
+  ->fields('u', array('uid', 'name', 'mail'))
+  ->orderBy('du.name')
+  ->extend('PagerDefault')
+  ->limit(PAGER_COUNT)
+  ->execute();
 
 
-  while ($node = db_fetch_object($results)) {
+  foreach ($results as $node) {
     $rows[] = array(
-    $node->name,
-    $node->mail,
-    $node->zabbix_uid,
-    $node->zabbix_usrgrp_id,
-    $node->zabbix_hostgrp_id,
-    l('Update', 'zabbix-user-mapping/update/' . $node->id) . ' | ' .
-    l('Delete', 'zabbix-user-mapping/delete/' . $node->id) . ' | ' .
-    l('Generate missing zabbix items', 'zabbix-user-mapping/generate/' . $node->id),
+      $node->name,
+      $node->mail,
+      $node->zabbix_uid,
+      $node->zabbix_usrgrp_id,
+      $node->zabbix_hostgrp_id,
+      l('Update', 'zabbix-user-mapping/update/' . $node->id) . ' | ' .
+      l('Delete', 'zabbix-user-mapping/delete/' . $node->id) . ' | ' .
+      l('Generate missing zabbix items', 'zabbix-user-mapping/generate/' . $node->id),
     );
   }
 
@@ -659,52 +718,72 @@ function zabbix_emails_table($userid = NULL) {
   global $user;
 
   $rows = array();
-  $count = PAGER_COUNT;
   $id = TABLE_ID_EMAILS_MAPPING;
 
   if (isset($userid)) {
     $header = array('Email', 'Severity', 'Enabled');
-//     $results = pager_query("select e.emailid, e.email, e.zabbixmediaid, zs.name severity, e.enabled from {zabbix_emails} e left join {zabbix_emails_severities} zes on e.emailid = zes.emailid left join {zabbix_severities} zs on zes.severityid = zs.severityid where e.userid = %d", $count, $id, null, $user->uid);
+    $query = db_select('zabbix_emails', 'e');
+    $query->join('zabbix_emails_severities', 'zes', 'e.emailid = zes.emailid');
+    $query->join('zabbix_severities', 'zs', 'zs.severityid = zes.severityid');
+    $query->condition('e.userid', $user->uid);
+    $query->add_field('zs', 'name', 'severity');
+    $results = $query
+      ->fields('e', array('emailid', 'email', 'zabbixmediaid', 'enabled'))
+      ->extend('PagerDefault')
+      ->limit(PAGER_COUNT)
+      ->execute();
   }
   else {
     $header = array('Username', 'Email Id', 'Email', 'Zabbix Media Id', 'Severity', 'Enabled');
-//     $results = pager_query("select u.name, e.emailid, e.email, e.zabbixmediaid, zs.name severity, e.enabled from {zabbix_emails} e left join {zabbix_emails_severities} zes on e.emailid = zes.emailid left join {zabbix_severities} zs on zes.severityid = zs.severityid left join {users} u on u.uid = e.userid", $count, $id);
+//     $results = pager_query("select u.name, e.emailid, e.email, e.zabbixmediaid, zs.name severity, e.enabled
+// from {zabbix_emails} e
+// left join {zabbix_emails_severities} zes on e.emailid = zes.emailid
+// left join {zabbix_severities} zs on zes.severityid = zs.severityid
+// left join {users} u on u.uid = e.userid", $count, $id);
+    $query = db_select('zabbix_emails', 'e');
+    $query->join('zabbix_emails_severities', 'zes', 'e.emailid = zes.emailid');
+    $query->join('zabbix_severities', 'zs', 'zs.severityid = zes.severityid');
+    $query->join('user', 'u', 'u.uid = e.userid');
+    $query->add_field('zs', 'name', 'severity');
+    $results = $query
+      ->fields('e', array('emailid', 'email', 'zabbixmediaid', 'enabled'))
+      ->fields('u', array('name'))
+      ->extend('PagerDefault')
+      ->limit(PAGER_COUNT)
+      ->execute();
   }
 
   $lastzabbixmediaid = -1;
 
-  while ($node = db_fetch_object($results)) {
+  foreach ($results as $node) {
 
     if (!isset($userid)) {
 
       $rows[] = array(
-      $node->name,
-      $node->emailid,
-      $node->email,
-      $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->zabbixmediaid,
-      $node->severity,
-      $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
-      $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
-      l($node->enabled == 0 ? 'Disable' : 'Enable', 'emails/enable-disable/' . $node->emailid) . ' | ' .
-      l('Delete', 'emails/delete/' . $node->emailid) . ' | ' .
-      l('Update', 'emails/update/' . $node->emailid)
-
-      ),
+        $node->name,
+        $node->emailid,
+        $node->email,
+        $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->zabbixmediaid,
+        $node->severity,
+        $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
+        $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
+          l($node->enabled == 0 ? 'Disable' : 'Enable', 'emails/enable-disable/' . $node->emailid) . ' | ' .
+          l('Delete', 'emails/delete/' . $node->emailid) . ' | ' .
+          l('Update', 'emails/update/' . $node->emailid)
+        ),
       );
     }
     else {
 
       $rows[] = array(
-      $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->email,
-      $node->severity,
-      $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
-      $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
-
-      l($node->enabled == 0 ? 'Disable' : 'Enable', 'emails/enable-disable/' . $node->emailid) . ' | ' .
-      l('Delete', 'emails/delete/' . $node->emailid) . ' | ' .
-      l('Update', 'emails/update/' . $node->emailid)
-
-      ),
+        $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->email,
+        $node->severity,
+        $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
+        $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
+          l($node->enabled == 0 ? 'Disable' : 'Enable', 'emails/enable-disable/' . $node->emailid) . ' | ' .
+          l('Delete', 'emails/delete/' . $node->emailid) . ' | ' .
+          l('Update', 'emails/update/' . $node->emailid)
+        ),
       );
     }
 
@@ -850,16 +929,46 @@ function zabbix_mobiles_table($userid = NULL) {
 
   if (isset($userid)) {
     $header = array('Mobile', 'Severity', 'Enabled');
-//     $results = pager_query("select m.mobileid, m.number, m.zabbixmediaid, zs.name severity, m.enabled from {zabbix_mobiles} m left join {zabbix_mobiles_severities} zms on m.mobileid = zms.mobileid left join {zabbix_severities} zs on zms.severityid = zs.severityid where m.userid = :userid", $count, $id, null, array(':userid' => $user->uid));
+//  $results = pager_query("select m.mobileid, m.number, m.zabbixmediaid, zs.name severity, m.enabled
+// from {zabbix_mobiles} m
+// left join {zabbix_mobiles_severities} zms on m.mobileid = zms.mobileid
+// left join {zabbix_severities} zs on zms.severityid = zs.severityid
+// where m.userid = :userid", $count, $id, null, array(':userid' => $user->uid));
+    $query = db_select('zabbix_mobiles', 'm');
+    $query->join('zabbix_mobiles_severities', 'zms', 'm.mobileid = zms.emailid');
+    $query->join('zabbix_severities', 'zs', 'zs.severityid = zms.severityid');
+    $query->condition('m.userid', $user->uid);
+    $query->add_field('zs', 'name', 'severity');
+    $results = $query
+      ->fields('m', array('mobileid', 'number', 'zabbixmediaid', 'enabled'))
+      ->extend('PagerDefault')
+      ->limit(PAGER_COUNT)
+      ->execute();
+
   }
   else {
     $header = array('Username', 'Mobile Id', 'Mobile Number', 'Zabbix Media Id', 'Severity', 'Enabled');
-//     $results = pager_query("select u.name, m.mobileid, m.number, m.zabbixmediaid, zs.name severity, m.enabled from {zabbix_mobiles} m left join {zabbix_mobiles_severities} zms on m.mobileid = zms.mobileid left join {zabbix_severities} zs on zms.severityid = zs.severityid left join {users} u on u.uid = m.userid", $count, $id);
+//  $results = pager_query("select u.name, m.mobileid, m.number, m.zabbixmediaid, zs.name severity, m.enabled
+// from {zabbix_mobiles} m
+// left join {zabbix_mobiles_severities} zms on m.mobileid = zms.mobileid
+// left join {zabbix_severities} zs on zms.severityid = zs.severityid
+// left join {users} u on u.uid = m.userid", $count, $id);
+    $query = db_select('zabbix_mobiles', 'm');
+    $query->join('zabbix_mobiles_severities', 'zms', 'm.mobileid = zms.emailid');
+    $query->join('zabbix_severities', 'zs', 'zs.severityid = zms.severityid');
+    $query->join('user', 'u', 'u.uid = m.userid');
+    $query->add_field('zs', 'name', 'severity');
+    $results = $query
+      ->fields('m', array('mobileid', 'number', 'zabbixmediaid', 'enabled'))
+      ->fields('u', array('name'))
+      ->extend('PagerDefault')
+      ->limit(PAGER_COUNT)
+      ->execute();
   }
 
   $lastzabbixmediaid = -1;
 
-  while ($node = db_fetch_object($results)) {
+  foreach ($results as $node) {
 
     if (!isset($userid)) {
 
@@ -992,47 +1101,75 @@ function zabbix_jabbers_table($userid = NULL) {
 
   if (isset($userid)) {
     $header = array('Jabber', 'Severity', 'Enabled');
-//     $results = pager_query("select j.jabberid, j.jabber, j.zabbixmediaid, zs.name severity, j.enabled from {zabbix_jabbers} j left join {zabbix_jabbers_severities} zjs on j.jabberid = zjs.jabberid left join {zabbix_severities} zs on zjs.severityid = zs.severityid where j.userid = :userid", $count, $id, null, array(':userid' => $user->uid));
+//     $results = pager_query("select j.jabberid, j.jabber, j.zabbixmediaid, zs.name severity, j.enabled
+// from {zabbix_jabbers} j
+// left join {zabbix_jabbers_severities} zjs on j.jabberid = zjs.jabberid
+// left join {zabbix_severities} zs on zjs.severityid = zs.severityid
+// where j.userid = :userid", $count, $id, null, array(':userid' => $user->uid));
+    $query = db_select('zabbix_jabbers', 'j');
+    $query->join('zabbix_jabbers_severities', 'zjs', 'j.jabberid = zjs.jabberid');
+    $query->join('zabbix_severities', 'zs', 'zs.severityid = zjs.severityid');
+    $query->condition('j.userid', $user->uid);
+    $query->add_field('zs', 'name', 'severity');
+    $results = $query
+      ->fields('j', array('jabberid', 'jabber', 'zabbixmediaid', 'enabled'))
+      ->extend('PagerDefault')
+      ->limit(PAGER_COUNT)
+      ->execute();
+
   }
   else {
     $header = array('Username', 'Jabber Id', 'Jabber', 'Zabbix Media Id', 'Severity', 'Enabled');
-//     $results = pager_query("select u.name, j.jabberid, j.jabber, j.zabbixmediaid, zs.name severity, j.enabled from {zabbix_jabbers} j left join {zabbix_jabbers_severities} zjs on j.jabberid = zjs.jabberid left join {zabbix_severities} zs on zjs.severityid = zs.severityid left join {users} u on u.uid = j.userid", $count, $id);
+//     $results = pager_query("select u.name, j.jabberid, j.jabber, j.zabbixmediaid, zs.name severity, j.enabled
+// from {zabbix_jabbers} j
+// left join {zabbix_jabbers_severities} zjs on j.jabberid = zjs.jabberid
+// left join {zabbix_severities} zs on zjs.severityid = zs.severityid
+// left join {users} u on u.uid = j.userid", $count, $id);
+    $query = db_select('zabbix_jabbers', 'j');
+    $query->join('zabbix_jabbers_severities', 'zjs', 'j.jabberid = zjs.jabberid');
+    $query->join('zabbix_severities', 'zs', 'zs.severityid = zjs.severityid');
+    $query->join('user', 'u', 'u.uid = j.userid');
+    $query->add_field('zs', 'name', 'severity');
+    $results = $query
+      ->fields('j', array('jabberid', 'jabber', 'zabbixmediaid', 'enabled'))
+      ->fields('u', array('name'))
+      ->extend('PagerDefault')
+      ->limit(PAGER_COUNT)
+      ->execute();
+
   }
 
   $lastzabbixmediaid = -1;
 
-  while ($node = db_fetch_object($results)) {
+  foreach ($results as $node) {
 
     if (!isset($userid)) {
 
       $rows[] = array(
-      $node->name,
-      $node->jabberid,
-      $node->jabber,
-      $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->zabbixmediaid,
-      $node->severity,
-      $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
-      $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
-      l($node->enabled == 0 ? 'Disable' : 'Enable', 'jabbers/enable-disable/' . $node->jabberid) . ' | ' .
-      l('Delete', 'jabbers/delete/' . $node->jabberid) . ' | ' .
-      l('Update', 'jabbers/update/' . $node->jabberid)
-
-      ),
+        $node->name,
+        $node->jabberid,
+        $node->jabber,
+        $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->zabbixmediaid,
+        $node->severity,
+        $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
+        $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
+          l($node->enabled == 0 ? 'Disable' : 'Enable', 'jabbers/enable-disable/' . $node->jabberid) . ' | ' .
+          l('Delete', 'jabbers/delete/' . $node->jabberid) . ' | ' .
+          l('Update', 'jabbers/update/' . $node->jabberid)
+        ),
       );
     }
     else {
 
       $rows[] = array(
-      $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->jabber,
-      $node->severity,
-      $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
-      $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
-
-      l($node->enabled == 0 ? 'Disable' : 'Enable', 'jabbers/enable-disable/' . $node->jabberid) . ' | ' .
-      l('Delete', 'jabbers/delete/' . $node->jabberid) . ' | ' .
-      l('Update', 'jabbers/update/' . $node->jabberid)
-
-      ),
+        $lastzabbixmediaid == $node->zabbixmediaid ? '' : $node->jabber,
+        $node->severity,
+        $lastzabbixmediaid == $node->zabbixmediaid ? '' : ($node->enabled == 0 ? 'enabled' : 'disabled'),
+        $lastzabbixmediaid == $node->zabbixmediaid ? '' : (
+          l($node->enabled == 0 ? 'Disable' : 'Enable', 'jabbers/enable-disable/' . $node->jabberid) . ' | ' .
+          l('Delete', 'jabbers/delete/' . $node->jabberid) . ' | ' .
+          l('Update', 'jabbers/update/' . $node->jabberid)
+        ),
       );
     }
 
