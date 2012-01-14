@@ -184,14 +184,13 @@ function zabbix_hosts($userid = NULL) {
 
   if (!isset($userid)) {
     $query->fields('u', array('u.name', 'u.mail'));
-    $query->orderBy('u.name');
   }
 
   $results = $query
-    ->orderBy('h.hostname')
-    ->orderBy('r.name')
     ->limit(PAGER_COUNT)
     ->extend('PagerDefault')
+    ->extend('TableSort')
+    ->orderByHeader($header)
     ->execute();
 
 
@@ -235,8 +234,9 @@ function zabbix_hosts_table($userid = NULL) {
     $query->addField('r', 'description', 'role_desc');
     $results = $query
       ->fields('h', array('hostid', 'hostname', 'zabbixhostid', 'enabled'))
-      ->orderBy('h.hostname, r.name')
       ->extend('PagerDefault')
+      ->extend('TableSort')
+      ->orderByHeader($header)
       ->limit(PAGER_COUNT)
       ->execute();
 
@@ -258,8 +258,9 @@ function zabbix_hosts_table($userid = NULL) {
     $results = $query
       ->fields('h', array('hostid', 'hostname', 'zabbixhostid', 'enabled'))
       ->fields('u', array('name', 'mail'))
-      ->orderBy('h.hostname, r.name')
       ->extend('PagerDefault')
+      ->extend('TableSort')
+      ->orderByHeader($header)
       ->limit(PAGER_COUNT)
       ->execute();
   }
@@ -303,17 +304,20 @@ function zabbix_hosts_table($userid = NULL) {
     $lastzabbixhostid = $node->zabbixhostid;
   }
 
-  if ($lastzabbixhostid == -1) {
-    if (!isset($userid)) {
-      $rows[] = array(t('No Hosts have been defined yet.'), '', '', '', '', '', '', '',);
-    }
-    else {
-      $rows[] = array(t('No Hosts have been defined yet.'), '', '', '', '');
-    }
-  }
+  $empty_msg = t('No Hosts have been defined yet.');
 
-  $table_attributes = array('id' => 'hosts-table', 'align' => 'center');
-  $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
+  $output = theme('table',
+    array(
+      'header'  => $header,
+      'rows'    => $rows,
+      'caption' => 'Monitored hosts',
+      'sticky'  => TRUE,
+      'empty'   => $empty_msg,
+    )) .
+  theme('pager',
+    array('element' => $id)
+  );
+
 
   return $output;
 }
@@ -362,8 +366,9 @@ function zabbix_roles_table($typeid) {
   $results = $query
     ->fields('zr')
     ->fields('zrt', array('templateid'))
-    ->orderBy('zr.sortorder')
     ->extend('PagerDefault')
+    ->extend('TableSort')
+    ->orderByHeader($header)
     ->limit(PAGER_COUNT)
     ->execute();
 
@@ -384,13 +389,21 @@ function zabbix_roles_table($typeid) {
     );
   }
 
-  if (count($rows) == 0) {
-    $rows[] = array(t('No templates have been defined yet'), '', '', '', '', '');
-  }
-
   $table_attributes = array('id' => 'roles-table', 'align' => 'center');
 
-  $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
+  $empty_msg = t('No roles have been defined yet.');
+
+  $output = theme('table',
+  array(
+        'header'  => $header,
+        'rows'    => $rows,
+        'caption' => 'Roles',
+        'sticky'  => TRUE,
+        'empty'   => $empty_msg,
+  )) .
+  theme('pager',
+    array('element' => $id)
+  );
 
   return $output;
 }
@@ -400,7 +413,15 @@ function zabbix_roles_table($typeid) {
  * @return string
  */
 function zabbix_user_mapping_table() {
-  $header = array('Username', 'Email', 'Zabbix Userid', 'Zabbix Usergroupid', 'Zabbix Hostgroupid', 'Actions');
+  $header = array(
+    array('data' => 'Username', 'field' => 'name', 'sort' => 'asc'),
+    array('data' => 'Email', 'field' => 'mail'),
+    array('data' => 'Zabbix Userid', 'field' => 'uid'),
+    array('data' => 'Zabbix Usergroupid', 'field' => 'zabbix_usrgrp_id'),
+    array('data' => 'Zabbix Hostgroupid', 'field' => 'zabbix_hostgrp_id'),
+    array('data' => 'Actions'),
+  );
+
   $rows = array();
   $id = TABLE_ID_USER_MAPPING;
 
@@ -413,8 +434,9 @@ function zabbix_user_mapping_table() {
   $results = $query
   ->fields('zda', array('id', 'zabbix_uid', 'zabbix_usrgrp_id', 'zabbix_hostgrp_id'))
   ->fields('u', array('uid', 'name', 'mail'))
-  ->orderBy('du.name')
   ->extend('PagerDefault')
+  ->extend('TableSort')
+  ->orderByHeader($header)
   ->limit(PAGER_COUNT)
   ->execute();
 
@@ -432,13 +454,22 @@ function zabbix_user_mapping_table() {
     );
   }
 
-  if (count($rows) == 0) {
-    $rows[] = array(t('No mappings have been defined yet'), '', '', '', '', '');
-  }
 
   $table_attributes = array('id' => 'mapping-table', 'align' => 'center');
 
-  $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
+  $empty_msg = t('No mappings have been defined yet.');
+
+  $output = theme('table',
+    array(
+      'header'  => $header,
+      'rows'    => $rows,
+      'caption' => 'Drupal user <-> zabbix user mappings',
+      'sticky'  => TRUE,
+      'empty'   => $empty_msg,
+    )) .
+  theme('pager',
+    array('element' => $id)
+  );
 
   return $output;
 }
@@ -721,7 +752,12 @@ function zabbix_emails_table($userid = NULL) {
   $id = TABLE_ID_EMAILS_MAPPING;
 
   if (isset($userid)) {
-    $header = array('Email', 'Severity', 'Enabled');
+    $header = array(
+      array('data' => 'Email', 'field' => 'email'),
+      array('data' => 'Severity', 'field' => 'severity'),
+      array('data' => 'Enabled', 'field' => 'enabled'),
+    );
+
     $query = db_select('zabbix_emails', 'e');
     $query->join('zabbix_emails_severities', 'zes', 'e.emailid = zes.emailid');
     $query->join('zabbix_severities', 'zs', 'zs.severityid = zes.severityid');
@@ -730,11 +766,22 @@ function zabbix_emails_table($userid = NULL) {
     $results = $query
       ->fields('e', array('emailid', 'email', 'zabbixmediaid', 'enabled'))
       ->extend('PagerDefault')
+      ->extend('TableSort')
+      ->orderByHeader($header)
       ->limit(PAGER_COUNT)
       ->execute();
   }
   else {
-    $header = array('Username', 'Email Id', 'Email', 'Zabbix Media Id', 'Severity', 'Enabled');
+    $header = array(
+      array('data' => 'Username', 'field' => 'name'),
+      array('data' => 'Email Id', 'field' => 'emailid'),
+      array('data' => 'Email', 'field' => 'email'),
+      array('data' => 'Zabbix Media Id', 'field' => 'zabbixmediaid'),
+      array('data' => 'Severity', 'field' => 'severity'),
+      array('data' => 'Enabled', 'field' => 'enabled'),
+    );
+
+
 //     $results = pager_query("select u.name, e.emailid, e.email, e.zabbixmediaid, zs.name severity, e.enabled
 // from {zabbix_emails} e
 // left join {zabbix_emails_severities} zes on e.emailid = zes.emailid
@@ -749,6 +796,8 @@ function zabbix_emails_table($userid = NULL) {
       ->fields('e', array('emailid', 'email', 'zabbixmediaid', 'enabled'))
       ->fields('u', array('name'))
       ->extend('PagerDefault')
+      ->extend('TableSort')
+      ->orderByHeader($header)
       ->limit(PAGER_COUNT)
       ->execute();
   }
@@ -790,20 +839,26 @@ function zabbix_emails_table($userid = NULL) {
     $lastzabbixmediaid = $node->zabbixmediaid;
   }
 
-  if ($lastzabbixmediaid == -1) {
-
-    if (!isset($userid)) {
-
-      $rows[] = array(t('No Emails have been defined yet.'), '', '', '', '', '');
-    }
-    else {
-
-      $rows[] = array(t('No Emails have been defined yet.'), '', '', '');
-    }
+  if (!isset($userid)) {
+    $empty_msg = t('No Emails have been defined yet.');
+  }
+  else {
+    $empty_msg = t('No Emails have been defined yet.');
   }
 
   $table_attributes = array('id' => 'emails-table', 'align' => 'center');
-  $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
+
+  $output = theme('table',
+    array(
+      'header'  => $header,
+      'rows'    => $rows,
+      'caption' => 'Alert emails',
+      'sticky'  => TRUE,
+      'empty'   => $empty_msg,
+    )) .
+  theme('pager',
+    array('element' => $id)
+  );
 
   return $output;
 }
@@ -942,6 +997,8 @@ function zabbix_mobiles_table($userid = NULL) {
     $results = $query
       ->fields('m', array('mobileid', 'number', 'zabbixmediaid', 'enabled'))
       ->extend('PagerDefault')
+      ->extend('TableSort')
+      ->orderByHeader($header)
       ->limit(PAGER_COUNT)
       ->execute();
 
@@ -962,6 +1019,8 @@ function zabbix_mobiles_table($userid = NULL) {
       ->fields('m', array('mobileid', 'number', 'zabbixmediaid', 'enabled'))
       ->fields('u', array('name'))
       ->extend('PagerDefault')
+      ->extend('TableSort')
+      ->orderByHeader($header)
       ->limit(PAGER_COUNT)
       ->execute();
   }
@@ -1006,20 +1065,26 @@ function zabbix_mobiles_table($userid = NULL) {
     $lastzabbixmediaid = $node->zabbixmediaid;
   }
 
-  if ($lastzabbixmediaid == -1) {
-
-    if (!isset($userid)) {
-
-      $rows[] = array(t('No mobile numbers have been defined yet.'), '', '', '', '', '');
-    }
-    else {
-
-      $rows[] = array(t('No mobile numbers have been defined yet.'), '', '', '');
-    }
+  if (!isset($userid)) {
+    $empty_msg = t('No mobile numbers have been defined yet.');
+  }
+  else {
+    $empty_msg = t('No mobile numbers have been defined yet.');
   }
 
   $table_attributes = array('id' => 'mobiles-table', 'align' => 'center');
-  $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
+
+  $output = theme('table',
+    array(
+      'header'  => $header,
+      'rows'    => $rows,
+      'caption' => 'Alert mobile numbers',
+      'sticky'  => TRUE,
+      'empty'   => $empty_msg,
+    )) .
+  theme('pager',
+    array('element' => $id)
+  );
 
   return $output;
 }
@@ -1114,6 +1179,8 @@ function zabbix_jabbers_table($userid = NULL) {
     $results = $query
       ->fields('j', array('jabberid', 'jabber', 'zabbixmediaid', 'enabled'))
       ->extend('PagerDefault')
+      ->extend('TableSort')
+      ->orderByHeader($header)
       ->limit(PAGER_COUNT)
       ->execute();
 
@@ -1134,6 +1201,8 @@ function zabbix_jabbers_table($userid = NULL) {
       ->fields('j', array('jabberid', 'jabber', 'zabbixmediaid', 'enabled'))
       ->fields('u', array('name'))
       ->extend('PagerDefault')
+      ->extend('TableSort')
+      ->orderByHeader($header)
       ->limit(PAGER_COUNT)
       ->execute();
 
@@ -1176,20 +1245,25 @@ function zabbix_jabbers_table($userid = NULL) {
     $lastzabbixmediaid = $node->zabbixmediaid;
   }
 
-  if ($lastzabbixmediaid == -1) {
-
-    if (!isset($userid)) {
-
-      $rows[] = array(t('No jabber ids have been defined yet.'), '', '', '', '', '');
-    }
-    else {
-
-      $rows[] = array(t('No jabber ids have been added. Click "Add Jabber id" below to get started!'), '', '', '');
-    }
+  if (!isset($userid)) {
+    $empty_msg = t('No jabber ids have been defined yet.');
+  }
+  else {
+    $empty_msg = t('No jabber ids have been added. Click "Add Jabber id" below to get started!');
   }
 
   $table_attributes = array('id' => 'jabbers-table', 'align' => 'center');
-  $output = theme('table', $header, $rows, $table_attributes) . theme('pager', $count, $id);
+  $output = theme('table',
+                  array(
+                    'header' => $header,
+                    'rows'=>$rows,
+                    'caption' => 'Jabber ids',
+                    'sticky' => TRUE,
+                    'empty' => $empty_msg,
+                  )) .
+  theme('pager',
+    array('element' => $id)
+  );
 
   return $output;
 }
