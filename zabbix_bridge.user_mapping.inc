@@ -177,20 +177,21 @@ function zabbix_bridge_user_mapping_generate_confirm_submit($form, &$form_state)
     $generatezabbixusergroup = !isset($mapping->zabbix_usrgrp_id);
     $generatezabbixhostgroup = !isset($mapping->zabbix_hostgrp_id);
 
-    $drupaluser = user_load(array('uid' => $mapping->drupal_uid));
+    $drupaluser = user_load($mapping->drupal_uid);
 
     zabbix_bridge_create_zabbix_user(
-    $drupaluser->name,
-    $pass,
-    $drupaluser->mail,
-    $mapping->drupal_uid,
-    NULL,
-    NULL,
-    NULL,
-    TRUE,
-    TRUE,
-    TRUE,
-    $id);
+      $drupaluser->name,
+      $pass,
+      $drupaluser->mail,
+      $mapping->drupal_uid,
+      NULL,
+      NULL,
+      NULL,
+      TRUE,
+      TRUE,
+      TRUE,
+      $id
+    );
   }
   else {
     // other situations not yet supported
