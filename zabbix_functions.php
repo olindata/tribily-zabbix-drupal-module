@@ -174,7 +174,7 @@ function zabbix_hosts($userid = NULL) {
   $query->join('zabbix_hosts_roles', 'hr', 'hr.hostid = h.hostid');
   $query->join('zabbix_role', 'r', 'r.roleid = hr.roleid');
   if (!isset($userid)) {
-    $query->join('user', 'u', 'u.uid = h.userid');
+    $query->join('users', 'u', 'u.uid = h.userid');
   }
 
   $query
@@ -252,7 +252,7 @@ function zabbix_hosts_table($userid = NULL) {
     $query = db_select('zabbix_hosts', 'h');
     $query->join('zabbix_hosts_roles', 'hr', 'hr.hostid = h.hostid');
     $query->join('zabbix_role', 'r', 'r.roleid = hr.roleid');
-    $query->join('user', 'u', 'u.uid = h.userid');
+    $query->join('users', 'u', 'u.uid = h.userid');
     $query->addField('r', 'name', 'role_name');
     $query->addField('r', 'description', 'role_desc');
     $results = $query
@@ -409,7 +409,7 @@ function zabbix_user_mapping_table() {
 // left join {users} du on du.uid = zda.drupal_uid
 // order by du.name", $count, $id);
   $query = db_select('zabbix_drupal_account', 'zda');
-  $query->join('user', 'du', 'du.uid = zda.drupal_uid');
+  $query->join('users', 'du', 'du.uid = zda.drupal_uid');
   $results = $query
   ->fields('zda', array('id', 'zabbix_uid', 'zabbix_usrgrp_id', 'zabbix_hostgrp_id'))
   ->fields('u', array('uid', 'name', 'mail'))
@@ -743,7 +743,7 @@ function zabbix_emails_table($userid = NULL) {
     $query = db_select('zabbix_emails', 'e');
     $query->join('zabbix_emails_severities', 'zes', 'e.emailid = zes.emailid');
     $query->join('zabbix_severities', 'zs', 'zs.severityid = zes.severityid');
-    $query->join('user', 'u', 'u.uid = e.userid');
+    $query->join('users', 'u', 'u.uid = e.userid');
     $query->addField('zs', 'name', 'severity');
     $results = $query
       ->fields('e', array('emailid', 'email', 'zabbixmediaid', 'enabled'))
@@ -956,7 +956,7 @@ function zabbix_mobiles_table($userid = NULL) {
     $query = db_select('zabbix_mobiles', 'm');
     $query->join('zabbix_mobiles_severities', 'zms', 'm.mobileid = zms.emailid');
     $query->join('zabbix_severities', 'zs', 'zs.severityid = zms.severityid');
-    $query->join('user', 'u', 'u.uid = m.userid');
+    $query->join('users', 'u', 'u.uid = m.userid');
     $query->addField('zs', 'name', 'severity');
     $results = $query
       ->fields('m', array('mobileid', 'number', 'zabbixmediaid', 'enabled'))
@@ -1128,7 +1128,7 @@ function zabbix_jabbers_table($userid = NULL) {
     $query = db_select('zabbix_jabbers', 'j');
     $query->join('zabbix_jabbers_severities', 'zjs', 'j.jabberid = zjs.jabberid');
     $query->join('zabbix_severities', 'zs', 'zs.severityid = zjs.severityid');
-    $query->join('user', 'u', 'u.uid = j.userid');
+    $query->join('users', 'u', 'u.uid = j.userid');
     $query->addField('zs', 'name', 'severity');
     $results = $query
       ->fields('j', array('jabberid', 'jabber', 'zabbixmediaid', 'enabled'))
