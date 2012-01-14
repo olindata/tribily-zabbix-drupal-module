@@ -128,7 +128,7 @@ function zabbix_bridge_settings_form() {
   $form['zabbix_bridge_credentials']['zabbix_bridge_API_url'] = array(
       '#type' => 'textfield',
       '#title' => t('Zabbix API url'),
-      '#default_value' => variable_get('zabbix_bridge_API_url', zabbix_bridge_API_url),
+      '#default_value' => variable_get('zabbix_bridge_API_url', 'zabbix_bridge_API_url'),
       '#required' => TRUE,
       '#description' => t('Url used for API calls. If you don\'t know what to put here, try the full path to your zabbix install, like: http://example.com/zabbix')
   );
@@ -136,7 +136,7 @@ function zabbix_bridge_settings_form() {
   $form['zabbix_bridge_credentials']['zabbix_bridge_API_user'] = array(
       '#type' => 'textfield',
       '#title' => t('Zabbix API user'),
-      '#default_value' => variable_get('zabbix_bridge_API_user', zabbix_bridge_API_user),
+      '#default_value' => variable_get('zabbix_bridge_API_user', 'zabbix_bridge_API_user'),
       '#description' => t('User used for API calls. Has to have API calling enabled, and has to be a super-admin.')
   );
 

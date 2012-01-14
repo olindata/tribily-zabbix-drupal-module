@@ -314,8 +314,8 @@ function zabbix_hosts_table($userid = NULL) {
       'sticky'  => TRUE,
       'empty'   => $empty_msg,
     )) .
-  theme('pager',
-    array('element' => $id)
+  theme('pager'//,
+//     array('element' => $id)
   );
 
 
@@ -333,7 +333,7 @@ function zabbix_roletype_tables() {
   $sql = "select typeid, typename from {zabbix_role_type} order by sortorder";
   $result = db_query($sql);
 
-  while ($record = db_fetch_object($result)) {
+  foreach ($result as $record) {
 
     $output .= "<h3>$record->typename</h3>";
 
@@ -401,8 +401,8 @@ function zabbix_roles_table($typeid) {
         'sticky'  => TRUE,
         'empty'   => $empty_msg,
   )) .
-  theme('pager',
-    array('element' => $id)
+  theme('pager'//,
+//     array('element' => $id)
   );
 
   return $output;
@@ -433,7 +433,7 @@ function zabbix_user_mapping_table() {
   $query->join('users', 'du', 'du.uid = zda.drupal_uid');
   $results = $query
   ->fields('zda', array('id', 'zabbix_uid', 'zabbix_usrgrp_id', 'zabbix_hostgrp_id'))
-  ->fields('u', array('uid', 'name', 'mail'))
+  ->fields('du', array('uid', 'name', 'mail'))
   ->extend('PagerDefault')
   ->extend('TableSort')
   ->orderByHeader($header)
@@ -467,8 +467,8 @@ function zabbix_user_mapping_table() {
       'sticky'  => TRUE,
       'empty'   => $empty_msg,
     )) .
-  theme('pager',
-    array('element' => $id)
+  theme('pager'//,
+//     array('element' => $id)
   );
 
   return $output;
@@ -856,8 +856,8 @@ function zabbix_emails_table($userid = NULL) {
       'sticky'  => TRUE,
       'empty'   => $empty_msg,
     )) .
-  theme('pager',
-    array('element' => $id)
+  theme('pager'//,
+//     array('element' => $id)
   );
 
   return $output;
@@ -990,7 +990,7 @@ function zabbix_mobiles_table($userid = NULL) {
 // left join {zabbix_severities} zs on zms.severityid = zs.severityid
 // where m.userid = :userid", $count, $id, null, array(':userid' => $user->uid));
     $query = db_select('zabbix_mobiles', 'm');
-    $query->join('zabbix_mobiles_severities', 'zms', 'm.mobileid = zms.emailid');
+    $query->join('zabbix_mobiles_severities', 'zms', 'm.mobileid = zms.mobileid');
     $query->join('zabbix_severities', 'zs', 'zs.severityid = zms.severityid');
     $query->condition('m.userid', $user->uid);
     $query->addField('zs', 'name', 'severity');
@@ -1011,7 +1011,7 @@ function zabbix_mobiles_table($userid = NULL) {
 // left join {zabbix_severities} zs on zms.severityid = zs.severityid
 // left join {users} u on u.uid = m.userid", $count, $id);
     $query = db_select('zabbix_mobiles', 'm');
-    $query->join('zabbix_mobiles_severities', 'zms', 'm.mobileid = zms.emailid');
+    $query->join('zabbix_mobiles_severities', 'zms', 'm.mobileid = zms.mobileid');
     $query->join('zabbix_severities', 'zs', 'zs.severityid = zms.severityid');
     $query->join('users', 'u', 'u.uid = m.userid');
     $query->addField('zs', 'name', 'severity');
@@ -1082,8 +1082,8 @@ function zabbix_mobiles_table($userid = NULL) {
       'sticky'  => TRUE,
       'empty'   => $empty_msg,
     )) .
-  theme('pager',
-    array('element' => $id)
+  theme('pager'//,
+//     array('element' => $id)
   );
 
   return $output;
@@ -1261,8 +1261,8 @@ function zabbix_jabbers_table($userid = NULL) {
                     'sticky' => TRUE,
                     'empty' => $empty_msg,
                   )) .
-  theme('pager',
-    array('element' => $id)
+  theme('pager'//,
+//     array('element' => $id)
   );
 
   return $output;
