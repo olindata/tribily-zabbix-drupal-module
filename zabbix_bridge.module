@@ -8,9 +8,12 @@ include_once 'zabbix_functions.php';
  * Implementation of hook_help().
  */
 function zabbix_bridge_help($path, $arg) {
-    return '<p>' .
-    t('This module provides integration between drupal and Zabbix.') .
-    '</p>';
+  switch ($path) {
+    case 'admin/help#zabbix_bridge':
+      return '<p>' .
+        t('This module provides integration between drupal and Zabbix.') .
+        '</p>';
+  }
 }
 
 /**
@@ -487,9 +490,9 @@ function zabbix_bridge_user_insert(&$edit, &$account, $category = NULL) {
 }
 
 function zabbix_bridge_user_delete(&$edit, &$account, $category = NULL) {
-    
+
   zabbix_bridge_delete_zabbix_user($edit, $account, $category);
-      
+
 }
 
 function zabbix_bridge_user_update(&$edit, &$account, $category = NULL) {

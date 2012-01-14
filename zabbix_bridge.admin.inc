@@ -90,7 +90,7 @@ function zabbix_bridge_admin_user_mappings() {
 
   drupal_set_title(t('User mappings of zabbix_bridge'));
 
-  $output .= '<h2>' . t('Mapping of Drupal vs Zabbix objects') . '</h2>';
+  $output = '<h2>' . t('Mapping of Drupal vs Zabbix objects') . '</h2>';
   $output .= t('This is teh list of currently configured mappings for drupal users to their corresponding zabbix object id\s');
   $output .= zabbix_user_mapping_table();
   $output .= l('Add mapping', 'zabbix-user-mapping/add');
@@ -106,7 +106,7 @@ function zabbix_bridge_admin_roles_mapping() {
 
   drupal_set_title(t('Mapping of roles of zabbix_bridge'));
 
-  $output .= '<h2>' . t('Roles and their corresponding Zabbix Templates') . '</h2>';
+  $output = '<h2>' . t('Roles and their corresponding Zabbix Templates') . '</h2>';
   $output .= t('These are all the roles with their corresponding zabbix templateids.');
 
   $output .= zabbix_roletype_tables();
