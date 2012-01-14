@@ -231,8 +231,8 @@ function zabbix_hosts_table($userid = NULL) {
     $query->join('zabbix_hosts_roles', 'hr', 'hr.hostid = h.hostid');
     $query->join('zabbix_role', 'r', 'r.roleid = hr.roleid');
     $query->condition('h.userid', $user->uid);
-    $query->add_field('r', 'name', 'role_name');
-    $query->add_field('r', 'description', 'role_desc');
+    $query->addField('r', 'name', 'role_name');
+    $query->addField('r', 'description', 'role_desc');
     $results = $query
       ->fields('h', array('hostid', 'hostname', 'zabbixhostid', 'enabled'))
       ->orderBy('h.hostname, r.name')
@@ -253,8 +253,8 @@ function zabbix_hosts_table($userid = NULL) {
     $query->join('zabbix_hosts_roles', 'hr', 'hr.hostid = h.hostid');
     $query->join('zabbix_role', 'r', 'r.roleid = hr.roleid');
     $query->join('user', 'u', 'u.uid = h.userid');
-    $query->add_field('r', 'name', 'role_name');
-    $query->add_field('r', 'description', 'role_desc');
+    $query->addField('r', 'name', 'role_name');
+    $query->addField('r', 'description', 'role_desc');
     $results = $query
       ->fields('h', array('hostid', 'hostname', 'zabbixhostid', 'enabled'))
       ->fields('u', array('name', 'mail'))
@@ -726,7 +726,7 @@ function zabbix_emails_table($userid = NULL) {
     $query->join('zabbix_emails_severities', 'zes', 'e.emailid = zes.emailid');
     $query->join('zabbix_severities', 'zs', 'zs.severityid = zes.severityid');
     $query->condition('e.userid', $user->uid);
-    $query->add_field('zs', 'name', 'severity');
+    $query->addField('zs', 'name', 'severity');
     $results = $query
       ->fields('e', array('emailid', 'email', 'zabbixmediaid', 'enabled'))
       ->extend('PagerDefault')
@@ -744,7 +744,7 @@ function zabbix_emails_table($userid = NULL) {
     $query->join('zabbix_emails_severities', 'zes', 'e.emailid = zes.emailid');
     $query->join('zabbix_severities', 'zs', 'zs.severityid = zes.severityid');
     $query->join('user', 'u', 'u.uid = e.userid');
-    $query->add_field('zs', 'name', 'severity');
+    $query->addField('zs', 'name', 'severity');
     $results = $query
       ->fields('e', array('emailid', 'email', 'zabbixmediaid', 'enabled'))
       ->fields('u', array('name'))
@@ -938,7 +938,7 @@ function zabbix_mobiles_table($userid = NULL) {
     $query->join('zabbix_mobiles_severities', 'zms', 'm.mobileid = zms.emailid');
     $query->join('zabbix_severities', 'zs', 'zs.severityid = zms.severityid');
     $query->condition('m.userid', $user->uid);
-    $query->add_field('zs', 'name', 'severity');
+    $query->addField('zs', 'name', 'severity');
     $results = $query
       ->fields('m', array('mobileid', 'number', 'zabbixmediaid', 'enabled'))
       ->extend('PagerDefault')
@@ -957,7 +957,7 @@ function zabbix_mobiles_table($userid = NULL) {
     $query->join('zabbix_mobiles_severities', 'zms', 'm.mobileid = zms.emailid');
     $query->join('zabbix_severities', 'zs', 'zs.severityid = zms.severityid');
     $query->join('user', 'u', 'u.uid = m.userid');
-    $query->add_field('zs', 'name', 'severity');
+    $query->addField('zs', 'name', 'severity');
     $results = $query
       ->fields('m', array('mobileid', 'number', 'zabbixmediaid', 'enabled'))
       ->fields('u', array('name'))
@@ -1110,7 +1110,7 @@ function zabbix_jabbers_table($userid = NULL) {
     $query->join('zabbix_jabbers_severities', 'zjs', 'j.jabberid = zjs.jabberid');
     $query->join('zabbix_severities', 'zs', 'zs.severityid = zjs.severityid');
     $query->condition('j.userid', $user->uid);
-    $query->add_field('zs', 'name', 'severity');
+    $query->addField('zs', 'name', 'severity');
     $results = $query
       ->fields('j', array('jabberid', 'jabber', 'zabbixmediaid', 'enabled'))
       ->extend('PagerDefault')
@@ -1129,7 +1129,7 @@ function zabbix_jabbers_table($userid = NULL) {
     $query->join('zabbix_jabbers_severities', 'zjs', 'j.jabberid = zjs.jabberid');
     $query->join('zabbix_severities', 'zs', 'zs.severityid = zjs.severityid');
     $query->join('user', 'u', 'u.uid = j.userid');
-    $query->add_field('zs', 'name', 'severity');
+    $query->addField('zs', 'name', 'severity');
     $results = $query
       ->fields('j', array('jabberid', 'jabber', 'zabbixmediaid', 'enabled'))
       ->fields('u', array('name'))
